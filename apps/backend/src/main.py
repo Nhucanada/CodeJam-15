@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.v1 import auth_routes, static_asset_routes
+from src.api.v1 import auth_routes, chat_routes, static_asset_routes
 from src.core.config import get_settings
 from src.infra.supabase_client import init_supabase
 
@@ -40,6 +40,7 @@ app.add_middleware(
     
 # Include routers
 app.include_router(auth_routes.router, prefix="/api/v1")
+app.include_router(chat_routes.router, prefix="/api/v1")
 app.include_router(static_asset_routes.router, prefix="/api/v1")
 
 
