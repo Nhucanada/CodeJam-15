@@ -23,6 +23,9 @@ export class GlassLoader {
   private currentFillLevel: number = 0.5
   private targetFillLevel: number = 0.5
   private glassBox: THREE.Box3 | null = null
+  private clippingPlane: THREE.Plane | null = null
+  private liquidTopMesh: THREE.Mesh | null = null
+  private liquidTopGeometry: THREE.CircleGeometry | null = null
 
   constructor() {
     this.loader = new GLTFLoader()
@@ -162,79 +165,174 @@ export class GlassLoader {
   }
 
   /**
-   * Creates a liquid mesh inside the glass
+   * Creates a liquid mesh inside the glass with full-height precomputed geometry
    */
   private createLiquid(glass: THREE.Object3D, glassBox: THREE.Box3): void {
     // Calculate glass dimensions
     const glassSize = new THREE.Vector3()
     glassBox.getSize(glassSize)
 
-    const height = glassSize.y * 0.5 // Start at 50% fill
+    // Create full-height liquid (from 6% to 90% of glass height)
+    const liquidStartPercent = 0.06
+    const liquidEndPercent = 0.90
+    const liquidBottom = glassBox.min.y + glassSize.y * liquidStartPercent
+    const liquidTop = glassBox.min.y + glassSize.y * liquidEndPercent
+    const fullHeight = liquidTop - liquidBottom
 
-    // Measure glass profile at multiple heights to understand shape
+    // Measure glass profile at multiple heights for better shape matching
     console.log('=== Glass Profile Analysis ===')
     console.log('Glass box min.y:', glassBox.min.y, 'max.y:', glassBox.max.y)
     console.log('Glass total height:', glassSize.y)
 
-    for (let i = 0; i <= 10; i++) {
-      const percent = i / 10
-      const y = glassBox.min.y + glassSize.y * percent
+    const heightSegments = 20 // Segments for smooth shape
+    const radialSegments = 64 // Smoother curves
+
+    // Sample glass radius at multiple heights
+    const radiusSamples: number[] = []
+    for (let i = 0; i <= heightSegments; i++) {
+      const percent = i / heightSegments
+      const y = liquidBottom + fullHeight * percent
       const radius = this.measureGlassRadiusAtHeight(glass, y)
-      console.log(`  ${(percent * 100).toFixed(0)}% height (Y=${y.toFixed(2)}): radius=${radius.toFixed(3)}`)
+      radiusSamples.push(radius)
+      console.log(`  ${(percent * 100).toFixed(0)}% liquid height (Y=${y.toFixed(2)}): radius=${radius.toFixed(3)}`)
     }
     console.log('==============================')
 
-    // Measure glass radius at top and bottom of liquid to match taper
-    const bottomY = glassBox.min.y + 0.1 // Slightly above bottom to avoid rim
-    const topY = glassBox.min.y + height
-
-    const radiusBottom = this.measureGlassRadiusAtHeight(glass, bottomY)
-    const radiusTop = this.measureGlassRadiusAtHeight(glass, topY)
-
-    console.log('Initial liquid: bottom Y:', bottomY, 'radius:', radiusBottom)
-    console.log('Initial liquid: top Y:', topY, 'radius:', radiusTop)
-
-    const radialSegments = 32
-    const heightSegments = 1 // Simple geometry, no animation needed
+    // Create cylinder geometry with average radius at top and bottom
+    const radiusBottom = radiusSamples[0]
+    const radiusTop = radiusSamples[radiusSamples.length - 1]
 
     this.liquidGeometry = new THREE.CylinderGeometry(
       radiusTop,
       radiusBottom,
-      height,
+      fullHeight,
       radialSegments,
-      heightSegments
+      heightSegments,
+      false // Not open-ended
     )
 
-    // Create transparent colored liquid material
+    // Adjust vertices to match glass shape at each height segment with smooth interpolation
+    const position = this.liquidGeometry.attributes.position
+    for (let i = 0; i < position.count; i++) {
+      const y = position.getY(i)
+
+      // Find which height segment this vertex belongs to (0 to 1), clamp to valid range
+      const normalizedY = Math.max(0, Math.min(1, (y + fullHeight / 2) / fullHeight))
+
+      // Get the exact position in the samples array (can be fractional)
+      const samplePosition = normalizedY * heightSegments
+      const lowerIndex = Math.max(0, Math.min(heightSegments - 1, Math.floor(samplePosition)))
+      const upperIndex = Math.min(heightSegments, lowerIndex + 1)
+      const fraction = samplePosition - lowerIndex
+
+      // Interpolate between the two nearest radius samples
+      const lowerRadius = radiusSamples[lowerIndex] || 0
+      const upperRadius = radiusSamples[upperIndex] || lowerRadius
+      const targetRadius = lowerRadius + (upperRadius - lowerRadius) * fraction
+
+      // Get current vertex radius
+      const x = position.getX(i)
+      const z = position.getZ(i)
+      const currentRadius = Math.sqrt(x * x + z * z)
+
+      // Scale vertex to match glass radius at this height
+      if (currentRadius > 0.001 && targetRadius > 0) {
+        const scale = targetRadius / currentRadius
+        position.setX(i, x * scale)
+        position.setZ(i, z * scale)
+      }
+    }
+    position.needsUpdate = true
+    this.liquidGeometry.computeVertexNormals()
+
+    // Create clipping plane (starts at bottom, will be animated to control fill level)
+    this.clippingPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0)
+
+    // Create transparent colored liquid material with clipping plane
     const liquidMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xff6b35, // Orange cocktail color (change as desired)
+      color: 0xff6b35, // Orange cocktail color
       transparent: true,
       opacity: 1,
       transmission: 0.9,
       roughness: 0.05,
       thickness: 0.3,
       ior: 1.33, // Water refraction index
-      depthWrite: true, // Ensure liquid renders properly
+      depthWrite: true,
+      clippingPlanes: [this.clippingPlane], // Add clipping plane
+      clipShadows: true,
     })
 
     this.liquidMesh = new THREE.Mesh(this.liquidGeometry, liquidMaterial)
     this.liquidMesh.castShadow = true
     this.liquidMesh.receiveShadow = true
-    this.liquidMesh.renderOrder = 1 // Render after glass (glass has default renderOrder 0)
+    this.liquidMesh.renderOrder = 1
 
-    // Position liquid at the bottom of the glass (in world space, not as child)
-    // This ensures liquid stays level when glass tilts
-    const liquidYPosition = glassBox.min.y + height / 2
+    // Position liquid mesh (centered at middle of full height)
+    const liquidCenterY = liquidBottom + fullHeight / 2
 
     this.liquidMesh.position.set(
       glass.position.x,
-      liquidYPosition,
+      liquidCenterY,
       glass.position.z
     )
 
-    // Add liquid to scene (NOT as child of glass, so it doesn't rotate)
+    // Initialize clipping plane to show 50% fill
+    this.updateClippingPlane()
+
+    // Create top surface for the liquid
+    this.createLiquidTop(liquidBottom, fullHeight)
+
+    // Add liquid to scene
     if (this.scene) {
       this.scene.add(this.liquidMesh)
+      if (this.liquidTopMesh) {
+        this.scene.add(this.liquidTopMesh)
+      }
+    }
+  }
+
+  /**
+   * Creates the top surface of the liquid
+   */
+  private createLiquidTop(liquidBottom: number, fullHeight: number): void {
+    if (!this.selectedGlass || !this.glassBox) return
+
+    // Start with a circle at 50% fill level
+    const initialFillHeight = fullHeight * 0.5
+    const initialY = liquidBottom + initialFillHeight
+    const initialRadius = this.measureGlassRadiusAtHeight(this.selectedGlass, initialY)
+
+    // Create circle geometry for the top surface
+    this.liquidTopGeometry = new THREE.CircleGeometry(initialRadius, 64)
+
+    // Same material as the liquid
+    const topMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xff6b35,
+      transparent: true,
+      opacity: 1,
+      transmission: 0.9,
+      roughness: 0.05,
+      thickness: 0.3,
+      ior: 1.33,
+      depthWrite: true,
+      side: THREE.DoubleSide, // Visible from both sides
+    })
+
+    this.liquidTopMesh = new THREE.Mesh(this.liquidTopGeometry, topMaterial)
+    this.liquidTopMesh.castShadow = true
+    this.liquidTopMesh.receiveShadow = true
+    this.liquidTopMesh.renderOrder = 1
+
+    // Rotate to face upward
+    this.liquidTopMesh.rotation.x = -Math.PI / 2
+
+    // Position at the initial fill level
+    if (this.selectedGlass) {
+      this.liquidTopMesh.position.set(
+        this.selectedGlass.position.x,
+        initialY,
+        this.selectedGlass.position.z
+      )
     }
   }
 
@@ -247,60 +345,74 @@ export class GlassLoader {
   }
 
   /**
+   * Updates the clipping plane position and top surface based on current fill level
+   */
+  private updateClippingPlane(): void {
+    if (!this.clippingPlane || !this.glassBox) return
+
+    const glassSize = new THREE.Vector3()
+    this.glassBox.getSize(glassSize)
+
+    // Calculate the Y position where liquid should be clipped
+    const liquidStartPercent = 0.06
+    const liquidEndPercent = 0.90
+    const liquidBottom = this.glassBox.min.y + glassSize.y * liquidStartPercent
+    const liquidTop = this.glassBox.min.y + glassSize.y * liquidEndPercent
+    const fullHeight = liquidTop - liquidBottom
+
+    // Current fill level determines clipping plane Y position
+    const currentFillHeight = fullHeight * this.currentFillLevel
+    const clipY = liquidBottom + currentFillHeight
+
+    // Update clipping plane (plane normal points down, so we use negative Y)
+    // The constant determines the plane's position along its normal
+    this.clippingPlane.constant = clipY
+
+    // Update top surface position and size
+    this.updateLiquidTop(clipY)
+  }
+
+  /**
+   * Updates the liquid top surface position and radius
+   */
+  private updateLiquidTop(yPosition: number): void {
+    if (!this.liquidTopMesh || !this.liquidTopGeometry || !this.selectedGlass) return
+
+    // Measure glass radius at the current fill height
+    const radius = this.measureGlassRadiusAtHeight(this.selectedGlass, yPosition)
+
+    // Recreate geometry with new radius (circles are simple, low cost)
+    this.liquidTopGeometry.dispose()
+    this.liquidTopGeometry = new THREE.CircleGeometry(radius, 64)
+    this.liquidTopMesh.geometry = this.liquidTopGeometry
+
+    // Update position
+    this.liquidTopMesh.position.y = yPosition
+  }
+
+  /**
    * Update the actual fill level based on the target
    */
   private updateFillLevel(): void {
-    if (!this.liquidMesh || !this.selectedGlass || !this.glassBox || !this.scene) return
+    if (!this.liquidMesh || !this.glassBox) return
 
     // Smooth interpolation towards target (lerp with speed factor)
     const lerpSpeed = 0.1 // Adjust this for faster/slower filling
     const previousFillLevel = this.currentFillLevel
     this.currentFillLevel += (this.targetFillLevel - this.currentFillLevel) * lerpSpeed
 
-    // Only update geometry if fill level changed significantly (optimization)
+    // Only update clipping plane if fill level changed significantly (optimization)
     if (Math.abs(this.currentFillLevel - previousFillLevel) < 0.001) return
 
-    const glassSize = new THREE.Vector3()
-    this.glassBox.getSize(glassSize)
-
-    // Calculate actual liquid height based on fill level
-    // Start from 5% of glass height to avoid the base
-    const liquidStartHeight = glassSize.y * 0.06 // Start liquid at 5% of glass height
-    const maxLiquidHeight = glassSize.y * 0.90 // Max fill to 90% of glass height
-    const currentHeight = maxLiquidHeight * this.currentFillLevel
-
-    // Both bottom and top of liquid move up together as it fills
-    const bottomY = this.glassBox.min.y + liquidStartHeight
-    const topY = bottomY + currentHeight
-
-    const radiusBottom = this.measureGlassRadiusAtHeight(this.selectedGlass, bottomY)
-    const radiusTop = this.measureGlassRadiusAtHeight(this.selectedGlass, topY)
-
-    console.log(`Updating liquid: fillLevel=${this.currentFillLevel.toFixed(3)}, height=${currentHeight.toFixed(3)}, bottomY=${bottomY.toFixed(2)}, topY=${topY.toFixed(2)}, radiusBottom=${radiusBottom.toFixed(3)}, radiusTop=${radiusTop.toFixed(3)}`)
-
-    // Dispose old geometry and create new one with updated radii
-    if (this.liquidGeometry) {
-      this.liquidGeometry.dispose()
-    }
-
-    this.liquidGeometry = new THREE.CylinderGeometry(
-      radiusTop,
-      radiusBottom,
-      currentHeight,
-      32,
-      1
-    )
-
-    this.liquidMesh.geometry = this.liquidGeometry
-
-    // Position liquid centered at its height
-    this.liquidMesh.position.y = bottomY + currentHeight / 2
+    // Update clipping plane position and top surface (no geometry recreation!)
+    this.updateClippingPlane()
   }
 
   /**
    * Update function (call this in animation loop)
    */
   public update(): void {
+    // Update fill level
     this.updateFillLevel()
   }
 
