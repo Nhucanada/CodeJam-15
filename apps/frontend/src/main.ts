@@ -19,6 +19,7 @@ const renderer = new THREE.WebGLRenderer({ antialias: true })
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.setPixelRatio(window.devicePixelRatio)
 renderer.shadowMap.enabled = true
+renderer.localClippingEnabled = true // Enable clipping planes for liquid masking
 document.body.appendChild(renderer.domElement)
 
 // OrbitControls
@@ -60,7 +61,7 @@ new Lighting(scene)
 new Floor(scene)
 
 // Load glass model - choose which glass to display
-const GLASS_TO_LOAD = 'pint_glass_4' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
+const GLASS_TO_LOAD = 'highball_glass_7' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
                                           // hurricane_glass_3, pint_glass_4, seidel_Glass_5,
                                           // shot_glass_6, highball_glass_7, margarita_glass_8, martini_glass_9
 
