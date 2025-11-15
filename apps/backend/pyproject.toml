@@ -22,14 +22,10 @@ dependencies = [
     "google-genai==1.50.1",
     "google-api-python-client==2.187.0",
     "httpx==0.28.1",
-<<<<<<< HEAD
     "PyJWT==2.10.1",
     "boto3==1.34.119",
     "botocore==1.34.119",
     "scikit-learn==1.5.0"
-=======
-    "PyJWT==2.10.1"
->>>>>>> 8738e2d (Authentication Core Services and Operation Bug Fixes for FastAPI (#11))
 ]
 
 [project.optional-dependencies]

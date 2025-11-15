@@ -5,11 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-<<<<<<< HEAD
 from src.api.v1 import auth_routes, static_asset_routes
-=======
-from src.api.v1 import auth_routes
->>>>>>> 8738e2d (Authentication Core Services and Operation Bug Fixes for FastAPI (#11))
 from src.core.config import get_settings
 from src.infra.supabase_client import init_supabase
 
@@ -44,10 +40,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth_routes.router, prefix="/api/v1")
-<<<<<<< HEAD
 app.include_router(static_asset_routes.router, prefix="/api/v1")
-=======
->>>>>>> 8738e2d (Authentication Core Services and Operation Bug Fixes for FastAPI (#11))
 
 
 @app.get("/")
