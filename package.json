@@ -1,10 +1,6 @@
 {
   "name": "my-app",
   "private": true,
-  "workspaces": [
-    "apps/frontend",
-    "packages/*"
-  ],
   "dependencies": {
     "three": "^0.181.1"
   }

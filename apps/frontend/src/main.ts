@@ -47,8 +47,12 @@ window.addEventListener('resize', () => {
 // Start animation
 animate()
 
-// Connect to backend
-fetch('http://localhost:8000')
+// Connect to backend - use environment-aware URL
+const apiUrl = window.location.hostname === 'localhost'
+  ? 'http://localhost:8000'
+  : 'http://backend:8000'
+
+fetch(apiUrl)
   .then(response => response.json())
   .then(data => console.log('Backend says:', data.message))
   .catch(error => console.log('Backend connection failed:', error))

@@ -6,6 +6,11 @@ services:
       - "8000:8000"
     volumes:
       - ../apps/backend:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   frontend:
     build: ../apps/frontend
@@ -14,4 +19,7 @@ services:
     volumes:
       - ../apps/frontend:/app
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    environment:
+      - VITE_API_URL=http://backend:8000
