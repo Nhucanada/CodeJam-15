@@ -58,6 +58,23 @@ class Settings(BaseSettings):
         default=10,
         description="Number of concurrent Gemini API requests allowed"
     )
+
+    aws_access_key_id: Optional[str] = Field(
+        default=None,
+        description="AWS Access Key ID for S3"
+    )
+    aws_secret_access_key: Optional[str] = Field(
+        default=None,
+        description="AWS Secret Access Key for S3"
+    )
+    aws_region: str = Field(
+        default="us-east-1",
+        description="AWS region for S3 operations"
+    )
+    aws_s3_bucket: Optional[str] = Field(
+        default=None,
+        description="Default S3 bucket name for RAG assets"
+    )
     
     # CORS Settings
     cors_origins: list[str] = Field(
