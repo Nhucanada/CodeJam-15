@@ -155,6 +155,16 @@ canvas {
   color: #fff;
 }
 
+.message.drink-title {
+  color: #fff;
+  margin-bottom: 5px;
+}
+
+.message.drink-info {
+  color: #ccc;
+  font-size: 12px;
+}
+
 .message.panel-header {
   align-items: center;
   text-align: center;
@@ -231,11 +241,13 @@ canvas {
 
 .recipe-button-container{
   flex: 1;
-  padding: 20px; 
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 20px;
+  padding-bottom: 10px;
   margin-top: 6px;
   margin-left: 19px;
   margin-right: 19px;
-  margin-bottom: 10px;
   align-items: center;
   overflow-y: auto;
   background: rgba(25, 10, 24, 1);
@@ -249,4 +261,35 @@ canvas {
 .recipe-btn.selected {
   background: rgba(102, 61, 91, 1);
   box-shadow: 8px 6px 8px rgba(255, 255, 255, 0.2);
+}
+
+.drink-img {
+  height: 100%;
+  object-fit: contain;
+  border-right: 3px solid #252525;
+}
+
+
+.shelf-box {
+  flex: 1;
+  height: 100px;
+  margin-top: 6px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 16px;
+  outline: 3px solid #252525;
+  overflow: hidden;
+  background: rgba(25, 10, 24, 1);
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.drink-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  margin-left: 10px;
+  margin-top: 10px;
 }

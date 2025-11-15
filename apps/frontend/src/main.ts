@@ -130,3 +130,52 @@ function animate() {
 }
 
 animate()
+
+// Get all elements
+const buttons = document.querySelectorAll('.recipe-btn') as NodeListOf<HTMLButtonElement>
+const recipeButton = Array.from(buttons).find(btn => btn.textContent === 'RECIPE')
+const shelfButton = Array.from(buttons).find(btn => btn.textContent === 'SHELF')
+
+const ingredientsBox = document.querySelector('.ingredients-box') as HTMLElement
+const recipeBox = document.querySelector('.recipe-box') as HTMLElement
+const allPanelHeaders = document.querySelectorAll('.message.panel-header') as NodeListOf<HTMLElement>
+const ingredientsHeader = allPanelHeaders[0] // First header is "Ingredients:"
+const recipeHeader = allPanelHeaders[1] // Second header is "Recipe:"
+const shelfBoxes = document.querySelectorAll('.shelf-box') as NodeListOf<HTMLElement>
+
+function showRecipe() {
+  // Show recipe elements
+  if (ingredientsBox) ingredientsBox.style.display = 'block'
+  if (recipeBox) recipeBox.style.display = 'block'
+  if (ingredientsHeader) ingredientsHeader.style.display = 'block'
+  if (recipeHeader) recipeHeader.style.display = 'block'
+
+  // Hide shelf elements
+  shelfBoxes.forEach(box => box.style.display = 'none')
+
+  // Update button states
+  recipeButton?.classList.add('selected')
+  shelfButton?.classList.remove('selected')
+}
+
+function showShelf() {
+  // Hide recipe elements
+  if (ingredientsBox) ingredientsBox.style.display = 'none'
+  if (recipeBox) recipeBox.style.display = 'none'
+  if (ingredientsHeader) ingredientsHeader.style.display = 'none'
+  if (recipeHeader) recipeHeader.style.display = 'none'
+
+  // Show shelf elements (with images and text)
+  shelfBoxes.forEach(box => box.style.display = 'flex')
+
+  // Update button states
+  shelfButton?.classList.add('selected')
+  recipeButton?.classList.remove('selected')
+}
+
+// Add event listeners
+recipeButton?.addEventListener('click', showRecipe)
+shelfButton?.addEventListener('click', showShelf)
+
+// Set default state
+showRecipe()
