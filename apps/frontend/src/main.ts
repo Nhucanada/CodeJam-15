@@ -1,41 +1,90 @@
 import './style.css'
 import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { Floor } from './scene/Floor'
+import { GlassLoader } from './scene/GlassLoader'
+import { IceLoader } from './scene/IceLoader'
+import { Lighting } from './scene/Lighting'
 
 // Scene setup
 const scene = new THREE.Scene()
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
-const renderer = new THREE.WebGLRenderer({ antialias: true })
+scene.background = new THREE.Color(0x0a0a0f) // Darker background for bar atmosphere
 
+// Camera setup
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000)
+camera.position.set(0, 2, 8)
+camera.lookAt(0, 0, 0)
+
+// Renderer setup
+const renderer = new THREE.WebGLRenderer({ antialias: true })
 renderer.setSize(window.innerWidth, window.innerHeight)
-renderer.setClearColor(0x1a1a1a)
+renderer.setPixelRatio(window.devicePixelRatio)
+renderer.shadowMap.enabled = true
+renderer.localClippingEnabled = true // Enable clipping planes for liquid masking
 document.body.appendChild(renderer.domElement)
 
-// Create a rotating cube
-const geometry = new THREE.BoxGeometry()
-const material = new THREE.MeshPhongMaterial({ color: 0x00ff88 })
-const cube = new THREE.Mesh(geometry, material)
-scene.add(cube)
+// OrbitControls
+const controls = new OrbitControls(camera, renderer.domElement)
+controls.enableDamping = true
+controls.dampingFactor = 0.05
+controls.minDistance = 1
+controls.maxDistance = 10
+controls.maxPolarAngle = Math.PI / 2 // Prevent camera from going below horizontal
+controls.target.set(0, 0, 0)
 
-// Add lighting
-const light = new THREE.DirectionalLight(0xffffff, 1)
-light.position.set(5, 5, 5)
-scene.add(light)
+// Lighting - Using Lighting class (for testing)
+new Lighting(scene)
 
-const ambientLight = new THREE.AmbientLight(0x404040, 0.4)
-scene.add(ambientLight)
+// Lighting - ambient bar atmosphere (commented out for testing)
+// const directionalLight = new THREE.DirectionalLight(0xffcc88, 0.4) // Warm, dim key light
+// directionalLight.position.set(5, 8, 5)
+// directionalLight.castShadow = true
+// scene.add(directionalLight)
 
-// Position camera
-camera.position.z = 5
+// const ambientLight = new THREE.AmbientLight(0xff9955, 0.15) // Very dim warm ambient
+// scene.add(ambientLight)
 
-// Animation loop
-function animate() {
-  requestAnimationFrame(animate)
+// const fillLight = new THREE.DirectionalLight(0xff6633, 0.2) // Subtle warm accent
+// fillLight.position.set(-3, 2, -3)
+// scene.add(fillLight)
 
-  cube.rotation.x += 0.01
-  cube.rotation.y += 0.01
+// Spotlight on the glass for bar effect
+// const spotLight = new THREE.SpotLight(0xffffff, 1.5)
+// spotLight.position.set(0, 5, 0)
+// spotLight.angle = Math.PI / 6
+// spotLight.penumbra = 0.3
+// spotLight.decay = 2
+// spotLight.distance = 10
+// spotLight.castShadow = true
+// scene.add(spotLight)
 
-  renderer.render(scene, camera)
-}
+// Create floor
+new Floor(scene)
+
+// Load glass model
+const GLASS_TO_LOAD = 'hurricane_glass_3' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
+                                          // hurricane_glass_3, pint_glass_4, seidel_Glass_5,
+                                          // shot_glass_6, highball_glass_7, margarita_glass_8, martini_glass_9
+const glassLoader = new GlassLoader()
+glassLoader.loadGlass(scene, GLASS_TO_LOAD, controls, camera).then(() => {
+  // After glass is loaded, load and position ice cube at the water surface
+  const iceLoader = new IceLoader()
+  iceLoader.loadIce(scene, 'cube_ice').then(() => {
+    const ice = iceLoader.getIce('cube_ice')
+    const liquid = glassLoader.getLiquid()
+
+    if (ice && liquid) {
+      // Position ice at the same Y position as the liquid surface (top of the liquid mesh)
+      const liquidBox = new THREE.Box3().setFromObject(liquid)
+      ice.position.y = liquidBox.max.y
+      ice.position.x = 0
+      ice.position.z = 0
+
+      // Scale ice to fit nicely in the glass
+      ice.scale.set(0.5, 0.5, 0.5)
+    }
+  }).catch(console.error)
+})
 
 // Handle window resize
 window.addEventListener('resize', () => {
@@ -44,15 +93,89 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
-// Start animation
+// Glass switching with spacebar
+const glassNames = [
+  'zombie_glass_0',
+  'cocktail_glass_1',
+  'rocks_glass_2',
+  'hurricane_glass_3',
+  'pint_glass_4',
+  'seidel_Glass_5',
+  'shot_glass_6',
+  'highball_glass_7',
+  'margarita_glass_8',
+  'martini_glass_9',
+] as const
+
+let currentGlassIndex = 7 // Start with highball_glass_7
+
+window.addEventListener('keydown', (event) => {
+  if (event.code === 'Space') {
+    event.preventDefault() // Prevent page scroll
+    currentGlassIndex = (currentGlassIndex + 1) % glassNames.length
+    console.log(`Switching to ${glassNames[currentGlassIndex]}`)
+    glassLoader.switchGlass(glassNames[currentGlassIndex]).catch(console.error)
+  }
+})
+
+// Animation loop
+function animate() {
+  requestAnimationFrame(animate)
+
+  // Update liquid fill animation
+  glassLoader.update()
+
+  controls.update()
+  renderer.render(scene, camera)
+}
+
 animate()
 
-// Connect to backend - use environment-aware URL
-const apiUrl = window.location.hostname === 'localhost'
-  ? 'http://localhost:8000'
-  : 'http://backend:8000'
+// Get all elements
+const buttons = document.querySelectorAll('.recipe-btn') as NodeListOf<HTMLButtonElement>
+const recipeButton = Array.from(buttons).find(btn => btn.textContent === 'RECIPE')
+const shelfButton = Array.from(buttons).find(btn => btn.textContent === 'SHELF')
 
-fetch(apiUrl)
-  .then(response => response.json())
-  .then(data => console.log('Backend says:', data.message))
-  .catch(error => console.log('Backend connection failed:', error))
+const ingredientsBox = document.querySelector('.ingredients-box') as HTMLElement
+const recipeBox = document.querySelector('.recipe-box') as HTMLElement
+const allPanelHeaders = document.querySelectorAll('.message.panel-header') as NodeListOf<HTMLElement>
+const ingredientsHeader = allPanelHeaders[0] // First header is "Ingredients:"
+const recipeHeader = allPanelHeaders[1] // Second header is "Recipe:"
+const shelfBoxes = document.querySelectorAll('.shelf-box') as NodeListOf<HTMLElement>
+
+function showRecipe() {
+  // Show recipe elements
+  if (ingredientsBox) ingredientsBox.style.display = 'block'
+  if (recipeBox) recipeBox.style.display = 'block'
+  if (ingredientsHeader) ingredientsHeader.style.display = 'block'
+  if (recipeHeader) recipeHeader.style.display = 'block'
+
+  // Hide shelf elements
+  shelfBoxes.forEach(box => box.style.display = 'none')
+
+  // Update button states
+  recipeButton?.classList.add('selected')
+  shelfButton?.classList.remove('selected')
+}
+
+function showShelf() {
+  // Hide recipe elements
+  if (ingredientsBox) ingredientsBox.style.display = 'none'
+  if (recipeBox) recipeBox.style.display = 'none'
+  if (ingredientsHeader) ingredientsHeader.style.display = 'none'
+  if (recipeHeader) recipeHeader.style.display = 'none'
+
+  // Show shelf elements (with images and text)
+  shelfBoxes.forEach(box => box.style.display = 'flex')
+
+  // Update button states
+  shelfButton?.classList.add('selected')
+  recipeButton?.classList.remove('selected')
+}
+
+// Add event listeners
+recipeButton?.addEventListener('click', showRecipe)
+shelfButton?.addEventListener('click', showShelf)
+
+// Set default state
+showRecipe()
