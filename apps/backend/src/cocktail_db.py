@@ -83,7 +83,7 @@ class Ingredient(Base):
     name = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     abv = Column(Numeric(5, 2))
-    flavour_profile = Column(Text)
+    flavor_profile = Column(Text)
     hexcode = Column(Text)
 
     cocktails = relationship(

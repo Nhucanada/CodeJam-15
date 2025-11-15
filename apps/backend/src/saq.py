@@ -1,11 +1,9 @@
-#import requests
+import re
 import requests
 
-# base for further shit
 SAQ_BASE_URL = "https:"
 API_URL = "https://catalog-service.adobe.io/graphql"
 
-# headers for request scraped from graphql 
 HEADERS = {
     "accept": "*/*",
     "content-type": "application/json",
@@ -24,7 +22,6 @@ HEADERS = {
     ),
 }
 
-# query for the graphql api
 QUERY = """
 query productSearch(
   $phrase: String!,
@@ -70,10 +67,32 @@ query productSearch(
 }
 """
 
+
+def _is_bottle_url(canonical_url: str) -> bool:
+    """
+    Heuristic: bottle product pages end with a numeric SKU, e.g. '/en/11639070'.
+    We return True only if the last path segment is all digits.
+    """
+    if not canonical_url:
+        return False
+    # strip trailing slash, get last segment
+    last_segment = canonical_url.rstrip("/").rsplit("/", 1)[-1]
+    return last_segment.isdigit()
+
+
 def get_first_saq_url(phrase: str, page_size: int = 5, current_page: int = 1):
     """
-    Search SAQ for a product name and return info for the first result.
-    Returns a dict with name, url, size, price_final, price_regular, or None if no results.
+    Search SAQ for a product name and return info for the first *bottle* result.
+
+    Returns a dict:
+      {
+        "name": str,
+        "url": str | None,
+        "size": str | None,
+        "price_final": {"value": number, "currency": str} | None,
+        "price_regular": {"value": number, "currency": str} | None,
+      }
+    or None if no suitable bottle results.
     """
     payload = {
         "query": QUERY,
@@ -101,25 +120,62 @@ def get_first_saq_url(phrase: str, page_size: int = 5, current_page: int = 1):
     if not items:
         return None
 
-    first = items[0]
-    product = first["product"]
-    canonical_url = product.get("canonical_url")
-    full_url = SAQ_BASE_URL + canonical_url if canonical_url else none
+    # Pick the first item whose canonical_url looks like a bottle page (ends in digits)
+    chosen = None
+    for item in items:
+        product = item.get("product") or {}
+        canonical_url = product.get("canonical_url")
+        if _is_bottle_url(canonical_url or ""):
+            chosen = item
+            break
 
-    # Optional: extract size
-    attrs = (first.get("productView") or {}).get("attributes") or []
+    if not chosen:
+        # No bottle-style URLs in the results
+        return None
+
+    product = chosen["product"]
+    canonical_url = product.get("canonical_url")
+
+    # Build full URL
+    if canonical_url and canonical_url.startswith("/"):
+        full_url = SAQ_BASE_URL + canonical_url
+    else:
+        full_url = canonical_url
+
+    # Extract size
+    attrs = (chosen.get("productView") or {}).get("attributes") or []
     size_value = next(
         (a.get("value") for a in attrs if a.get("name") == "format_contenant_ml"),
         None,
     )
     size = f"{size_value} ml" if size_value is not None else None
 
+    # Extract price info
+    price_info = product.get("price_range", {}).get("minimum_price", {}) or {}
+    final_price = price_info.get("final_price") or {}
+    regular_price = price_info.get("regular_price") or {}
+
+    # Fallback: if final price missing, use regular price
+    price_value = final_price.get("value") or regular_price.get("value")
+    price_currency = (
+        final_price.get("currency")
+        or regular_price.get("currency")
+        or "CAD"
+    )
+
+    price_final_struct = None
+    if price_value is not None:
+        price_final_struct = {
+            "value": price_value,
+            "currency": price_currency,
+        }
+
     return {
         "name": product["name"],
         "url": full_url,
         "size": size,
-        "price_final": product["price_range"]["minimum_price"]["final_price"],
-        "price_regular": product["price_range"]["minimum_price"]["regular_price"],
+        "price_final": price_final_struct,
+        "price_regular": regular_price or None,
     }
 
 
@@ -128,16 +184,18 @@ if __name__ == "__main__":
     result = get_first_saq_url(phrase)
 
     if result is None:
-        print("No products found.")
+        print("No bottle-like products found.")
     else:
-        print("Best match:")
+        print("Best match (bottle):")
         print("Name:", result["name"])
         print("URL:", result["url"])
         if result["size"]:
             print("Size:", result["size"])
-        print(
-            "Final price:",
-            result["price_final"]["value"],
-            result["price_final"]["currency"],
-        )
-
+        if result["price_final"]:
+            print(
+                "Final price:",
+                result["price_final"]["value"],
+                result["price_final"]["currency"],
+            )
+        else:
+            print("Final price: (not available)")
