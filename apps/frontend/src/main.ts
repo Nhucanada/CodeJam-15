@@ -1,19 +1,16 @@
 import './style.css'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { Floor } from './scene/Floor'
 import { GlassLoader } from './scene/GlassLoader'
 import { IceLoader } from './scene/IceLoader'
+import { GarnishLoader } from './scene/GarnishLoader'
 import { Lighting } from './scene/Lighting'
+import { CameraSetup } from './scene/CameraSetup'
+import { ControlsSetup } from './scene/ControlsSetup'
 
 // Scene setup
 const scene = new THREE.Scene()
 scene.background = new THREE.Color(0x0a0a0f) // Darker background for bar atmosphere
-
-// Camera setup
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000)
-camera.position.set(0, 2, 8)
-camera.lookAt(0, 0, 0)
 
 // Renderer setup
 const renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -23,16 +20,15 @@ renderer.shadowMap.enabled = true
 renderer.localClippingEnabled = true // Enable clipping planes for liquid masking
 document.body.appendChild(renderer.domElement)
 
-// OrbitControls
-const controls = new OrbitControls(camera, renderer.domElement)
-controls.enableDamping = true
-controls.dampingFactor = 0.05
-controls.minDistance = 1
-controls.maxDistance = 10
-controls.maxPolarAngle = Math.PI / 2 // Prevent camera from going below horizontal
-controls.target.set(0, 0, 0)
+// Camera setup
+const cameraSetup = new CameraSetup()
+const camera = cameraSetup.getCamera()
 
-// Lighting - Using Lighting class (for testing)
+// Controls setup
+const controlsSetup = new ControlsSetup(camera, renderer)
+const controls = controlsSetup.getControls()
+
+// Lighting
 new Lighting(scene)
 
 
@@ -40,11 +36,12 @@ new Lighting(scene)
 new Floor(scene)
 
 // Load glass model
-const GLASS_TO_LOAD = 'martini_glass_9' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
-                                          // hurricane_glass_3, pint_glass_4, seidel_Glass_5,
-                                          // shot_glass_6, highball_glass_7, margarita_glass_8, martini_glass_9
+const GLASS_TO_LOAD = 'margarita_glass_8' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
+                                            // hurricane_glass_3, pint_glass_4, seidel_Glass_5,
+                                            // shot_glass_6, highball_glass_7, margarita_glass_8, martini_glass_9
 const glassLoader = new GlassLoader()
 const iceLoader = new IceLoader()
+const garnishLoader = new GarnishLoader()
 
 // Helper function to create multiple ice cubes for a glass
 function createIceCubesForGlass(glassName: typeof glassNames[number]) {
@@ -109,12 +106,20 @@ function createIceCubesForGlass(glassName: typeof glassNames[number]) {
 
 glassLoader.loadGlass(scene, GLASS_TO_LOAD, controls, camera).then(() => {
   createIceCubesForGlass(GLASS_TO_LOAD)
+
+  // Load mint garnish for testing
+  garnishLoader.loadGarnish(scene, 'mint', GLASS_TO_LOAD).then(() => {
+    console.log('Mint garnish loaded!')
+    // Scale it down a lot
+    garnishLoader.setGarnishScale('mint', 0.2)
+    garnishLoader.setGarnishPosition('mint', new THREE.Vector3(0.1, 3.2,-1 )) // Adjust position above liquid
+  }).catch((error) => {
+    console.error('Failed to load mint:', error)
+  })
 })
 
 // Handle window resize
 window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight
-  camera.updateProjectionMatrix()
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
@@ -132,7 +137,7 @@ const glassNames = [
   'martini_glass_9',
 ] as const
 
-let currentGlassIndex = 7 // Start with highball_glass_7
+let currentGlassIndex = 8 // Start with margarita_glass_8
 
 window.addEventListener('keydown', (event) => {
   if (event.code === 'Space') {
@@ -169,7 +174,7 @@ function animate() {
   // Update ice animations with delta time
   iceLoader.update(deltaTime)
 
-  controls.update()
+  controlsSetup.update()
   renderer.render(scene, camera)
 }
 
