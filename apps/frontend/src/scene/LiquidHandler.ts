@@ -68,11 +68,13 @@ export class LiquidHandler {
   public createLiquid(
     glass: THREE.Object3D,
     glassBox: THREE.Box3,
-    liquidStartPercent: number = 0.06
+    liquidStartPercent: number = 0.06,
+    liquidEndPercent: number = 0.90
   ): void {
     this.glass = glass
     this.glassBox = glassBox
     this.liquidStartPercent = liquidStartPercent
+    this.liquidEndPercent = liquidEndPercent
 
     // Calculate glass dimensions
     const glassSize = new THREE.Vector3()
@@ -299,7 +301,7 @@ export class LiquidHandler {
     if (!this.liquidMesh || !this.glassBox) return
 
     // Smooth interpolation towards target (lerp with speed factor)
-    const lerpSpeed = 0.1 // Adjust this for faster/slower filling
+    const lerpSpeed = 0.04 // Adjust this for faster/slower filling (0.04 = ~1 second)
     const previousFillLevel = this.currentFillLevel
     this.currentFillLevel += (this.targetFillLevel - this.currentFillLevel) * lerpSpeed
 

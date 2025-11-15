@@ -61,7 +61,7 @@ new Lighting(scene)
 new Floor(scene)
 
 // Load glass model - choose which glass to display
-const GLASS_TO_LOAD = 'shot_glass_6' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
+const GLASS_TO_LOAD = 'hurricane_glass_3' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
                                           // hurricane_glass_3, pint_glass_4, seidel_Glass_5,
                                           // shot_glass_6, highball_glass_7, margarita_glass_8, martini_glass_9
 

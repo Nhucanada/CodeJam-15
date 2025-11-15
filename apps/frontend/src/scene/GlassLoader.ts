@@ -36,13 +36,28 @@ const LIQUID_START_PERCENT: Record<GlassName, number> = {
   zombie_glass_0: 0.06,
   cocktail_glass_1: 0.25, // Has stem
   rocks_glass_2: 0.06,
-  hurricane_glass_3: 0.06,
+  hurricane_glass_3: 0.24,
   pint_glass_4: 0.06,
   seidel_Glass_5: 0.06,
   shot_glass_6: 0.06,
   highball_glass_7: 0.06,
   margarita_glass_8: 0.55, // Has stem
   martini_glass_9: 0.55, // Has stem
+}
+
+// Liquid end position as percentage of glass height (0.0 to 1.0)
+// Different drinks fill to different levels based on serving standards
+const LIQUID_END_PERCENT: Record<GlassName, number> = {
+  zombie_glass_0: 0.85, // Zombie - tropical cocktail, filled generously
+  cocktail_glass_1: 0.80, // Cocktail glass - filled to just below rim
+  rocks_glass_2: 0.70, // Rocks glass - spirits served on ice, moderate fill
+  hurricane_glass_3: 0.88, // Hurricane - large tropical drink, filled high
+  pint_glass_4: 0.90, // Pint glass - beer, filled to top with head
+  seidel_Glass_5: 0.90, // Seidel (beer mug) - beer, filled to top
+  shot_glass_6: 0.95, // Shot glass - filled to the brim
+  highball_glass_7: 0.85, // Highball - mixed drinks with ice, standard fill
+  margarita_glass_8: 0.95, // Margarita glass - filled to bowl, not stem
+  martini_glass_9: 0.97, 
 }
 
 export class GlassLoader {
@@ -125,7 +140,8 @@ export class GlassLoader {
             this.liquidHandler!.createLiquid(
               selectedGlass,
               finalBox,
-              LIQUID_START_PERCENT[glassName]
+              LIQUID_START_PERCENT[glassName],
+              LIQUID_END_PERCENT[glassName]
             )
 
             // Start filling animation to 100% if auto-start is enabled
@@ -133,10 +149,8 @@ export class GlassLoader {
               this.liquidHandler!.setFillLevel(1)
             }
 
-            // Update camera and controls to focus on the center of the glass
-            controls.target.copy(glassCenter)
-            camera.lookAt(glassCenter)
-            controls.update()
+            // Update camera and controls to focus on the center of the glass with smooth transition
+            this.smoothCameraTransition(controls, glassCenter)
 
             console.log('Glass loaded successfully!')
             resolve()
@@ -263,6 +277,30 @@ export class GlassLoader {
           .start()
       })
     }
+  }
+
+  /**
+   * Smoothly transition camera to focus on a new target point
+   */
+  private smoothCameraTransition(
+    controls: OrbitControls,
+    targetPoint: THREE.Vector3
+  ): void {
+    // Store current target
+    const startTarget = controls.target.clone()
+
+    // Animate the camera target smoothly
+    const targetAnim = { x: startTarget.x, y: startTarget.y, z: startTarget.z }
+    const endTarget = { x: targetPoint.x, y: targetPoint.y, z: targetPoint.z }
+
+    new TWEEN.Tween(targetAnim, this.tweenGroup)
+      .to(endTarget, 600) // 600ms duration for smooth transition
+      .easing(TWEEN.Easing.Cubic.InOut)
+      .onUpdate(() => {
+        controls.target.set(targetAnim.x, targetAnim.y, targetAnim.z)
+        controls.update()
+      })
+      .start()
   }
 
   /**
