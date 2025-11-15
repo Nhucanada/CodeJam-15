@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Sixtyfour:wght@400;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -6,9 +8,288 @@
 
 body {
   overflow: hidden;
-  font-family: Arial, sans-serif;
+  font-family: 'Sixtyfour', monospace;
 }
 
 canvas {
   display: block;
+}
+
+.chat-panel {
+  position: fixed;
+  top: 1%;
+  left: 0.5%;
+  width: 29%;
+  height: 98%;
+  background: rgba(37, 37, 37, 1);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  z-index: 1000;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.recipe-panel {
+  position: fixed;
+  top: 1%;
+  right: 0.5%;
+  width: 29%;
+  height: 98%;
+  background: rgba(37, 37, 37, 1);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  z-index: 1000;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.chat-content {
+  width: calc(100% - 32px);
+  height: calc(100% - 32px);
+  background: rgba(25, 10, 24, 1);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+}
+
+.recipe-content {
+  width: calc(100% - 32px);
+  height: calc(100% - 32px);
+  background: rgba(25, 10, 24, 1);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.chat-header {
+  display: flex;
+  height: 15.4%;
+  margin-top: 19px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 10px;
+  align-items: center;
+  outline: 3px solid #252525;
+  background: rgba(25, 10, 24, 1);
+}
+
+.profile-img {
+  height: calc(100% - 14px);
+  margin-top: 7px;
+  margin-left: 7px;
+  margin-right: 25px;
+  margin-bottom: 7px;
+  object-fit: contain;
+}
+
+.bartender-title {
+  color: #fff;
+  font-size: 20px;
+  margin: 0;
+  font-weight: normal;
+  letter-spacing: 2px;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 20px;
+  height: 74%;
+  margin-top: 6px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 10px;
+  align-items: center;
+  outline: 3px solid #252525;
+  overflow-y: auto;
+  background: rgba(25, 10, 24, 1);
+}
+
+.ingredients-box {
+  flex: 1;
+  padding: 20px;
+  height: 12.8%;
+  margin-top: 6px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 10px;
+  align-items: center;
+  outline: 3px solid #252525;
+  overflow-y: auto;
+  background: rgba(25, 10, 24, 1);
+}
+
+.recipe-box {
+  flex: 1;
+  padding: 20px;
+  height: 42%;
+  margin-top: 6px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 10px;
+  align-items: center;
+  outline: 3px solid #252525;
+  overflow-y: auto;
+  background: rgba(25, 10, 24, 1);
+}
+
+.message-container {
+  margin-left: -8px;
+  margin-right: -8px;
+}
+
+.message {
+  margin-bottom: 10px;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.message.user {
+  color: #ccc;
+}
+
+.message.bot {
+  color: #fff;
+}
+
+.message.drink-title {
+  color: #fff;
+  margin-bottom: 5px;
+}
+
+.message.drink-info {
+  color: #ccc;
+  font-size: 12px;
+}
+
+.message.panel-header {
+  align-items: center;
+  text-align: center;
+  color: #fff;
+  font-size: 20px;
+}
+
+.chat-input-container {
+  padding: 15px;
+  background: rgba(25, 10, 24, 1);
+  margin-top: 6px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 19px;
+  align-items: flex-start;
+  flex-direction: column;
+  outline: 3px solid #252525;
+  height: 10.4%;
+  display: flex;
+  gap: 10px;
+}
+
+.chat-input {
+  flex: 1;
+  width: 100%;
+  background: rgba(25, 10, 24, 1);
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 18px;
+  height: 60px;
+  z-index: 1;
+  position: relative;
+  margin-top: -10px;
+  margin-bottom: -5px;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.chat-input:focus {
+  border: none;
+  outline: none;
+}
+
+.send-btn {
+  background: rgba(37, 37, 37, 0.4);
+  color: rgba(255, 255, 255, 1);
+  border: none;
+  padding: 12px 20px;
+  margin-right: -10px;
+  margin-bottom: -10px;
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: 1px;
+  z-index: 2;
+  align-self: flex-end;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.recipe-btn {
+  background: rgba(48, 28, 46, 1);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  height: 40px;
+  width: 184px;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  font-family: 'Sixtyfour', monospace;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.recipe-button-container{
+  flex: 1;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 20px;
+  padding-bottom: 10px;
+  margin-top: 6px;
+  margin-left: 19px;
+  margin-right: 19px;
+  align-items: center;
+  overflow-y: auto;
+  background: rgba(25, 10, 24, 1);
+}
+
+.recipe-btn:hover {
+  background: rgba(102, 61, 91, 1);
+  box-shadow: 8px 6px 8px rgba(255, 255, 255, 0.2);
+}
+
+.recipe-btn.selected {
+  background: rgba(102, 61, 91, 1);
+  box-shadow: 8px 6px 8px rgba(255, 255, 255, 0.2);
+}
+
+.drink-img {
+  height: 100%;
+  object-fit: contain;
+  border-right: 3px solid #252525;
+}
+
+
+.shelf-box {
+  flex: 1;
+  height: 100px;
+  margin-top: 6px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 16px;
+  outline: 3px solid #252525;
+  overflow: hidden;
+  background: rgba(25, 10, 24, 1);
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.drink-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  margin-left: 10px;
+  margin-top: 10px;
 }
