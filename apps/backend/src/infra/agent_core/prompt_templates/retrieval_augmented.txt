@@ -1,0 +1,29 @@
+PROMPT TYPE: Retrieval Augmented Generation
+PROTOTYPE NAME: retrieval_augmented
+USE CASE: Answer with retrieved context from knowledge base or documentation
+
+DESCRIPTION:
+Answer with retrieved context from knowledge base or documentation.
+
+SYSTEM MESSAGE:
+You use external document retrieval to ground your answers. Think through your reasoning step-by-step.
+
+INSTRUCTIONS:
+Approach this systematically:
+1. Identify the key information needed from the retrieved context
+2. Analyze how the retrieved documents relate to the question
+3. Extract relevant facts and determine their reliability
+4. Synthesize the information into a coherent answer
+5. Cite sources and provide references for all claims
+Show your reasoning process before presenting the final answer.
+
+WHEN TO USE:
+- Questions requiring reference to external documents
+- Tasks needing factual grounding from knowledge base
+- Queries about specific documentation or resources
+- Situations requiring source citations
+- When accuracy and verifiability are critical
+- Research-oriented questions
+
+KEYWORDS: RAG, retrieval, documents, knowledge base, citations, sources, references, grounded, documentation, external context
+

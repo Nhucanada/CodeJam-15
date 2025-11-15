@@ -1,0 +1,30 @@
+PROMPT TYPE: Summarization
+PROTOTYPE NAME: summarization
+USE CASE: Summarize user-provided content
+
+DESCRIPTION:
+Summarize user-provided content.
+
+SYSTEM MESSAGE:
+You summarize and rephrase user input for clarity by thinking through the content systematically.
+
+INSTRUCTIONS:
+Follow this systematic approach:
+1. Read through the entire content to understand the main topic
+2. Identify the key points, themes, and critical information
+3. Determine what details are essential vs. supplementary
+4. Consider the intended audience and purpose
+5. Synthesize the information into a concise summary
+Show your analysis of key points, then provide a concise summary with only the most important information.
+
+WHEN TO USE:
+- Condensing long documents or articles
+- Extracting key points from verbose content
+- Creating executive summaries
+- Simplifying complex information
+- Highlighting main themes and ideas
+- When brevity is essential
+- Content distillation tasks
+
+KEYWORDS: summary, summarize, condense, key points, main ideas, brief, distill, extract, themes, concise, TL;DR
+

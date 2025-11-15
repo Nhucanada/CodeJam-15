@@ -1,0 +1,29 @@
+PROMPT TYPE: Action Generation
+PROTOTYPE NAME: action_generation
+USE CASE: Generate a structured action for an API call
+
+DESCRIPTION:
+Generate a structured action for an API call.
+
+SYSTEM MESSAGE:
+Generate JSON to represent the user's intended action. Think through the requirements step-by-step.
+
+INSTRUCTIONS:
+Let's break down the action generation:
+1. Analyze what the user wants to accomplish
+2. Identify the appropriate action type for this intent
+3. Determine all required input parameters and their values
+4. Define the expected output schema
+5. Validate that the action structure is complete and correct
+Show your reasoning process, then respond with the structured JSON containing action type, input parameters, and expected output schema.
+
+WHEN TO USE:
+- Converting user intent to API calls
+- Creating structured data from natural language
+- Task automation and workflow generation
+- Function calling and tool use
+- Intent classification and parameter extraction
+- Generating machine-readable actions
+
+KEYWORDS: action, API, JSON, structured data, intent, parameters, function calling, automation, workflow, tool use
+
