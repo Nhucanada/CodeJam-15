@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  backend:
+    build: ../apps/backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../apps/backend:/app
+
+  frontend:
+    build: ../apps/frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../apps/frontend:/app
+    depends_on:
+      - backend
