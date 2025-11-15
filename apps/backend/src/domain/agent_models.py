@@ -37,3 +37,4 @@ class AgentActionSchema(BaseModel):
     reasoning: str = Field(..., max_length=1000)
 
     drink_recipe: DrinkRecipeSchema | None = None
+    suggest_drink: DrinkRecipeSchema | None = None

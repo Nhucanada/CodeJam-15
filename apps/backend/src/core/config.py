@@ -40,6 +40,24 @@ class Settings(BaseSettings):
         None,
         description="Supabase JWT secret for token verification"
     )
+
+    # Gemini Settings
+    gemini_api_key: Optional[str] = Field(
+        default=None,
+        description="Google Gemini API key"
+    )
+    gemini_model: str = Field(
+        default="gemini-2.5-flash",
+        description="Default Gemini model to use"
+    )
+    gemini_rate_limit_per_minute: int = Field(
+        default=100,
+        description="Max Gemini API requests allowed per minute"
+    )
+    gemini_concurrent_requests: int = Field(
+        default=10,
+        description="Number of concurrent Gemini API requests allowed"
+    )
     
     # CORS Settings
     cors_origins: list[str] = Field(

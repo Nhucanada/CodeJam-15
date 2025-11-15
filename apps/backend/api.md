@@ -1,4 +1,4 @@
-# Authentication API Documentation
+# Arthur API Documentation
 
 ## Overview
 
@@ -284,17 +284,23 @@ async def public_route(user: OptionalUser):
 apps/backend/src/
 ├── api/
 │   └── v1/
-│       └── auth_routes.py       # Authentication endpoints
+│       ├── auth_routes.py           # Authentication endpoints (signup, login, refresh)
+│       └── __init__.py
 ├── core/
-│   ├── config.py                # Environment configuration
-│   └── dependencies.py          # FastAPI dependencies (auth)
+│   ├── config.py                    # Environment and settings configuration
+│   ├── dependencies.py              # FastAPI dependencies (authentication & common DI)
+│   └── __init__.py
 ├── domain/
-│   └── auth_models.py           # Pydantic models for auth
+│   ├── auth_models.py               # Pydantic models/schemas for authentication
+│   └── __init__.py
 ├── infra/
-│   └── supabase_client.py       # Supabase client initialization
+│   ├── supabase_client.py           # Supabase client initialization and helpers
+│   ├── gemini_client.py             # Google Gemini client initialization (if used)
+│   └── __init__.py
 ├── services/
-│   └── auth_service.py          # Business logic for auth
-└── main.py                      # FastAPI app entry point
+│   ├── auth_service.py              # Authentication business logic
+│   └── __init__.py
+└── main.py                          # FastAPI app factory and entry point
 ```
 
 ---

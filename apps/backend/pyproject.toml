@@ -9,13 +9,17 @@ description = "FastAPI backend for Arthur, the Three.js Agentic Bartender"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi>=0.104.0",
-    "uvicorn[standard]>=0.24.0",
-    "pydantic>=2.5.0",
-    "pydantic-settings>=2.0.0",
-    "python-multipart>=0.0.6",
-    "supabase>=2.0.0",
-    "python-dotenv>=1.0.0"
+    "fastapi==0.104.0",
+    "uvicorn[standard]==0.24.0",
+    "pydantic==2.12.4",
+    "pydantic-settings==2.12.0",
+    "python-multipart==0.0.6",
+    "supabase==2.24.0",
+    "python-dotenv==1.2.1",
+    "google-genai==1.50.1",
+    "google-generativeai==0.8.5",
+    "httpx==0.28.1",
+    "PyJWT==2.10.1"
 ]
 
 [project.optional-dependencies]
