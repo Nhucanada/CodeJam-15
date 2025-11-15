@@ -1,6 +1,6 @@
 """Authentication service for handling user auth operations."""
 
-from typing import Optional
+from typing import Optional, Union
 
 from fastapi import HTTPException, status
 from supabase import Client
@@ -11,6 +11,7 @@ from src.domain.auth_models import (
     LoginRequest,
     MessageResponse,
     RefreshTokenRequest,
+    SignupRedirectResponse,
     SignupRequest,
     UserResponse,
 )
@@ -41,7 +42,7 @@ def _format_auth_tokens(session_data: dict) -> AuthTokens:
 async def signup_user(
     signup_data: SignupRequest,
     supabase: Client
-) -> AuthResponse:
+) -> Union[AuthResponse, SignupRedirectResponse]:
     """
     Register a new user with email and password.
     
@@ -50,7 +51,8 @@ async def signup_user(
         supabase: Supabase client instance
         
     Returns:
-        AuthResponse with user info and tokens
+        AuthResponse with user info and tokens if signup is complete,
+        or SignupRedirectResponse if email confirmation is required
         
     Raises:
         HTTPException: If signup fails
@@ -71,16 +73,30 @@ async def signup_user(
             "options": {"data": user_metadata} if user_metadata else {}
         })
         
-        if not response.user or not response.session:
+        if not response.user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Failed to create user account"
             )
-        
-        return AuthResponse(
-            user=_format_user_response(response.user.model_dump()),
-            tokens=_format_auth_tokens(response.session.model_dump())
-        )
+
+        # Check if session was created (instant signup) or confirmation is required
+        if response.session:
+            # Full signup with immediate session
+            return AuthResponse(
+                user=_format_user_response(response.user.model_dump()),
+                tokens=_format_auth_tokens(response.session.model_dump())
+            )
+        else:
+            # Email confirmation required (no session yet)
+            user_dump = response.user.model_dump()
+            redirect_to = user_dump.get("action_link") or user_dump.get("confirmation_sent_at")
+            
+            return SignupRedirectResponse(
+                user=_format_user_response(user_dump),
+                redirect_to=redirect_to if isinstance(redirect_to, str) else None,
+                message="Please check your email to confirm your account",
+                confirmation_required=True
+            )
         
     except HTTPException:
         raise

@@ -74,3 +74,18 @@ class MessageResponse(BaseModel):
     
     message: str = Field(..., description="Response message")
 
+
+class SignupRedirectResponse(BaseModel):
+    """Response model for signup when email confirmation is required."""
+    
+    user: UserResponse = Field(..., description="User information (without session)")
+    redirect_to: Optional[str] = Field(None, description="URL to redirect to for confirmation")
+    message: str = Field(
+        default="Please check your email to confirm your account",
+        description="Confirmation message"
+    )
+    confirmation_required: bool = Field(
+        default=True,
+        description="Indicates if email confirmation is required"
+    )
+

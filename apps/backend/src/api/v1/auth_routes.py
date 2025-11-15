@@ -1,6 +1,6 @@
 """Authentication API routes."""
 
-from typing import Annotated
+from typing import Annotated, Union
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -12,6 +12,7 @@ from src.domain.auth_models import (
     LoginRequest,
     MessageResponse,
     RefreshTokenRequest,
+    SignupRedirectResponse,
     SignupRequest,
     UserResponse,
 )
@@ -29,12 +30,12 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post(
     "/signup",
-    response_model=AuthResponse,
+    response_model=Union[AuthResponse, SignupRedirectResponse],
     status_code=status.HTTP_201_CREATED,
     summary="Register new user",
     description="Create a new user account with email and password"
 )
-async def signup(signup_data: SignupRequest) -> AuthResponse:
+async def signup(signup_data: SignupRequest) -> Union[AuthResponse, SignupRedirectResponse]:
     """
     Register a new user.
     
@@ -42,7 +43,8 @@ async def signup(signup_data: SignupRequest) -> AuthResponse:
         signup_data: User registration information
         
     Returns:
-        AuthResponse with user info and access tokens
+        AuthResponse with user info and access tokens if signup is complete,
+        or SignupRedirectResponse if email confirmation is required
     """
     supabase = get_supabase_client()
     return await signup_user(signup_data, supabase)
