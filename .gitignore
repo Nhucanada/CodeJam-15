@@ -47,3 +47,7 @@ pids
 # Temporary files
 *.tmp
 *.temp
+
+# Agentic development files
+.cursorrules
+.cursorrules.local
