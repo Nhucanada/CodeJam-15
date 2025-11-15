@@ -10,7 +10,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     """Application settings with environment variable support."""
+<<<<<<< HEAD
     # Pydantic settings
+=======
+    
+>>>>>>> 8738e2d (Authentication Core Services and Operation Bug Fixes for FastAPI (#11))
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -58,6 +62,7 @@ class Settings(BaseSettings):
         default=10,
         description="Number of concurrent Gemini API requests allowed"
     )
+<<<<<<< HEAD
     gemini_general_model: str = Field(
         default="gemini-2.0-flash",
         description="Default Gemini general model"
@@ -88,6 +93,12 @@ class Settings(BaseSettings):
     # CORS Settings
     cors_origins: list[str] = Field(
         default=["http://localhost:5173", "http://localhost:8000"],
+=======
+    
+    # CORS Settings
+    cors_origins: list[str] = Field(
+        default=["http://localhost:5173", "http://localhost:5173"],
+>>>>>>> 8738e2d (Authentication Core Services and Operation Bug Fixes for FastAPI (#11))
         description="Allowed CORS origins"
     )
 
