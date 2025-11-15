@@ -5,8 +5,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
-# 1) Get DB URL from env
-DATABASE_URL = os.getenv("postgresql://postgres.lmltyadxwomdzqkmydmd:Ryanzhaomcgill1@aws-1-us-east-2.pooler.supabase.com:5432/postgres")
+# 1) Get DB URL from arthur env
+DATABASE_URL = os.getenv("postgresql://postgres.lmltyadxwomdzqkmydmd:Ryanzhaomcgill1@aws-1-us-east-2.pooler.supabase.com:5432/postgres") # arthur environment
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not set in environment")
 
