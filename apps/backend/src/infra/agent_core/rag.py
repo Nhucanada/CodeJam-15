@@ -77,18 +77,18 @@ class SupabaseVectorDatabaseSearch(RAGStrategy):
             return []
 
     def _generate_embedding(self, text: str) -> np.ndarray:
-      from services.embedding_service import get_embedding
+        from services.embedding_service import get_embedding_with_task_type
 
-      # Get embedding from the embedding service
-      embedding_list = get_embedding(text)
+        # Use QUESTION_ANSWERING task type for better retrieval embeddings
+        embedding_list = get_embedding_with_task_type(text, "QUESTION_ANSWERING")
 
-      # Convert to numpy array
-      if hasattr(embedding_list, 'embedding'):
-          # Handle case where EmbeddingResponse object is returned
-          return np.array(embedding_list.embedding)
-      else:
-          # Handle case where list is returned directly
-          return np.array(embedding_list)
+        # Convert to numpy array
+        if hasattr(embedding_list, 'embedding'):
+            # Handle case where EmbeddingResponse object is returned
+            return np.array(embedding_list.embedding)
+        else:
+            # Handle case where list is returned directly
+            return np.array(embedding_list)
         
 class NoOpRetrieval(RAGStrategy):
     """
