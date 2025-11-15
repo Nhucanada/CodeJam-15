@@ -4,7 +4,7 @@ import os
 from functools import lru_cache
 from typing import Optional
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     pool_use_lifespan: bool = True
     
     # API Settings
-    app_name: str = Field(default="Drink Recipe API", description="Application name")
+    app_name: str = Field(default="Arthur API", description="Application name")
     app_version: str = Field(default="1.0.0", description="Application version")
     debug: bool = Field(default=False, description="Debug mode")
     
@@ -61,9 +61,18 @@ class Settings(BaseSettings):
     
     # CORS Settings
     cors_origins: list[str] = Field(
-        default=["http://localhost:5173", "http://frontend:5173"],
+        default=["http://localhost:5173", "http://localhost:5173"],
         description="Allowed CORS origins"
     )
+
+
+@field_validator("cors_origins", mode="after")
+@classmethod
+def split_cors_origins(cls, v: str) -> list[str]:
+    """Convert comma-separated string to list."""
+    if isinstance(v, str):
+        return [origin.strip() for origin in v.split(",") if origin.strip()]
+    return v
 
 
 @lru_cache

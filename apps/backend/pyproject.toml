@@ -2,22 +2,25 @@
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
 [project]
 name = "backend"
 version = "0.1.0"
 description = "FastAPI backend for Arthur, the Three.js Agentic Bartender"
-readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "fastapi==0.104.0",
+    "fastapi==0.121.2",
     "uvicorn[standard]==0.24.0",
     "pydantic==2.12.4",
     "pydantic-settings==2.12.0",
+    "pydantic[email]==2.12.4",
     "python-multipart==0.0.6",
     "supabase==2.24.0",
     "python-dotenv==1.2.1",
     "google-genai==1.50.1",
-    "google-generativeai==0.8.5",
+    "google-api-python-client==2.187.0",
     "httpx==0.28.1",
     "PyJWT==2.10.1"
 ]

@@ -60,6 +60,9 @@ async def signup_user(
         user_metadata = {}
         if signup_data.full_name:
             user_metadata["full_name"] = signup_data.full_name
+
+        import logging
+        logging.debug(f"[auth_service.signup_user] Signup data: email={signup_data.email}, full_name={signup_data.full_name}")
         
         # Sign up user
         response = supabase.auth.sign_up({
