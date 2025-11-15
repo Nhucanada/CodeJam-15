@@ -41,3 +41,18 @@ def get_embeddings(texts: List[str]) -> List[List[float]]:
     )
 
     return EmbeddingsResponse(embeddings=response.embeddings.copy())
+
+def get_embedding_with_task_type(text: str, task_type: str) -> List[float]:
+    """
+    Get the embedding for a given text and task type.
+    """
+    settings: Settings = get_settings()
+    gemini_client: GeminiClient = get_gemini_client()
+
+    response = gemini_client.embed_content(
+        model=settings.gemini_model,
+        contents=[text],
+        task_type=task_type
+    )
+
+    return EmbeddingResponse(embedding=response.embeddings[0])

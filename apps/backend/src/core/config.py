@@ -58,6 +58,14 @@ class Settings(BaseSettings):
         default=10,
         description="Number of concurrent Gemini API requests allowed"
     )
+    gemini_general_model: str = Field(
+        default="gemini-2.0-flash",
+        description="Default Gemini general model"
+    )
+    gemini_embedding_model: str = Field(
+        default="embedding-001",
+        description="Default Gemini embedding model"
+    )
 
     # AWS Settings
     aws_access_key_id: Optional[str] = Field(
@@ -79,7 +87,7 @@ class Settings(BaseSettings):
     
     # CORS Settings
     cors_origins: list[str] = Field(
-        default=["http://localhost:5173", "http://localhost:5173"],
+        default=["http://localhost:5173", "http://localhost:8000"],
         description="Allowed CORS origins"
     )
 

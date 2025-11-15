@@ -1,5 +1,7 @@
 from typing import Any, Iterable, Optional, List, Callable
 
+import numpy as np
+
 class Prompt:
     """
     Composable, dynamic prompt for use with any AI agent library.
@@ -9,7 +11,7 @@ class Prompt:
       - Interfaced string access/manipulation.
     """
     def __init__(self, base: Optional[str] = "", *, sep: str = "\n") -> None:
-        self._segments: List[str] = [base] if base else []
+        self._segments: np.ndarray[str] = np.array([base] if base else [])
         self._sep = sep
 
     def __str__(self) -> str:
@@ -28,7 +30,7 @@ class Prompt:
 
     def set(self, parts: Iterable[str]) -> None:
         """Set the segments explicitly."""
-        self._segments = list(parts)
+        self._segments = np.array(parts)
 
     def rag(self, retrieval_fn: Callable[[str], Any], query: Optional[str] = None) -> None:
         """
