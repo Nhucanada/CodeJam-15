@@ -49,5 +49,13 @@ pids
 *.temp
 
 # Agentic development files
+.cursor/
 .cursorrules
 .cursorrules.local
+
+# Virtual environment
+le_venv/
+venv/
+.env
+.env.local
+.env.*.local
