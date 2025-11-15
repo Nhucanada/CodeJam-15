@@ -1,16 +1,40 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Cocktail 3D</title>
-  </head>
-  <body>
-    <div id="ui-panel" class="chat-panel">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cocktail 3D</title>
+</head>
+
+<body>
+  <div id="chat-panel" class="chat-panel">
+    <div class="chat-content">
+      <div class="chat-header">
+        <img src="/src/img/1742270047720.jpeg" alt="Bartender" class="profile-img">
+        <h2 class="bartender-title">L - E<br>Bartender</h2>
+      </div>
+      <div class="chat-messages">
+        <div class="message-container">
+          <div class="message user">L - E: How can I help you?</div>
+          <div class="message user">You: Give me something that will take away my sorrows</div>
+          <div class="message bot">L-E: Hmmmm... let me see. Sweet or no sweet?</div>
+          <div class="message user">You: No sweet please, I don't deserve anything good in life</div>
+          <div class="message bot">L-E: I think I have just the right thing for you. Full liter bottle of Everclear mixed with
+  Dr Pepper</div>
+        </div>
+      </div>
+      <div class="chat-input-container">
+        <input type="text" value="Oh dear!" class="chat-input">
+        <button class="send-btn">SEND</button>
+      </div>
     </div>
-    <div id="ui-panel" class="recipe-panel">
-    </div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+  </div>
+  <div id="recipe-panel" class="recipe-panel">
+    <div class="recipe-content"></div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>
