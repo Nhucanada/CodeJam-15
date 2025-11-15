@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+# import the saq.py file for link finding 
+import saq.py as saq 
+
 app = FastAPI()
 
 # Add CORS middleware
