@@ -5,12 +5,15 @@ export class LiquidHandler {
   private liquidGeometry: THREE.CylinderGeometry | null = null
   private liquidTopMesh: THREE.Mesh | null = null
   private liquidTopGeometry: THREE.CircleGeometry | null = null
-  private currentFillLevel: number = 0.5
-  private targetFillLevel: number = 0.5
+  private currentFillLevel: number = 0
+  private targetFillLevel: number = 0
   private clippingPlane: THREE.Plane | null = null
   private scene: THREE.Scene | null = null
   private glass: THREE.Object3D | null = null
   private glassBox: THREE.Box3 | null = null
+  private isPaused: boolean = false
+  private liquidStartPercent: number = 0.06
+  private liquidEndPercent: number = 0.90
 
   constructor(scene: THREE.Scene) {
     this.scene = scene
@@ -62,19 +65,22 @@ export class LiquidHandler {
   /**
    * Creates a liquid mesh inside the glass with full-height precomputed geometry
    */
-  public createLiquid(glass: THREE.Object3D, glassBox: THREE.Box3): void {
+  public createLiquid(
+    glass: THREE.Object3D,
+    glassBox: THREE.Box3,
+    liquidStartPercent: number = 0.06
+  ): void {
     this.glass = glass
     this.glassBox = glassBox
+    this.liquidStartPercent = liquidStartPercent
 
     // Calculate glass dimensions
     const glassSize = new THREE.Vector3()
     glassBox.getSize(glassSize)
 
-    // Create full-height liquid (from 6% to 90% of glass height)
-    const liquidStartPercent = 0.06
-    const liquidEndPercent = 0.90
-    const liquidBottom = glassBox.min.y + glassSize.y * liquidStartPercent
-    const liquidTop = glassBox.min.y + glassSize.y * liquidEndPercent
+    // Create full-height liquid (from liquidStartPercent to 90% of glass height)
+    const liquidBottom = glassBox.min.y + glassSize.y * this.liquidStartPercent
+    const liquidTop = glassBox.min.y + glassSize.y * this.liquidEndPercent
     const fullHeight = liquidTop - liquidBottom
 
     // Measure glass profile at multiple heights for better shape matching
@@ -174,7 +180,7 @@ export class LiquidHandler {
       glass.position.z
     )
 
-    // Initialize clipping plane to show 50% fill
+    // Initialize clipping plane to show 0% fill (empty)
     this.updateClippingPlane()
 
     // Create top surface for the liquid
@@ -195,8 +201,8 @@ export class LiquidHandler {
   private createLiquidTop(liquidBottom: number, fullHeight: number): void {
     if (!this.glass || !this.glassBox) return
 
-    // Start with a circle at 50% fill level
-    const initialFillHeight = fullHeight * 0.5
+    // Start with a circle at current fill level
+    const initialFillHeight = fullHeight * this.currentFillLevel
     const initialY = liquidBottom + initialFillHeight
     const initialRadius = this.measureGlassRadiusAtHeight(this.glass, initialY)
 
@@ -252,10 +258,8 @@ export class LiquidHandler {
     this.glassBox.getSize(glassSize)
 
     // Calculate the Y position where liquid should be clipped
-    const liquidStartPercent = 0.06
-    const liquidEndPercent = 0.90
-    const liquidBottom = this.glassBox.min.y + glassSize.y * liquidStartPercent
-    const liquidTop = this.glassBox.min.y + glassSize.y * liquidEndPercent
+    const liquidBottom = this.glassBox.min.y + glassSize.y * this.liquidStartPercent
+    const liquidTop = this.glassBox.min.y + glassSize.y * this.liquidEndPercent
     const fullHeight = liquidTop - liquidBottom
 
     // Current fill level determines clipping plane Y position
@@ -310,8 +314,24 @@ export class LiquidHandler {
    * Update function (call this in animation loop)
    */
   public update(): void {
-    // Update fill level
-    this.updateFillLevel()
+    // Only update fill level if not paused
+    if (!this.isPaused) {
+      this.updateFillLevel()
+    }
+  }
+
+  /**
+   * Pause the filling animation
+   */
+  public pause(): void {
+    this.isPaused = true
+  }
+
+  /**
+   * Unpause the filling animation
+   */
+  public unpause(): void {
+    this.isPaused = false
   }
 
   /**
@@ -319,5 +339,12 @@ export class LiquidHandler {
    */
   public getLiquid(): THREE.Mesh | null {
     return this.liquidMesh
+  }
+
+  /**
+   * Get the liquid top mesh for external manipulation
+   */
+  public getLiquidTop(): THREE.Mesh | null {
+    return this.liquidTopMesh
   }
 }

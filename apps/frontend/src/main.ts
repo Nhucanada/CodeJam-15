@@ -61,16 +61,12 @@ new Lighting(scene)
 new Floor(scene)
 
 // Load glass model - choose which glass to display
-const GLASS_TO_LOAD = 'highball_glass_7' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
+const GLASS_TO_LOAD = 'shot_glass_6' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
                                           // hurricane_glass_3, pint_glass_4, seidel_Glass_5,
                                           // shot_glass_6, highball_glass_7, margarita_glass_8, martini_glass_9
 
 const glassLoader = new GlassLoader()
 glassLoader.loadGlass(scene, GLASS_TO_LOAD, controls, camera)
-
-// Fill animation state
-let fillDirection = 1
-let targetFill = 0.5
 
 // Handle window resize
 window.addEventListener('resize', () => {
@@ -79,16 +75,34 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
+// Glass switching with spacebar
+const glassNames = [
+  'zombie_glass_0',
+  'cocktail_glass_1',
+  'rocks_glass_2',
+  'hurricane_glass_3',
+  'pint_glass_4',
+  'seidel_Glass_5',
+  'shot_glass_6',
+  'highball_glass_7',
+  'margarita_glass_8',
+  'martini_glass_9',
+] as const
+
+let currentGlassIndex = 7 // Start with highball_glass_7
+
+window.addEventListener('keydown', (event) => {
+  if (event.code === 'Space') {
+    event.preventDefault() // Prevent page scroll
+    currentGlassIndex = (currentGlassIndex + 1) % glassNames.length
+    console.log(`Switching to ${glassNames[currentGlassIndex]}`)
+    glassLoader.switchGlass(glassNames[currentGlassIndex]).catch(console.error)
+  }
+})
+
 // Animation loop
 function animate() {
   requestAnimationFrame(animate)
-
-  // Continuously update fill target for smooth animation
-  targetFill += fillDirection * 0.002 // Smooth continuous increment
-  if (targetFill >= 1 || targetFill <= 0.2) {
-    fillDirection *= -1
-  }
-  glassLoader.setFillLevel(targetFill)
 
   // Update liquid fill animation
   glassLoader.update()
