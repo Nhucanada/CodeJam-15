@@ -163,7 +163,7 @@ export class LiquidHandler {
       transmission: 0.6,
       roughness: 0.05,
       thickness: 0.3,
-      ior: 1.33, // Water refraction index
+      ior: 1.1, // Reduced refraction index for less distortion
       depthWrite: true,
       clippingPlanes: [this.clippingPlane], // Add clipping plane
       clipShadows: true,
@@ -220,15 +220,15 @@ export class LiquidHandler {
       transmission: 0.9,
       roughness: 0.05,
       thickness: 0.3,
-      ior: 1.33,
-      depthWrite: true,
+      ior: 1.1, // Reduced refraction index for less distortion
+      depthWrite: false, // Don't write to depth buffer so ice is visible through it
       side: THREE.DoubleSide, // Visible from both sides
     })
 
     this.liquidTopMesh = new THREE.Mesh(this.liquidTopGeometry, topMaterial)
     this.liquidTopMesh.castShadow = true
     this.liquidTopMesh.receiveShadow = true
-    this.liquidTopMesh.renderOrder = 1
+    this.liquidTopMesh.renderOrder = 3 // Render after ice (ice is renderOrder 2)
 
     // Rotate to face upward
     this.liquidTopMesh.rotation.x = -Math.PI / 2

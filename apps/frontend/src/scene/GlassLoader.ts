@@ -109,13 +109,13 @@ export class GlassLoader {
 
                 // Replace with glass material for see-through effect
                 child.material = new THREE.MeshPhysicalMaterial({
-
                   metalness: 0.0,
                   roughness: 0.05,
                   transmission: 0.9, // Makes it see-through like glass
                   thickness: 0.2,
                   transparent: true,
                   color: 0xffffff,
+                  ior: 1.1, // Reduced refraction index for less distortion
                   depthWrite: false, // Allow seeing objects behind transparent glass
                   side: THREE.DoubleSide, // Render both sides of glass
                 })
