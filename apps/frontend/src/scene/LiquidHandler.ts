@@ -14,6 +14,7 @@ export class LiquidHandler {
   private isPaused: boolean = false
   private liquidStartPercent: number = 0.06
   private liquidEndPercent: number = 0.90
+  private waveTime: number = 0
 
   constructor(scene: THREE.Scene) {
     this.scene = scene
@@ -68,11 +69,13 @@ export class LiquidHandler {
   public createLiquid(
     glass: THREE.Object3D,
     glassBox: THREE.Box3,
-    liquidStartPercent: number = 0.06
+    liquidStartPercent: number = 0.06,
+    liquidEndPercent: number = 0.90
   ): void {
     this.glass = glass
     this.glassBox = glassBox
     this.liquidStartPercent = liquidStartPercent
+    this.liquidEndPercent = liquidEndPercent
 
     // Calculate glass dimensions
     const glassSize = new THREE.Vector3()
@@ -157,10 +160,10 @@ export class LiquidHandler {
       color: 0xff6b35, // Orange cocktail color
       transparent: true,
       opacity: 1,
-      transmission: 0.9,
+      transmission: 0.6,
       roughness: 0.05,
       thickness: 0.3,
-      ior: 1.33, // Water refraction index
+      ior: 1.1, // Reduced refraction index for less distortion
       depthWrite: true,
       clippingPlanes: [this.clippingPlane], // Add clipping plane
       clipShadows: true,
@@ -206,8 +209,8 @@ export class LiquidHandler {
     const initialY = liquidBottom + initialFillHeight
     const initialRadius = this.measureGlassRadiusAtHeight(this.glass, initialY)
 
-    // Create circle geometry for the top surface
-    this.liquidTopGeometry = new THREE.CircleGeometry(initialRadius, 64)
+    // Create circle geometry for the top surface with more segments for wave animation
+    this.liquidTopGeometry = new THREE.CircleGeometry(initialRadius, 64, 16)
 
     // Same material as the liquid
     const topMaterial = new THREE.MeshPhysicalMaterial({
@@ -217,15 +220,15 @@ export class LiquidHandler {
       transmission: 0.9,
       roughness: 0.05,
       thickness: 0.3,
-      ior: 1.33,
-      depthWrite: true,
+      ior: 1.1, // Reduced refraction index for less distortion
+      depthWrite: false, // Don't write to depth buffer so ice is visible through it
       side: THREE.DoubleSide, // Visible from both sides
     })
 
     this.liquidTopMesh = new THREE.Mesh(this.liquidTopGeometry, topMaterial)
     this.liquidTopMesh.castShadow = true
     this.liquidTopMesh.receiveShadow = true
-    this.liquidTopMesh.renderOrder = 1
+    this.liquidTopMesh.renderOrder = 3 // Render after ice (ice is renderOrder 2)
 
     // Rotate to face upward
     this.liquidTopMesh.rotation.x = -Math.PI / 2
@@ -285,7 +288,7 @@ export class LiquidHandler {
 
     // Recreate geometry with new radius (circles are simple, low cost)
     this.liquidTopGeometry.dispose()
-    this.liquidTopGeometry = new THREE.CircleGeometry(radius, 64)
+    this.liquidTopGeometry = new THREE.CircleGeometry(radius, 64, 16)
     this.liquidTopMesh.geometry = this.liquidTopGeometry
 
     // Update position
@@ -299,7 +302,7 @@ export class LiquidHandler {
     if (!this.liquidMesh || !this.glassBox) return
 
     // Smooth interpolation towards target (lerp with speed factor)
-    const lerpSpeed = 0.1 // Adjust this for faster/slower filling
+    const lerpSpeed = 0.04 // Adjust this for faster/slower filling (0.04 = ~1 second)
     const previousFillLevel = this.currentFillLevel
     this.currentFillLevel += (this.targetFillLevel - this.currentFillLevel) * lerpSpeed
 
@@ -311,6 +314,45 @@ export class LiquidHandler {
   }
 
   /**
+   * Updates the wave animation on the liquid surface
+   */
+  private updateWaveAnimation(): void {
+    if (!this.liquidTopMesh || !this.liquidTopGeometry) return
+
+    // Increment wave time for animation
+    this.waveTime += 0.02
+
+    const position = this.liquidTopGeometry.attributes.position
+    const positionArray = position.array as Float32Array
+
+    // Wave parameters
+    const waveAmplitude = 0.008 // Height of the waves
+    const waveFrequency = 4 // Number of waves around the circle
+    const waveSpeed = this.waveTime
+
+    // Animate vertices (skip center vertex at index 0)
+    for (let i = 1; i < position.count; i++) {
+      const x = positionArray[i * 3]
+      const y = positionArray[i * 3 + 1]
+
+      // Calculate angle and distance from center for wave pattern
+      const angle = Math.atan2(y, x)
+      const distance = Math.sqrt(x * x + y * y)
+
+      // Create wave displacement using sine waves
+      const wave1 = Math.sin(angle * waveFrequency + waveSpeed) * waveAmplitude
+      const wave2 = Math.sin(angle * waveFrequency * 0.7 - waveSpeed * 1.3) * waveAmplitude * 0.5
+      const radialWave = Math.sin(distance * 15 + waveSpeed * 2) * waveAmplitude * 0.3
+
+      // Combine waves and apply to Z coordinate
+      positionArray[i * 3 + 2] = wave1 + wave2 + radialWave
+    }
+
+    position.needsUpdate = true
+    this.liquidTopGeometry.computeVertexNormals()
+  }
+
+  /**
    * Update function (call this in animation loop)
    */
   public update(): void {
@@ -318,6 +360,9 @@ export class LiquidHandler {
     if (!this.isPaused) {
       this.updateFillLevel()
     }
+
+    // Always update wave animation (even when paused for visual effect)
+    this.updateWaveAnimation()
   }
 
   /**

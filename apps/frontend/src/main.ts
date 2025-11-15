@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { Floor } from './scene/Floor'
 import { GlassLoader } from './scene/GlassLoader'
+import { IceLoader } from './scene/IceLoader'
 import { Lighting } from './scene/Lighting'
 
 // Scene setup
@@ -60,13 +61,30 @@ new Lighting(scene)
 // Create floor
 new Floor(scene)
 
-// Load glass model - choose which glass to display
-const GLASS_TO_LOAD = 'shot_glass_6' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
+// Load glass model
+const GLASS_TO_LOAD = 'hurricane_glass_3' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
                                           // hurricane_glass_3, pint_glass_4, seidel_Glass_5,
                                           // shot_glass_6, highball_glass_7, margarita_glass_8, martini_glass_9
-
 const glassLoader = new GlassLoader()
-glassLoader.loadGlass(scene, GLASS_TO_LOAD, controls, camera)
+glassLoader.loadGlass(scene, GLASS_TO_LOAD, controls, camera).then(() => {
+  // After glass is loaded, load and position ice cube at the water surface
+  const iceLoader = new IceLoader()
+  iceLoader.loadIce(scene, 'cube_ice').then(() => {
+    const ice = iceLoader.getIce('cube_ice')
+    const liquid = glassLoader.getLiquid()
+
+    if (ice && liquid) {
+      // Position ice at the same Y position as the liquid surface (top of the liquid mesh)
+      const liquidBox = new THREE.Box3().setFromObject(liquid)
+      ice.position.y = liquidBox.max.y
+      ice.position.x = 0
+      ice.position.z = 0
+
+      // Scale ice to fit nicely in the glass
+      ice.scale.set(0.5, 0.5, 0.5)
+    }
+  }).catch(console.error)
+})
 
 // Handle window resize
 window.addEventListener('resize', () => {
