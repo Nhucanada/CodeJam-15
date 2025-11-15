@@ -1,4 +1,3 @@
-# src/saq_ingest.py
 from datetime import datetime
 
 from sqlalchemy.orm import Session
@@ -6,8 +5,8 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy import Column, Text, Numeric, DateTime, ForeignKey
 from sqlalchemy.sql import func
 
-from .cocktail_db import SessionLocal, Ingredient, Base
-from .saq import get_first_saq_product
+from cocktail_db import SessionLocal, Ingredient, Base
+from saq import get_first_saq_product
 
 
 class SaqProduct(Base):
