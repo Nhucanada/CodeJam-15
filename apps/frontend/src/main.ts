@@ -17,6 +17,7 @@ camera.lookAt(0, 0, 0)
 
 // Renderer setup
 const renderer = new THREE.WebGLRenderer({ antialias: true })
+
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.setPixelRatio(window.devicePixelRatio)
 renderer.shadowMap.enabled = true
