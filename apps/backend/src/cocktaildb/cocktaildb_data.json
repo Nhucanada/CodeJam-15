@@ -1,0 +1,800 @@
+{
+    "ingredients": {
+      "spirits": [
+        {
+          "id": "vodka_plain",
+          "name": "Vodka",
+          "category": "spirit",
+          "subcategory": "vodka"
+        },
+        {
+          "id": "gin_london_dry",
+          "name": "London Dry Gin",
+          "category": "spirit",
+          "subcategory": "gin"
+        },
+        {
+          "id": "rum_white",
+          "name": "White Rum",
+          "category": "spirit",
+          "subcategory": "rum"
+        },
+        {
+          "id": "rum_dark",
+          "name": "Dark Rum",
+          "category": "spirit",
+          "subcategory": "rum"
+        },
+        {
+          "id": "tequila_blanco",
+          "name": "Tequila Blanco",
+          "category": "spirit",
+          "subcategory": "tequila"
+        },
+        {
+          "id": "tequila_reposado",
+          "name": "Tequila Reposado",
+          "category": "spirit",
+          "subcategory": "tequila"
+        },
+        {
+          "id": "whiskey_bourbon",
+          "name": "Bourbon",
+          "category": "spirit",
+          "subcategory": "whiskey"
+        },
+        {
+          "id": "whiskey_rye",
+          "name": "Rye Whiskey",
+          "category": "spirit",
+          "subcategory": "whiskey"
+        },
+        {
+          "id": "whiskey_scotch_blended",
+          "name": "Blended Scotch",
+          "category": "spirit",
+          "subcategory": "whiskey"
+        },
+        {
+          "id": "brandy_cognac",
+          "name": "Cognac",
+          "category": "spirit",
+          "subcategory": "brandy"
+        },
+        {
+          "id": "campari",
+          "name": "Campari",
+          "category": "spirit",
+          "subcategory": "aperitivo"
+        },
+        {
+          "id": "aperol",
+          "name": "Aperol",
+          "category": "spirit",
+          "subcategory": "aperitivo"
+        },
+        {
+          "id": "mezcal_joven",
+          "name": "Mezcal Joven",
+          "category": "spirit",
+          "subcategory": "mezcal"
+        }
+      ],
+      "mixers": [
+        {
+          "id": "dry_vermouth",
+          "name": "Dry Vermouth",
+          "category": "mixer",
+          "subcategory": "fortified_wine"
+        },
+        {
+          "id": "sweet_vermouth",
+          "name": "Sweet Vermouth",
+          "category": "mixer",
+          "subcategory": "fortified_wine"
+        },
+        {
+          "id": "triple_sec",
+          "name": "Triple Sec / Orange Liqueur",
+          "category": "mixer",
+          "subcategory": "liqueur"
+        },
+        {
+          "id": "simple_syrup",
+          "name": "Simple Syrup (1:1)",
+          "category": "mixer",
+          "subcategory": "syrup"
+        },
+        {
+          "id": "grenadine",
+          "name": "Grenadine",
+          "category": "mixer",
+          "subcategory": "syrup"
+        },
+        {
+          "id": "orange_bitters",
+          "name": "Orange Bitters",
+          "category": "mixer",
+          "subcategory": "bitters"
+        },
+        {
+          "id": "aromatic_bitters",
+          "name": "Aromatic Bitters",
+          "category": "mixer",
+          "subcategory": "bitters"
+        },
+        {
+          "id": "lime_juice",
+          "name": "Fresh Lime Juice",
+          "category": "mixer",
+          "subcategory": "citrus"
+        },
+        {
+          "id": "lemon_juice",
+          "name": "Fresh Lemon Juice",
+          "category": "mixer",
+          "subcategory": "citrus"
+        },
+        {
+          "id": "cranberry_juice",
+          "name": "Cranberry Juice",
+          "category": "mixer",
+          "subcategory": "juice"
+        },
+        {
+          "id": "pineapple_juice",
+          "name": "Pineapple Juice",
+          "category": "mixer",
+          "subcategory": "juice"
+        },
+        {
+          "id": "ginger_beer",
+          "name": "Ginger Beer",
+          "category": "mixer",
+          "subcategory": "carbonated"
+        },
+        {
+          "id": "soda_water",
+          "name": "Soda Water",
+          "category": "mixer",
+          "subcategory": "carbonated"
+        },
+        {
+          "id": "tonic_water",
+          "name": "Tonic Water",
+          "category": "mixer",
+          "subcategory": "carbonated"
+        },
+        {
+          "id": "sparkling_wine",
+          "name": "Sparkling Wine",
+          "category": "mixer",
+          "subcategory": "wine"
+        }
+      ],
+      "garnishes": [
+        {
+          "id": "lime_wedge",
+          "name": "Lime Wedge",
+          "category": "garnish"
+        },
+        {
+          "id": "lime_wheel",
+          "name": "Lime Wheel",
+          "category": "garnish"
+        },
+        {
+          "id": "lemon_twist",
+          "name": "Lemon Twist",
+          "category": "garnish"
+        },
+        {
+          "id": "orange_twist",
+          "name": "Orange Twist",
+          "category": "garnish"
+        },
+        {
+          "id": "orange_slice",
+          "name": "Orange Slice",
+          "category": "garnish"
+        },
+        {
+          "id": "maraschino_cherry",
+          "name": "Maraschino Cherry",
+          "category": "garnish"
+        },
+        {
+          "id": "olive",
+          "name": "Olive",
+          "category": "garnish"
+        },
+        {
+          "id": "mint_sprig",
+          "name": "Mint Sprig",
+          "category": "garnish"
+        },
+        {
+          "id": "cucumber_slice",
+          "name": "Cucumber Slice",
+          "category": "garnish"
+        },
+        {
+          "id": "salt_rim",
+          "name": "Salt (Rim)",
+          "category": "garnish"
+        }
+      ]
+    },
+  
+    "patterns": [
+      {
+        "id": "pattern_sour",
+        "name": "Sour Template",
+        "description": "Base spirit + citrus juice + sweetener.",
+        "components": [
+          { "role": "base", "ratio": 2 },
+          { "role": "sour", "ratio": 1 },
+          { "role": "sweet", "ratio": 1 }
+        ],
+        "typical_ingredients": {
+          "base": ["whiskey_bourbon", "rum_white", "tequila_blanco", "gin_london_dry"],
+          "sour": ["lemon_juice", "lime_juice"],
+          "sweet": ["simple_syrup"]
+        }
+      },
+      {
+        "id": "pattern_old_fashioned",
+        "name": "Old Fashioned Template",
+        "description": "Spirit-forward, lightly sweetened, bitters, built over ice.",
+        "components": [
+          { "role": "base", "ratio": 8 },
+          { "role": "sweet", "ratio": 1 },
+          { "role": "bitters", "ratio": 0.2 }
+        ],
+        "typical_ingredients": {
+          "base": ["whiskey_bourbon", "whiskey_rye"],
+          "sweet": ["simple_syrup"],
+          "bitters": ["aromatic_bitters"]
+        }
+      },
+      {
+        "id": "pattern_martini",
+        "name": "Martini Template",
+        "description": "Spirit + vermouth, stirred and served up.",
+        "components": [
+          { "role": "base", "ratio": 5 },
+          { "role": "modifier", "ratio": 1 }
+        ],
+        "typical_ingredients": {
+          "base": ["gin_london_dry", "vodka_plain"],
+          "modifier": ["dry_vermouth"]
+        }
+      },
+      {
+        "id": "pattern_negroni",
+        "name": "Negroni Template",
+        "description": "Equal parts spirit, bitter, and vermouth.",
+        "components": [
+          { "role": "base", "ratio": 1 },
+          { "role": "bitter", "ratio": 1 },
+          { "role": "modifier", "ratio": 1 }
+        ],
+        "typical_ingredients": {
+          "base": ["gin_london_dry"],
+          "bitter": ["campari"],
+          "modifier": ["sweet_vermouth"]
+        }
+      },
+      {
+        "id": "pattern_manhattan",
+        "name": "Manhattan Template",
+        "description": "Whiskey + sweet vermouth + bitters.",
+        "components": [
+          { "role": "base", "ratio": 2 },
+          { "role": "modifier", "ratio": 1 },
+          { "role": "bitters", "ratio": 0.2 }
+        ],
+        "typical_ingredients": {
+          "base": ["whiskey_rye", "whiskey_bourbon"],
+          "modifier": ["sweet_vermouth"],
+          "bitters": ["aromatic_bitters"]
+        }
+      },
+      {
+        "id": "pattern_highball",
+        "name": "Highball Template",
+        "description": "Base spirit lengthened with carbonated mixer over ice.",
+        "components": [
+          { "role": "base", "ratio": 1 },
+          { "role": "lengthener", "ratio": 2 }
+        ],
+        "typical_ingredients": {
+          "base": ["whiskey_bourbon", "whiskey_scotch_blended", "vodka_plain", "tequila_blanco"],
+          "lengthener": ["soda_water", "ginger_beer", "tonic_water"]
+        }
+      },
+      {
+        "id": "pattern_spritz",
+        "name": "Spritz Template",
+        "description": "Aperitivo + sparkling wine + soda water.",
+        "components": [
+          { "role": "aperitivo", "ratio": 3 },
+          { "role": "sparkling", "ratio": 2 },
+          { "role": "lengthener", "ratio": 1 }
+        ],
+        "typical_ingredients": {
+          "aperitivo": ["aperol", "campari"],
+          "sparkling": ["sparkling_wine"],
+          "lengthener": ["soda_water"]
+        }
+      },
+      {
+        "id": "pattern_collins",
+        "name": "Collins Template",
+        "description": "Sour-style drink built tall with soda water.",
+        "components": [
+          { "role": "base", "ratio": 2 },
+          { "role": "sour", "ratio": 1 },
+          { "role": "sweet", "ratio": 1 },
+          { "role": "lengthener", "ratio": 3 }
+        ],
+        "typical_ingredients": {
+          "base": ["gin_london_dry", "vodka_plain"],
+          "sour": ["lemon_juice"],
+          "sweet": ["simple_syrup"],
+          "lengthener": ["soda_water"]
+        }
+      }
+    ],
+  
+    "cocktails": [
+      {
+        "id": "old_fashioned",
+        "name": "Old Fashioned",
+        "category": "classic",
+        "pattern_id": "pattern_old_fashioned",
+        "base_spirit_id": "whiskey_bourbon",
+        "tags": ["spirit_forward", "stirred", "on_rocks"],
+        "ingredients": [
+          { "ingredient_id": "whiskey_bourbon", "amount_ml": 60, "role": "base" },
+          { "ingredient_id": "simple_syrup", "amount_ml": 7.5, "role": "sweet" },
+          { "ingredient_id": "aromatic_bitters", "amount_ml": 2, "role": "bitters" },
+          { "ingredient_id": "orange_twist", "amount_ml": null, "role": "garnish" },
+          { "ingredient_id": "maraschino_cherry", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "whiskey_sour",
+        "name": "Whiskey Sour",
+        "category": "classic",
+        "pattern_id": "pattern_sour",
+        "base_spirit_id": "whiskey_bourbon",
+        "tags": ["sour", "shaken"],
+        "ingredients": [
+          { "ingredient_id": "whiskey_bourbon", "amount_ml": 60, "role": "base" },
+          { "ingredient_id": "lemon_juice", "amount_ml": 30, "role": "sour" },
+          { "ingredient_id": "simple_syrup", "amount_ml": 22.5, "role": "sweet" },
+          { "ingredient_id": "maraschino_cherry", "amount_ml": null, "role": "garnish" },
+          { "ingredient_id": "lemon_twist", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "daiquiri",
+        "name": "Daiquiri",
+        "category": "classic",
+        "pattern_id": "pattern_sour",
+        "base_spirit_id": "rum_white",
+        "tags": ["sour", "shaken", "rum"],
+        "ingredients": [
+          { "ingredient_id": "rum_white", "amount_ml": 60, "role": "base" },
+          { "ingredient_id": "lime_juice", "amount_ml": 30, "role": "sour" },
+          { "ingredient_id": "simple_syrup", "amount_ml": 22.5, "role": "sweet" }
+        ]
+      },
+      {
+        "id": "margarita",
+        "name": "Margarita",
+        "category": "classic",
+        "pattern_id": "pattern_sour",
+        "base_spirit_id": "tequila_blanco",
+        "tags": ["sour", "shaken", "tequila"],
+        "ingredients": [
+          { "ingredient_id": "tequila_blanco", "amount_ml": 50, "role": "base" },
+          { "ingredient_id": "triple_sec", "amount_ml": 20, "role": "modifier" },
+          { "ingredient_id": "lime_juice", "amount_ml": 25, "role": "sour" },
+          { "ingredient_id": "simple_syrup", "amount_ml": 10, "role": "sweet" },
+          { "ingredient_id": "salt_rim", "amount_ml": null, "role": "garnish" },
+          { "ingredient_id": "lime_wedge", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "dry_martini",
+        "name": "Dry Gin Martini",
+        "category": "classic",
+        "pattern_id": "pattern_martini",
+        "base_spirit_id": "gin_london_dry",
+        "tags": ["spirit_forward", "stirred", "up"],
+        "ingredients": [
+          { "ingredient_id": "gin_london_dry", "amount_ml": 60, "role": "base" },
+          { "ingredient_id": "dry_vermouth", "amount_ml": 10, "role": "modifier" },
+          { "ingredient_id": "olive", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "negroni",
+        "name": "Negroni",
+        "category": "classic",
+        "pattern_id": "pattern_negroni",
+        "base_spirit_id": "gin_london_dry",
+        "tags": ["bitter", "stirred", "on_rocks"],
+        "ingredients": [
+          { "ingredient_id": "gin_london_dry", "amount_ml": 30, "role": "base" },
+          { "ingredient_id": "campari", "amount_ml": 30, "role": "bitter" },
+          { "ingredient_id": "sweet_vermouth", "amount_ml": 30, "role": "modifier" },
+          { "ingredient_id": "orange_twist", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "manhattan",
+        "name": "Manhattan",
+        "category": "classic",
+        "pattern_id": "pattern_manhattan",
+        "base_spirit_id": "whiskey_rye",
+        "tags": ["spirit_forward", "stirred", "up"],
+        "ingredients": [
+          { "ingredient_id": "whiskey_rye", "amount_ml": 60, "role": "base" },
+          { "ingredient_id": "sweet_vermouth", "amount_ml": 30, "role": "modifier" },
+          { "ingredient_id": "aromatic_bitters", "amount_ml": 2, "role": "bitters" },
+          { "ingredient_id": "maraschino_cherry", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "cosmopolitan",
+        "name": "Cosmopolitan",
+        "category": "classic",
+        "pattern_id": "pattern_sour",
+        "base_spirit_id": "vodka_plain",
+        "tags": ["vodka", "fruity", "shaken"],
+        "ingredients": [
+          { "ingredient_id": "vodka_plain", "amount_ml": 45, "role": "base" },
+          { "ingredient_id": "triple_sec", "amount_ml": 15, "role": "modifier" },
+          { "ingredient_id": "cranberry_juice", "amount_ml": 30, "role": "lengthener" },
+          { "ingredient_id": "lime_juice", "amount_ml": 15, "role": "sour" },
+          { "ingredient_id": "lime_wheel", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "mojito",
+        "name": "Mojito",
+        "category": "classic",
+        "pattern_id": "pattern_collins",
+        "base_spirit_id": "rum_white",
+        "tags": ["rum", "tall", "minty"],
+        "ingredients": [
+          { "ingredient_id": "rum_white", "amount_ml": 50, "role": "base" },
+          { "ingredient_id": "lime_juice", "amount_ml": 25, "role": "sour" },
+          { "ingredient_id": "simple_syrup", "amount_ml": 15, "role": "sweet" },
+          { "ingredient_id": "mint_sprig", "amount_ml": null, "role": "garnish" },
+          { "ingredient_id": "soda_water", "amount_ml": 60, "role": "lengthener" }
+        ]
+      },
+      {
+        "id": "tom_collins",
+        "name": "Tom Collins",
+        "category": "classic",
+        "pattern_id": "pattern_collins",
+        "base_spirit_id": "gin_london_dry",
+        "tags": ["gin", "tall", "citrusy"],
+        "ingredients": [
+          { "ingredient_id": "gin_london_dry", "amount_ml": 50, "role": "base" },
+          { "ingredient_id": "lemon_juice", "amount_ml": 25, "role": "sour" },
+          { "ingredient_id": "simple_syrup", "amount_ml": 15, "role": "sweet" },
+          { "ingredient_id": "soda_water", "amount_ml": 60, "role": "lengthener" },
+          { "ingredient_id": "lemon_twist", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "gimlet",
+        "name": "Gimlet",
+        "category": "classic",
+        "pattern_id": "pattern_sour",
+        "base_spirit_id": "gin_london_dry",
+        "tags": ["gin", "sour", "up"],
+        "ingredients": [
+          { "ingredient_id": "gin_london_dry", "amount_ml": 60, "role": "base" },
+          { "ingredient_id": "lime_juice", "amount_ml": 30, "role": "sour" },
+          { "ingredient_id": "simple_syrup", "amount_ml": 15, "role": "sweet" }
+        ]
+      },
+      {
+        "id": "boulevardier",
+        "name": "Boulevardier",
+        "category": "classic",
+        "pattern_id": "pattern_negroni",
+        "base_spirit_id": "whiskey_bourbon",
+        "tags": ["bitter", "stirred", "whiskey"],
+        "ingredients": [
+          { "ingredient_id": "whiskey_bourbon", "amount_ml": 30, "role": "base" },
+          { "ingredient_id": "campari", "amount_ml": 30, "role": "bitter" },
+          { "ingredient_id": "sweet_vermouth", "amount_ml": 30, "role": "modifier" }
+        ]
+      },
+      {
+        "id": "sidecar",
+        "name": "Sidecar",
+        "category": "classic",
+        "pattern_id": "pattern_sour",
+        "base_spirit_id": "brandy_cognac",
+        "tags": ["brandy", "citrusy"],
+        "ingredients": [
+          { "ingredient_id": "brandy_cognac", "amount_ml": 50, "role": "base" },
+          { "ingredient_id": "triple_sec", "amount_ml": 20, "role": "modifier" },
+          { "ingredient_id": "lemon_juice", "amount_ml": 25, "role": "sour" }
+        ]
+      },
+      {
+        "id": "whiskey_highball",
+        "name": "Whiskey Highball",
+        "category": "classic",
+        "pattern_id": "pattern_highball",
+        "base_spirit_id": "whiskey_scotch_blended",
+        "tags": ["highball", "whiskey"],
+        "ingredients": [
+          { "ingredient_id": "whiskey_scotch_blended", "amount_ml": 45, "role": "base" },
+          { "ingredient_id": "soda_water", "amount_ml": 90, "role": "lengthener" },
+          { "ingredient_id": "lemon_twist", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "gin_tonic",
+        "name": "Gin and Tonic",
+        "category": "classic",
+        "pattern_id": "pattern_highball",
+        "base_spirit_id": "gin_london_dry",
+        "tags": ["highball", "gin"],
+        "ingredients": [
+          { "ingredient_id": "gin_london_dry", "amount_ml": 45, "role": "base" },
+          { "ingredient_id": "tonic_water", "amount_ml": 120, "role": "lengthener" },
+          { "ingredient_id": "lime_wedge", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "french_75",
+        "name": "French 75",
+        "category": "classic",
+        "pattern_id": "pattern_sour",
+        "base_spirit_id": "gin_london_dry",
+        "tags": ["sparkling", "gin"],
+        "ingredients": [
+          { "ingredient_id": "gin_london_dry", "amount_ml": 30, "role": "base" },
+          { "ingredient_id": "lemon_juice", "amount_ml": 15, "role": "sour" },
+          { "ingredient_id": "simple_syrup", "amount_ml": 15, "role": "sweet" },
+          { "ingredient_id": "sparkling_wine", "amount_ml": 60, "role": "lengthener" }
+        ]
+      },
+      {
+        "id": "aperol_spritz",
+        "name": "Aperol Spritz",
+        "category": "classic",
+        "pattern_id": "pattern_spritz",
+        "base_spirit_id": "aperol",
+        "tags": ["spritz", "bitter", "sparkling"],
+        "ingredients": [
+          { "ingredient_id": "aperol", "amount_ml": 60, "role": "aperitivo" },
+          { "ingredient_id": "sparkling_wine", "amount_ml": 90, "role": "sparkling" },
+          { "ingredient_id": "soda_water", "amount_ml": 30, "role": "lengthener" },
+          { "ingredient_id": "orange_slice", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "dark_and_stormy",
+        "name": "Dark and Stormy",
+        "category": "classic",
+        "pattern_id": "pattern_highball",
+        "base_spirit_id": "rum_dark",
+        "tags": ["rum", "ginger", "highball"],
+        "ingredients": [
+          { "ingredient_id": "rum_dark", "amount_ml": 50, "role": "base" },
+          { "ingredient_id": "ginger_beer", "amount_ml": 100, "role": "lengthener" },
+          { "ingredient_id": "lime_wedge", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "tequila_highball",
+        "name": "Tequila Highball",
+        "category": "classic",
+        "pattern_id": "pattern_highball",
+        "base_spirit_id": "tequila_blanco",
+        "tags": ["tequila", "highball"],
+        "ingredients": [
+          { "ingredient_id": "tequila_blanco", "amount_ml": 45, "role": "base" },
+          { "ingredient_id": "soda_water", "amount_ml": 120, "role": "lengthener" },
+          { "ingredient_id": "lime_wedge", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "pineapple_rum_punch",
+        "name": "Pineapple Rum Punch",
+        "category": "classic",
+        "pattern_id": "pattern_sour",
+        "base_spirit_id": "rum_white",
+        "tags": ["rum", "fruity"],
+        "ingredients": [
+          { "ingredient_id": "rum_white", "amount_ml": 45, "role": "base" },
+          { "ingredient_id": "pineapple_juice", "amount_ml": 60, "role": "lengthener" },
+          { "ingredient_id": "lime_juice", "amount_ml": 15, "role": "sour" },
+          { "ingredient_id": "grenadine", "amount_ml": 10, "role": "sweet" }
+        ]
+      },
+      {
+        "id": "tokyo_twilight_highball",
+        "name": "Tokyo Twilight Highball",
+        "category": "house",
+        "pattern_id": "pattern_highball",
+        "base_spirit_id": "whiskey_rye",
+        "tags": ["house", "highball", "city_pop_vibe"],
+        "ingredients": [
+          { "ingredient_id": "whiskey_rye", "amount_ml": 40, "role": "base" },
+          { "ingredient_id": "ginger_beer", "amount_ml": 100, "role": "lengthener" },
+          { "ingredient_id": "lime_wheel", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "shibuya_gin_spritz",
+        "name": "Shibuya Gin Spritz",
+        "category": "house",
+        "pattern_id": "pattern_spritz",
+        "base_spirit_id": "gin_london_dry",
+        "tags": ["house", "spritz", "gin"],
+        "ingredients": [
+          { "ingredient_id": "gin_london_dry", "amount_ml": 30, "role": "base" },
+          { "ingredient_id": "sparkling_wine", "amount_ml": 60, "role": "sparkling" },
+          { "ingredient_id": "soda_water", "amount_ml": 30, "role": "lengthener" },
+          { "ingredient_id": "lemon_twist", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "golden_hour_margarita",
+        "name": "Golden Hour Margarita",
+        "category": "house",
+        "pattern_id": "pattern_sour",
+        "base_spirit_id": "tequila_reposado",
+        "tags": ["house", "margarita_twist"],
+        "ingredients": [
+          { "ingredient_id": "tequila_reposado", "amount_ml": 45, "role": "base" },
+          { "ingredient_id": "triple_sec", "amount_ml": 20, "role": "modifier" },
+          { "ingredient_id": "lime_juice", "amount_ml": 25, "role": "sour" },
+          { "ingredient_id": "simple_syrup", "amount_ml": 10, "role": "sweet" },
+          { "ingredient_id": "orange_twist", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "neon_boulevard",
+        "name": "Neon Boulevard",
+        "category": "house",
+        "pattern_id": "pattern_negroni",
+        "base_spirit_id": "mezcal_joven",
+        "tags": ["house", "smoky", "bitter"],
+        "ingredients": [
+          { "ingredient_id": "mezcal_joven", "amount_ml": 30, "role": "base" },
+          { "ingredient_id": "campari", "amount_ml": 30, "role": "bitter" },
+          { "ingredient_id": "sweet_vermouth", "amount_ml": 30, "role": "modifier" },
+          { "ingredient_id": "orange_twist", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "garden_gimlet",
+        "name": "Garden Gimlet",
+        "category": "house",
+        "pattern_id": "pattern_sour",
+        "base_spirit_id": "gin_london_dry",
+        "tags": ["house", "herbal", "gin"],
+        "ingredients": [
+          { "ingredient_id": "gin_london_dry", "amount_ml": 50, "role": "base" },
+          { "ingredient_id": "lime_juice", "amount_ml": 25, "role": "sour" },
+          { "ingredient_id": "simple_syrup", "amount_ml": 15, "role": "sweet" },
+          { "ingredient_id": "cucumber_slice", "amount_ml": null, "role": "garnish" },
+          { "ingredient_id": "mint_sprig", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "citrus_city_sour",
+        "name": "Citrus City Sour",
+        "category": "house",
+        "pattern_id": "pattern_sour",
+        "base_spirit_id": "vodka_plain",
+        "tags": ["house", "bright", "vodka"],
+        "ingredients": [
+          { "ingredient_id": "vodka_plain", "amount_ml": 45, "role": "base" },
+          { "ingredient_id": "lemon_juice", "amount_ml": 20, "role": "sour" },
+          { "ingredient_id": "simple_syrup", "amount_ml": 15, "role": "sweet" },
+          { "ingredient_id": "cranberry_juice", "amount_ml": 20, "role": "lengthener" },
+          { "ingredient_id": "orange_slice", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "midnight_daiquiri",
+        "name": "Midnight Daiquiri",
+        "category": "house",
+        "pattern_id": "pattern_sour",
+        "base_spirit_id": "rum_dark",
+        "tags": ["house", "rum", "rich"],
+        "ingredients": [
+          { "ingredient_id": "rum_dark", "amount_ml": 60, "role": "base" },
+          { "ingredient_id": "lime_juice", "amount_ml": 25, "role": "sour" },
+          { "ingredient_id": "simple_syrup", "amount_ml": 20, "role": "sweet" }
+        ]
+      },
+      {
+        "id": "kyoto_highball",
+        "name": "Kyoto Highball",
+        "category": "house",
+        "pattern_id": "pattern_highball",
+        "base_spirit_id": "whiskey_scotch_blended",
+        "tags": ["house", "highball", "crisp"],
+        "ingredients": [
+          { "ingredient_id": "whiskey_scotch_blended", "amount_ml": 40, "role": "base" },
+          { "ingredient_id": "soda_water", "amount_ml": 100, "role": "lengthener" },
+          { "ingredient_id": "lemon_twist", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "sunrise_spritz",
+        "name": "Sunrise Spritz",
+        "category": "house",
+        "pattern_id": "pattern_spritz",
+        "base_spirit_id": "aperol",
+        "tags": ["house", "spritz", "fruity"],
+        "ingredients": [
+          { "ingredient_id": "aperol", "amount_ml": 45, "role": "aperitivo" },
+          { "ingredient_id": "sparkling_wine", "amount_ml": 75, "role": "sparkling" },
+          { "ingredient_id": "soda_water", "amount_ml": 30, "role": "lengthener" },
+          { "ingredient_id": "orange_slice", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "electric_collins",
+        "name": "Electric Collins",
+        "category": "house",
+        "pattern_id": "pattern_collins",
+        "base_spirit_id": "gin_london_dry",
+        "tags": ["house", "tall", "refreshing"],
+        "ingredients": [
+          { "ingredient_id": "gin_london_dry", "amount_ml": 45, "role": "base" },
+          { "ingredient_id": "lemon_juice", "amount_ml": 25, "role": "sour" },
+          { "ingredient_id": "simple_syrup", "amount_ml": 15, "role": "sweet" },
+          { "ingredient_id": "soda_water", "amount_ml": 90, "role": "lengthener" },
+          { "ingredient_id": "mint_sprig", "amount_ml": null, "role": "garnish" }
+        ]
+      },
+      {
+        "id": "cranberry_collins",
+        "name": "Cranberry Collins",
+        "category": "house",
+        "pattern_id": "pattern_collins",
+        "base_spirit_id": "vodka_plain",
+        "tags": ["house", "tall", "fruity"],
+        "ingredients": [
+          { "ingredient_id": "vodka_plain", "amount_ml": 45, "role": "base" },
+          { "ingredient_id": "lemon_juice", "amount_ml": 20, "role": "sour" },
+          { "ingredient_id": "simple_syrup", "amount_ml": 10, "role": "sweet" },
+          { "ingredient_id": "cranberry_juice", "amount_ml": 40, "role": "lengthener" },
+          { "ingredient_id": "soda_water", "amount_ml": 40, "role": "lengthener" }
+        ]
+      },
+      {
+        "id": "smoky_highball",
+        "name": "Smoky Highball",
+        "category": "house",
+        "pattern_id": "pattern_highball",
+        "base_spirit_id": "mezcal_joven",
+        "tags": ["house", "mezcal", "highball"],
+        "ingredients": [
+          { "ingredient_id": "mezcal_joven", "amount_ml": 40, "role": "base" },
+          { "ingredient_id": "soda_water", "amount_ml": 100, "role": "lengthener" },
+          { "ingredient_id": "lime_wedge", "amount_ml": null, "role": "garnish" }
+        ]
+      }
+    ]
+  }
+  
