@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     """Application settings with environment variable support."""
-    
+    # Pydantic settings
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -59,6 +59,7 @@ class Settings(BaseSettings):
         description="Number of concurrent Gemini API requests allowed"
     )
 
+    # AWS Settings
     aws_access_key_id: Optional[str] = Field(
         default=None,
         description="AWS Access Key ID for S3"
