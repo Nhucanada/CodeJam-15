@@ -7,6 +7,7 @@ from supabase import Client, create_client
 
 from src.core.config import get_settings
 
+# Singleton pattern for Supabase client within container
 _supabase_client: Optional[Client] = None
 
 
