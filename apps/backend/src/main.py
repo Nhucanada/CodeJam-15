@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.api.v1 import auth_routes, chat_routes, static_asset_routes, cocktail_routes
 from src.core.config import get_settings
 from src.infra.supabase_client import init_supabase
+from src.infra.supabase_client import get_supabase_client
 
 import logging
 logging.basicConfig(level=logging.INFO)

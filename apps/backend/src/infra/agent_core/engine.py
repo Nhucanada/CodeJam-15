@@ -34,21 +34,7 @@ class AgenticEngine:
         self,
         rag_strategy: RAGStrategy,
         fast_template_selector: Optional[Any] = None,
-        personality: str = """You are Arthur, the Three.js PS1 throwback Agentic Bartender, who can help the user make classy cocktails.
-
-Your capabilities:
-- CREATE_DRINK (action_type: "create_drink"): When the user requests a specific cocktail by name (e.g., "make me an Old Fashioned", "I want a Mojito", "fix me a Margarita"). You should provide the complete recipe with ingredients, measurements, instructions, glass type, and garnish.
-
-- SUGGEST_DRINK (action_type: "suggest_drink"): When the user describes preferences or asks for recommendations without naming a specific drink (e.g., "something fruity", "I want something strong", "surprise me", "what's good?"). Analyze their preferences and suggest an appropriate cocktail.
-
-- SEARCH_DRINK (action_type: "search_drink"): When the user asks about drinks containing certain ingredients or wants to explore options (e.g., "what can I make with whiskey and honey?", "drinks with gin", "show me bourbon cocktails").
-
-IMPORTANT: ALWAYS set the action_type field to one of these three values. When creating or suggesting drinks, ALWAYS provide complete recipe details including:
-- All ingredients with exact measurements and hex color codes
-- Step-by-step instructions
-- Glass type (MUST be one of: zombie glass, cocktail glass, rocks glass, hurricane glass, pint glass, seidel glass, shot glass, highball glass, margarita glass, martini glass)
-- Garnish (MUST be one of: lemon, lime, orange, cherry, olive, salt_rim, mint, or null)
-- Ice preference (true/false)""",
+        personality: str = """You are Arthur, the Three.js PS1 throwback Agentic Bartender, who can help the user make classy cocktails.""",
     ) -> None:
         """
         Args:
@@ -78,14 +64,12 @@ IMPORTANT: ALWAYS set the action_type field to one of these three values. When c
             "mix",
             "mix me",
             "build",
-            "suggest",
             "recommend",
             "i want",
             "i'd like",
         ]
         if any(keyword in user_input.lower() for keyword in drink_keywords):
             return "action_generation"
-
         if "summarize" in user_input.lower():
             return "summarization"
         if "action" in user_input.lower() or "do this" in user_input.lower():
@@ -125,20 +109,32 @@ IMPORTANT: ALWAYS set the action_type field to one of these three values. When c
         few_shot_examples = self._get_few_shot_examples(template_name)
 
         if few_shot_examples:
-            prompt.append("\n\n--- FEW-SHOT EXAMPLES ---")
+            prompt.append("\n\n[FEW-SHOT EXAMPLES]")
             for idx, example in enumerate(few_shot_examples, 1):
                 prompt.append(f"\n\nExample {idx}:\n{example}")
-            prompt.append("\n--- END EXAMPLES ---\n")
+            prompt.append("\n[END EXAMPLES]\n")
 
         # Optionally augment via RAG
+        prompt.append("\n\n[CONTEXT FETCHED FROM ONLINE RAG DATABASE]")
+#         prompt.append(f"""\nYour capabilities:
+# Can create new drinks based on context of example drinks (e.g. SAQ Product)
+
+# - CREATE_DRINK (action_type: "create_drink"): When the user requests a specific cocktail by name (e.g., "make me an Old Fashioned", "I want a Mojito", "fix me a Margarita"). You should provide the complete recipe with ingredients, measurements, instructions, glass type, and garnish.
+# - SUGGEST_DRINK (action_type: "suggest_drink"): When the user describes preferences or asks for recommendations without naming a specific drink (e.g., "something fruity", "I want something strong", "surprise me", "what's good?"). Analyze their preferences and suggest an appropriate cocktail.
+# - SEARCH_DRINK (action_type: "search_drink"): When the user asks about drinks containing certain ingredients or wants to explore options (e.g., "what can I make with whiskey and honey?", "drinks with gin", "show me bourbon cocktails").
+
+# - Glass type (MUST be one of: zombie glass, cocktail glass, rocks glass, hurricane glass, pint glass, seidel glass, shot glass, highball glass, margarita glass, martini glass)
+# - Garnish (MUST be one of: lemon, lime, orange, cherry, olive, salt_rim, mint, or null)
+# - Ice preference (true/false)\n""")
         retrieved_chunks = []
         if rag_enabled:
             retrieval_results = self.rag_strategy(user_input, user_id=user_id, top_k=top_k)
             retrieved_chunks = [doc.content for doc in retrieval_results if hasattr(doc, "content")]
             for chunk in retrieved_chunks:
                 prompt.append(f"\n[RETRIEVED]\n{chunk}")
+        prompt.append("\n[END CONTEXT FETCHED FROM ONLINE RAG DATABASE]\n")
 
-        logger.info(prompt.as_string())
+        prompt.append(f"\n[CONVERSATION]\n{user_input}")
 
         # Send to Gemini
         completion = await self._invoke_llm(
@@ -184,19 +180,16 @@ IMPORTANT: ALWAYS set the action_type field to one of these three values. When c
             schema_str = json.dumps(schema_json, indent=2)
             enhanced_prompt = f"""{prompt}\n[OUTPUT SCHEMA]\nYou MUST respond with valid JSON matching the output schema.\n{schema_str}\nResponse (JSON only, no other text):\n"""
 
-            # TODO: Make inference output enforces schema output
-
-            logger.info(enhanced_prompt)
-
+            
             # Use Gemini's JSON mode or response_mime_type
             config = {
-                "temperature": 0.3,  # Lower temperature for more accurate, less creative responses
+                "temperature": 0.8,  # Lower temperature for more accurate, less creative responses
                 "system_instruction": self.personality,
                 "response_mime_type": "application/json",
                 "response_schema": schema_json,
             }
-            logger.info(f"Gemini API Request Config: {config}")
-            logger.info(f"Gemini Model: {model or settings.gemini_model}")
+
+            logger.info(f"Enhanced prompt: {enhanced_prompt}")
 
             response = client.models.generate_content(
                 model=model or settings.gemini_model,
@@ -205,10 +198,8 @@ IMPORTANT: ALWAYS set the action_type field to one of these three values. When c
             )
 
             # Parse and validate
-            logger.info(f"Gemini API Raw Response: {response.text}")
             result = json.loads(response.text)
             validated = response_schema(**result)
-            logger.info(f"Validated Response: {validated.model_dump(mode='json')}")
             return validated.model_dump(mode="json")
 
         else:
@@ -220,8 +211,6 @@ IMPORTANT: ALWAYS set the action_type field to one of these three values. When c
                 contents=prompt,
                 config=config,
             )
-
-            logger.info(f"Gemini API Raw Response (text mode): {response.text}")
 
         return response.text
 
