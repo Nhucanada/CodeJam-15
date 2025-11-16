@@ -636,42 +636,6 @@ async function loadAndDisplayShelf() {
         const errorDiv = document.createElement('div');
         errorDiv.className = 'shelf-error';
 
-        // Check error type for better messaging
-        if (error instanceof Error) {
-          if (error.message.includes('Backend server not running') || error.message.includes('fetch')) {
-            errorDiv.innerHTML = `
-              <div style="text-align: center; padding: 40px; color: #f44336;">
-                <h3>🔌 Backend Not Running</h3>
-                <p>The backend server needs to be started to load cocktails.</p>
-                <p style="font-size: 0.9em; opacity: 0.7;">Run: <code>npm run dev</code> in the backend folder</p>
-              </div>
-            `;
-
-            // Show same error in drink title
-            showDrinkTitleError('Backend server not running');
-
-          } else {
-            errorDiv.innerHTML = `
-              <div style="text-align: center; padding: 40px; color: #f44336;">
-                <h3>⚠️ Connection Error</h3>
-              </div>
-            `;
-
-            // Show same error in drink title
-            showDrinkTitleError('⚠️ Connection Error');
-          }
-        } else {
-          errorDiv.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #f44336;">
-              <h3>❌ Unknown Error</h3>
-              <p>Could not load cocktails.</p>
-            </div>
-          `;
-
-          // Show same error in drink title
-          showDrinkTitleError('Unknown Error');
-        }
-
         recipeContent.appendChild(errorDiv);
       }
     } else {
@@ -695,7 +659,7 @@ function updateShelfDisplay(cocktails: any[], greeting: string) {
     cocktails.forEach((cocktail, index) => {
       if (index < 3) { // Limit to 3 visible cocktails
         const shelfBox = createShelfBox(cocktail);
-        recipePanel.appendChipld(shelfBox);
+        recipePanel.appendChild(shelfBox);
       }
     });
   }
@@ -894,42 +858,6 @@ function clearAllErrorMessages() {
   console.log('[CLEAR ERRORS] Skipping drink title error handling');
 }
 
-function showRecipeError(message: string) {
-  // Show error in ingredients box
-  const ingredientsBox = document.querySelector('.ingredients-box .message-container');
-  if (ingredientsBox) {
-    ingredientsBox.innerHTML = '';
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'message bot recipe-error';
-    errorDiv.style.cssText = `
-      background: #ffebee;
-      border-left: 4px solid #f44336;
-      color: #c62828;
-      padding: 8px;
-      border-radius: 4px;
-    `;
-    errorDiv.textContent = `❌ ${message}`;
-    ingredientsBox.appendChild(errorDiv);
-  }
-
-  // Show error in recipe box
-  const recipeBox = document.querySelector('.recipe-box .message-container');
-  if (recipeBox) {
-    recipeBox.innerHTML = '';
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'message bot recipe-error';
-    errorDiv.style.cssText = `
-      background: #ffebee;
-      border-left: 4px solid #f44336;
-      color: #c62828;
-      padding: 8px;
-      border-radius: 4px;
-    `;
-    errorDiv.textContent = `❌ ${message}`;
-    recipeBox.appendChild(errorDiv);
-  }
-}
-
 function updateSceneForCocktail(cocktail: CocktailDetail) {
   // Update liquid color based on ingredients
   const liquidHandler = glassLoader.getLiquidHandler();
@@ -1055,12 +983,6 @@ chatInput?.addEventListener('keypress', (e) => {
 // Expose renderDrinkFromBackend globally for WebSocket updates
 (window as any).renderDrinkFromBackend = renderDrinkFromBackend;
 
-chatInput?.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    sendChatMessage();
-  }
-});
-
 // Handle placeholder label visibility
 const chatInputElement = document.getElementById('chat-input') as HTMLInputElement;
 const sendMessageTitle = document.querySelector('.send-message-title') as HTMLElement;
@@ -1092,9 +1014,6 @@ if (chatInputElement && sendMessageTitle) {
   // Initial check
   updateLabelVisibility();
 }
-
-// Expose refresh function globally for WebSocket updates
-(window as any).refreshShelfPanel = loadAndDisplayShelf;
 
 // Load shelf on startup
 loadAndDisplayShelf();
