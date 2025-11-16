@@ -13,7 +13,6 @@ import { cocktailAPI } from './api/client'
 import type { CocktailDetail } from './types/cocktail'
 import { LoginOverlay } from './components/LoginOverlay'
 import { authAPI } from './api/client'
-
 // Token refresh management
 class TokenManager {
     private refreshInterval: number | null = null;
@@ -1110,3 +1109,5 @@ function showShelfEnhanced() {
 // Replace the existing shelf button listener
 shelfButton?.removeEventListener('click', showShelf);
 shelfButton?.addEventListener('click', showShelfEnhanced);
+
+// Add ambient audio
