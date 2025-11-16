@@ -603,6 +603,96 @@ chatInput?.addEventListener('keypress', (e) => {
 // Load shelf on startup
 loadAndDisplayShelf();
 
+// Enhanced logout functionality with custom dialog
+function logoutWithConfirmation() {
+  showLogoutDialog();
+}
+
+function showLogoutDialog() {
+  // Create logout overlay if it doesn't exist
+  let logoutOverlay = document.querySelector('.logout-overlay') as HTMLElement;
+
+  if (!logoutOverlay) {
+    logoutOverlay = document.createElement('div');
+    logoutOverlay.className = 'logout-overlay';
+    logoutOverlay.innerHTML = `
+      <div class="logout-modal">
+        <div class="logout-content">
+          <h2 class="logout-title">Confirm Logout</h2>
+          <p class="logout-message">Are you sure you want to log out?<br>You'll need to sign in again to continue.</p>
+          <div class="logout-buttons">
+            <button class="logout-cancel-btn">Cancel</button>
+            <button class="logout-confirm-btn">Log Out</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(logoutOverlay);
+
+    // Add event listeners
+    const cancelBtn = logoutOverlay.querySelector('.logout-cancel-btn');
+    const confirmBtn = logoutOverlay.querySelector('.logout-confirm-btn');
+
+    cancelBtn?.addEventListener('click', hideLogoutDialog);
+    confirmBtn?.addEventListener('click', () => {
+      hideLogoutDialog();
+      performLogout();
+    });
+
+    // Close on overlay click
+    logoutOverlay.addEventListener('click', (e) => {
+      if (e.target === logoutOverlay) {
+        hideLogoutDialog();
+      }
+    });
+  }
+
+  logoutOverlay.style.display = 'flex';
+}
+
+function hideLogoutDialog() {
+  const logoutOverlay = document.querySelector('.logout-overlay') as HTMLElement;
+  if (logoutOverlay) {
+    logoutOverlay.style.display = 'none';
+  }
+}
+
+async function performLogout() {
+  try {
+    // Call backend logout endpoint
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      const response = await fetch('http://localhost:8000/api/v1/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Log response for debugging but continue even if it fails
+      if (!response.ok) {
+        console.warn('Backend logout failed, but continuing with local logout');
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to contact logout endpoint, but continuing with local logout:', error);
+  }
+
+  // Always clear local storage and show login
+  authAPI.logout();
+  initializeAuth();
+}
+
+// Add logout button event listener
+const logoutBtn = document.querySelector('.logout-btn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', logoutWithConfirmation);
+}
+
+// Update the global logout function to use the new confirmation
+(window as any).logout = logoutWithConfirmation;
+
 function showShelfEnhanced() {
   // Hide recipe elements
   if (ingredientsBox) ingredientsBox.style.display = 'none'

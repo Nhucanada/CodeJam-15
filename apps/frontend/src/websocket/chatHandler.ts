@@ -60,7 +60,7 @@ constructor() {
     };
   }
 
-  private showChatError(title: string, message?: string) {
+    private showChatError(title: string, message?: string) {
     const chatMessages = document.querySelector('.chat-messages .message-container');
     if (!chatMessages) return;
 
@@ -85,7 +85,24 @@ constructor() {
     `;
 
     chatMessages.appendChild(errorDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    const chatContainer = document.querySelector('.chat-messages');
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // If authentication failed, show login overlay
+    if (title.includes('Authentication Failed') || title.includes('🔐 Authentication Failed')) {
+      // Clear the access token
+      localStorage.removeItem('access_token');
+
+      // Show login overlay
+      setTimeout(() => {
+        const loginOverlay = document.querySelector('.login-overlay');
+        if (loginOverlay) {
+          (loginOverlay as HTMLElement).style.display = 'flex';
+        }
+      }, 1000); // Show login after 1 second delay
+    }
   }
 
   private clearChatError() {
