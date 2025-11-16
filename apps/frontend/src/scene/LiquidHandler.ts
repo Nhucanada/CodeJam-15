@@ -158,7 +158,7 @@ export class LiquidHandler {
 
     // Create transparent colored liquid material with clipping plane
     const liquidMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xff6b35, // Orange cocktail color
+      color: 0xffffff, // Clear/white - will be set to actual color later
       transparent: true,
       opacity: 1,
       transmission: 0.6,
@@ -215,7 +215,7 @@ export class LiquidHandler {
 
     // Same material as the liquid
     const topMaterial = new THREE.MeshPhysicalMaterial({
-      color: 0xff6b35,
+      color: 0xffffff, // Clear/white - will be set to actual color later
       transparent: true,
       opacity: 1,
       transmission: 0.9,
@@ -422,5 +422,17 @@ export class LiquidHandler {
    */
   public getTargetFillLevel(): number {
     return this.targetFillLevel
+  }
+
+  /**
+   * Set the liquid color
+   */
+  public setLiquidColor(color: THREE.Color): void {
+    if (this.liquidMesh && this.liquidMesh.material instanceof THREE.MeshPhysicalMaterial) {
+      this.liquidMesh.material.color = color
+    }
+    if (this.liquidTopMesh && this.liquidTopMesh.material instanceof THREE.MeshPhysicalMaterial) {
+      this.liquidTopMesh.material.color = color
+    }
   }
 }
