@@ -139,7 +139,7 @@ private updateChatUI(message: EnhancedChatMessage) {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message bot';
     messageDiv.id = `message-${message.message_id}`;
-    messageDiv.textContent = 'L - E: ';
+    messageDiv.textContent = 'Arthur: ';
     chatMessages.appendChild(messageDiv);
     } else if (message.type === 'stream_delta') {
     // Append to existing message
@@ -151,7 +151,7 @@ private updateChatUI(message: EnhancedChatMessage) {
     // Finalize message
     const messageDiv = document.getElementById(`message-${message.message_id}`);
     if (messageDiv && message.content) {
-        messageDiv.textContent = `L - E: ${message.content}`;
+        messageDiv.textContent = `Arthur: ${message.content}`;
     }
     }
 
