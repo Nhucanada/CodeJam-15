@@ -41,6 +41,56 @@ canvas {
   font-family: 'Sixtyfour', monospace;
 }
 
+.drink-panel {
+  position: fixed;
+  bottom: 1%;
+  right: 33%;
+  width: 34%;
+  height: 15%;
+  background: rgba(37, 37, 37, 1);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  z-index: 1000;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.drink-content {
+  width: calc(100% - 32px);
+  height: calc(100% - 32px);
+  background: rgba(25, 10, 24, 1);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+}
+
+.drink-title-container {
+  padding: 15px;
+  background: rgba(25, 10, 24, 1);
+  margin-top: 19px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 19px;
+  align-items: center;
+  justify-content: center;
+  height: calc(100% - 32px);
+  flex-direction: column;
+  outline: 3px solid #252525;
+  display: flex;
+  gap: 10px;
+}
+
+.drink-title {
+  color: #fff;
+  font-size: 24px;
+  margin: 0;
+  font-weight: normal;
+  letter-spacing: 2px;
+  font-family: 'Sixtyfour', monospace;
+}
+
 .chat-content {
   width: calc(100% - 32px);
   height: calc(100% - 32px);

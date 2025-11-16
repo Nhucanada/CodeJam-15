@@ -121,27 +121,35 @@ let loginOverlay: LoginOverlay;
 // Update the initializeAuth function to include token manager
 function initializeAuth(): void {
   if (!authAPI.isAuthenticated()) {
-    // Hide both panels during login
+    // Hide all panels during login
     const chatPanel = document.querySelector('.chat-panel') as HTMLElement;
     const recipePanel = document.querySelector('.recipe-panel') as HTMLElement;
+    const drinkPanel = document.querySelector('.drink-panel') as HTMLElement;
     if (chatPanel) {
       chatPanel.style.display = 'none';
     }
     if (recipePanel) {
       recipePanel.style.display = 'none';
     }
+    if (drinkPanel) {
+      drinkPanel.style.display = 'none';
+    }
 
     loginOverlay = new LoginOverlay(() => {
       console.log('Authentication successful!');
 
-      // Show both panels after login
+      // Show all panels after login
       const chatPanel = document.querySelector('.chat-panel') as HTMLElement;
       const recipePanel = document.querySelector('.recipe-panel') as HTMLElement;
+      const drinkPanel = document.querySelector('.drink-panel') as HTMLElement;
       if (chatPanel) {
         chatPanel.style.display = 'block';
       }
       if (recipePanel) {
         recipePanel.style.display = 'block';
+      }
+      if (drinkPanel) {
+        drinkPanel.style.display = 'block';
       }
 
       // Clear any existing WebSocket errors
@@ -163,14 +171,18 @@ function initializeAuth(): void {
     });
     loginOverlay.show();
   } else {
-    // Show both panels if already authenticated
+    // Show all panels if already authenticated
     const chatPanel = document.querySelector('.chat-panel') as HTMLElement;
     const recipePanel = document.querySelector('.recipe-panel') as HTMLElement;
+    const drinkPanel = document.querySelector('.drink-panel') as HTMLElement;
     if (chatPanel) {
       chatPanel.style.display = 'block';
     }
     if (recipePanel) {
       recipePanel.style.display = 'block';
+    }
+    if (drinkPanel) {
+      drinkPanel.style.display = 'block';
     }
     tokenManager.start(); // Start token refresh if already authenticated
   }
@@ -418,10 +430,14 @@ async function loadAndDisplayShelf() {
   try {
     const response = await cocktailAPI.getUserShelf();
     updateShelfDisplay(response.cocktails, response.agent_greeting);
+
+    // Reset drink title to default when shelf loads successfully
+    resetDrinkTitle();
+
   } catch (error) {
     console.error('Failed to load shelf:', error);
 
-    // Show user-friendly error message
+    // Show user-friendly error message in shelf
     const recipeContent = document.querySelector('.recipe-content');
     if (recipeContent) {
       // Clear any existing content first
@@ -441,6 +457,10 @@ async function loadAndDisplayShelf() {
               <p style="font-size: 0.9em; opacity: 0.7;">Run: <code>npm run dev</code> in the backend folder</p>
             </div>
           `;
+
+          // Show same error in drink title
+          showDrinkTitleError('Backend server not running');
+
         } else {
           errorDiv.innerHTML = `
             <div style="text-align: center; padding: 40px; color: #f44336;">
@@ -448,6 +468,9 @@ async function loadAndDisplayShelf() {
               <p>${error.message}</p>
             </div>
           `;
+
+          // Show same error in drink title
+          showDrinkTitleError('⚠️ Connection Error');
         }
       } else {
         errorDiv.innerHTML = `
@@ -456,6 +479,9 @@ async function loadAndDisplayShelf() {
             <p>Could not load cocktails.</p>
           </div>
         `;
+
+        // Show same error in drink title
+        showDrinkTitleError('Unknown Error');
       }
 
       recipeContent.appendChild(errorDiv);
@@ -532,6 +558,9 @@ function createShelfBox(cocktail: any) {
 }
 
 function showRecipeLoading() {
+  // Show loading in drink title
+  showDrinkTitleLoading();
+
   // Show loading in ingredients box
   const ingredientsBox = document.querySelector('.ingredients-box .message-container');
   if (ingredientsBox) {
@@ -573,6 +602,9 @@ async function selectAndDisplayCocktail(cocktail: CocktailDetail) {
   selectedCocktail = cocktail;
 
   try {
+    // Update drink title
+    updateDrinkTitle(cocktail.name);
+
     // Update ingredients display
     const ingredientsBox = document.querySelector('.ingredients-box .message-container');
     if (ingredientsBox) {
@@ -605,6 +637,58 @@ async function selectAndDisplayCocktail(cocktail: CocktailDetail) {
   } catch (error) {
     console.error('Error displaying cocktail:', error);
     showRecipeError('Failed to display cocktail details');
+    showDrinkTitleError('Failed to load drink details');
+  }
+}
+
+function updateDrinkTitle(cocktailName: string) {
+  const drinkTitleElement = document.querySelector('.drink-title');
+  if (drinkTitleElement) {
+    drinkTitleElement.textContent = cocktailName;
+  }
+}
+
+function showDrinkTitleError(message: string) {
+  const drinkTitleContainer = document.querySelector('.drink-title-container');
+  if (drinkTitleContainer) {
+    drinkTitleContainer.innerHTML = '';
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'drink-title-error';
+    errorDiv.style.cssText = `
+      color: #c62828;
+      text-align: center;
+      font-size: 18px;
+    `;
+    errorDiv.textContent = `${message}`;
+    drinkTitleContainer.appendChild(errorDiv);
+  }
+}
+
+function showDrinkTitleLoading() {
+  const drinkTitleContainer = document.querySelector('.drink-title-container');
+  if (drinkTitleContainer) {
+    drinkTitleContainer.innerHTML = '';
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'drink-title-loading';
+    loadingDiv.style.cssText = `
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      color: #1976d2;
+      padding: 12px;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 14px;
+      font-style: italic;
+    `;
+    loadingDiv.textContent = '⏳ Loading drink...';
+    drinkTitleContainer.appendChild(loadingDiv);
+  }
+}
+
+function resetDrinkTitle() {
+  const drinkTitleContainer = document.querySelector('.drink-title-container');
+  if (drinkTitleContainer) {
+    drinkTitleContainer.innerHTML = '<h2 class="drink-title">Select a Drink</h2>';
   }
 }
 
@@ -879,7 +963,7 @@ function showShelfEnhanced() {
   shelfButton?.classList.add('selected')
   recipeButton?.classList.remove('selected')
 
-  // Reload shelf data with error handling
+  // Reload shelf data with error handling - this will handle drink title state
   loadAndDisplayShelf().catch(error => {
     console.error('Error loading shelf in enhanced view:', error);
   });
