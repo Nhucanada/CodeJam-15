@@ -37,7 +37,11 @@ def get_classic_completion_prompt(_: str) -> Prompt:
     return prompt_prototype_factory(
         "",
         description="Freeform completion of text based on user input.",
-        system_message="You are an intelligent assistant that thinks step-by-step.",
+        system_message=(
+            "You are an intelligent assistant that thinks step-by-step. "
+            "Always consider what tools, data sources, and other resources are available in the current context "
+            "and how to use them effectively to produce the best possible answer."
+        ),
         instructions=(
             "Let's approach this step by step:\n"
             "1. First, analyze the user's request and identify key components\n"
@@ -52,7 +56,11 @@ def get_retrieval_augmented_prompt(_: str) -> Prompt:
     return prompt_prototype_factory(
         "",
         description="Answer with retrieved context from knowledge base or documentation.",
-        system_message="You use external document retrieval to ground your answers. Think through your reasoning step-by-step.",
+        system_message=(
+            "You use external document retrieval to ground your answers and you are aware of all retrieval and "
+            "knowledge resources that are available in the current context. Think through your reasoning step-by-step, "
+            "explicitly considering which documents, tools, or APIs to use and why."
+        ),
         instructions=(
             "Approach this systematically:\n"
             "1. Identify the key information needed from the retrieved context\n"
@@ -68,7 +76,11 @@ def get_question_answering_prompt(_: str) -> Prompt:
     return prompt_prototype_factory(
         "",
         description="Question answering based on available data.",
-        system_message="You answer questions concisely and accurately by reasoning through them step-by-step.",
+        system_message=(
+            "You answer questions concisely and accurately by reasoning through them step-by-step. "
+            "Always inspect what contextual resources (retrieved documents, past interactions, tools, and APIs) are "
+            "available, and use them when they can improve the quality or reliability of the answer."
+        ),
         instructions=(
             "Think through this question carefully:\n"
             "1. What specifically is being asked?\n"
@@ -84,7 +96,11 @@ def get_action_generation_prompt(_: str) -> Prompt:
     return prompt_prototype_factory(
         "",
         description="Generate a structured action for an API call.",
-        system_message="Generate JSON to represent the user's intended action. Think through the requirements step-by-step.",
+        system_message=(
+            "Generate JSON to represent the user's intended action. Think through the requirements step-by-step, and "
+            "pay attention to what backend services, APIs, tools, and other resources are available so that the action "
+            "is executable in the current environment."
+        ),
         instructions=(
             "Let's break down the action generation:\n"
             "1. Analyze what the user wants to accomplish\n"
@@ -100,7 +116,11 @@ def get_summarization_prompt(_: str) -> Prompt:
     return prompt_prototype_factory(
         "",
         description="Summarize user-provided content.",
-        system_message="You summarize and rephrase user input for clarity by thinking through the content systematically.",
+        system_message=(
+            "You summarize and rephrase user input for clarity by thinking through the content systematically. "
+            "When helpful, take into account any available context, metadata, or other resources that can make the "
+            "summary more accurate or useful."
+        ),
         instructions=(
             "Follow this systematic approach:\n"
             "1. Read through the entire content to understand the main topic\n"
@@ -116,7 +136,11 @@ def get_chat_style_prompt(_: str) -> Prompt:
     return prompt_prototype_factory(
         "",
         description="Multi-turn conversational assistant.",
-        system_message="Respond in a friendly, helpful chat style. Think through your responses step-by-step.",
+        system_message=(
+            "Respond in a friendly, helpful chat style. Think through your responses step-by-step. "
+            "Continuously consider what contextual resources (conversation history, tools, APIs, and retrieved data) "
+            "are available and how to use them to provide the most helpful, grounded reply."
+        ),
         instructions=(
             "Let's think through this conversation carefully:\n"
             "1. What is the user asking or trying to accomplish?\n"

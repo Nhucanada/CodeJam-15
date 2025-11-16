@@ -1,4 +1,5 @@
 from typing import List, Optional, Protocol
+from annotated_doc import Doc
 from pydantic import BaseModel, Field
 
 from supabase import Client as SupabaseClient
@@ -6,6 +7,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 import numpy as np
 import logging
+
+import ast
+
 
 logger = logging.getLogger(__name__)
 
@@ -76,15 +80,14 @@ class SupabaseVectorDatabaseSearch(RAGStrategy):
 
                 query_builder = (
                     self.supabase
-                    .table(tbl)
-                    .select("id, content, embedding")
+                    .from_(f"{tbl}")
+                    .select('id, content, embedding')
                     .limit(max_candidates_per_table)
                 )
 
                 response = query_builder.execute()
-                logger.info(response.data)
 
-                rows = response.data
+                rows = response.data or []
 
                 if not rows:
                     logger.info(f"No rows returned from table {tbl}")
@@ -95,7 +98,8 @@ class SupabaseVectorDatabaseSearch(RAGStrategy):
                     if not raw_embedding:
                         continue
 
-                    doc_embedding = np.array(raw_embedding, dtype=np.float32)
+                    embedding = ast.literal_eval(raw_embedding)
+                    doc_embedding = np.array(embedding, dtype=np.float32)
                     if doc_embedding.size == 0:
                         continue
 
