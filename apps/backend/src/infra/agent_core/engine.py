@@ -2,6 +2,7 @@ from typing import Any, Optional, Dict, Union
 from pathlib import Path
 
 from src.core.config import get_settings
+from src.domain.agent_models import AgentActionSchema
 from src.infra.agent_core.prompt import Prompt
 from src.infra.agent_core.rag import RAGStrategy, RAGRetrievalResult
 from src.infra.agent_core.prototypes import get_prompt_prototype
@@ -98,12 +99,13 @@ class AgenticEngine:
             retrieval_results = self.rag_strategy(user_input, user_id=user_id, top_k=top_k)
             retrieved_chunks = [doc.content for doc in retrieval_results if hasattr(doc, "content")]
             for chunk in retrieved_chunks:
-                prompt.append(f"\n[RETRIEVED]\n{chunk}")
+                prompt.append(f"\n[RETRIEVED] FROM RAG CHUNKS \n{chunk}")
 
         # Send to Gemini
         completion = await self._invoke_llm(
             model=settings.gemini_model,
             prompt=prompt.as_string(),
+            response_schema=AgentActionSchema,
             **kwargs
         )
 
@@ -146,6 +148,8 @@ class AgenticEngine:
 
             Response (JSON only, no other text):
             """
+
+            # TODO: Make inference output enforces schaema output
             
             # Use Gemini's JSON mode or response_mime_type
             response = await client.models.generate_content(
@@ -162,6 +166,7 @@ class AgenticEngine:
             result = json.loads(response.text)
             validated = response_schema(**result)
             return validated.model_dump()
+
         else:
             # Regular text completion
             import logging

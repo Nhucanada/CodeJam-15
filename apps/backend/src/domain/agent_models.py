@@ -41,3 +41,8 @@ class AgentActionSchema(BaseModel):
 
     drink_recipe: DrinkRecipeSchema | None = None
     suggest_drink: DrinkRecipeSchema | None = None
+
+class AgentResponseSchema(BaseModel):
+    action: AgentActionSchema | None = None
+    error: str | None = None
+    conversation: str | None = None

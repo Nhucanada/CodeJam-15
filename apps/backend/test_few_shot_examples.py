@@ -1,6 +1,8 @@
 """
 Test script for the AgenticEngine few-shot examples functionality.
 
+Generated using Claude 4.5 Sonnet 20251116
+
 This script demonstrates how the engine loads and uses few-shot examples
 from the examples directory based on the selected template.
 """
