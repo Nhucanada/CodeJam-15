@@ -13,6 +13,12 @@ from src.domain.static_asset_models import (
     AssetResponse,
 )
 
+def _format_asset_url(asset_data: dict) -> str:
+    """Format asset data into a URL."""
+    s3_bucket = asset_data.get('s3_bucket')
+    s3_key = asset_data.get('s3_key')
+    return f"https://{s3_bucket}.s3.amazonaws.com/{s3_key}"
+
 
 def _format_asset_response(asset_data: dict) -> AssetResponse:
     """Format Supabase asset data into AssetResponse model."""

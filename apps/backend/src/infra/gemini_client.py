@@ -22,7 +22,9 @@ def init_gemini() -> genai.Client:
         if not api_key:
             raise RuntimeError("Gemini API key is not configured")
 
-        _gemini_client = genai.Client()
+        _gemini_client = genai.Client(
+            api_key=api_key
+        )
 
     return _gemini_client
 
