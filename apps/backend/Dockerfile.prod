@@ -25,7 +25,7 @@ COPY --from=build /app /app
 
 # Add AWS Lambda Web Adapter as an extension
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 \
-    /lambda-adapter \
+    /aws-lambda-adapter \
     /opt/extensions/aws-lambda-adapter
 
 # Configure the Web Adapter
