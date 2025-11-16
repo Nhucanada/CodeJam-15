@@ -154,7 +154,7 @@ canvas {
   right: 7px;
   top: 50%;
   transform: translateY(-50%);
-  background-image: url('./img/exit.png');
+  background-image: url('/img/exit.png');
   background-size: 32px 32px;
   background-repeat: no-repeat;
   background-position: calc(50% - 2px);

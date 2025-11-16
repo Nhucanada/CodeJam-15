@@ -115,6 +115,45 @@ class TokenManager {
 // Create and start token manager
 const tokenManager = new TokenManager();
 
+// Notification system for toast messages
+function showNotification(message: string, type: 'success' | 'error' | 'info' = 'info') {
+  const notification = document.createElement('div');
+  notification.className = `notification ${type}`;
+
+  // Set color based on type
+  let backgroundColor = '#301C2E'; // info blue
+  if (type === 'success') backgroundColor = '#98B172'; // green
+  if (type === 'error') backgroundColor = '#f44336'; // red
+
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${backgroundColor};
+    color: white;
+    padding: 15px 25px;
+    border-radius: 4px;
+    z-index: 10000;
+    font-family: 'Sixtyfour', monospace;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: slideIn 0.3s ease-out;
+  `;
+
+  notification.textContent = message;
+  document.body.appendChild(notification);
+
+  // Remove after 3 seconds with fade out
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.3s ease-in';
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 300);
+  }, 3000);
+}
+
 // Start token refresh when authenticated
 if (authAPI.isAuthenticated()) {
     tokenManager.start();
@@ -206,8 +245,8 @@ initializeAuth();
 };
 
 // Audio setup
-const pourSound = new Audio('/src/assets/SFX/PourSFX.mp3')
-const iceSound = new Audio('/src/assets/SFX/IceSFX.mp3')
+const pourSound = new Audio('/assets/SFX/PourSFX.mp3')
+const iceSound = new Audio('/assets/SFX/IceSFX.mp3')
 
 // Helper function to play audio with optional start time trimming and duration
 function playSound(audio: HTMLAudioElement, startTime: number = 0, duration?: number) {
@@ -262,6 +301,7 @@ const barLoader = new BarLoader()
 
 // Cocktail state
 let currentCocktailIndex = 0
+let currentDisplayedRecipe: DrinkRecipeSchema | null = null
 
 // Helper function to render a complete cocktail
 function renderCocktail(index: number) {
@@ -320,6 +360,9 @@ function renderCocktail(index: number) {
 
 // Helper function to render drink from backend recipe data
 function renderDrinkFromBackend(recipe: DrinkRecipeSchema) {
+  // Store recipe globally so it can be saved later
+  currentDisplayedRecipe = recipe
+
   console.log('[3D RENDER] ========== Starting renderDrinkFromBackend ==========')
   console.log('[3D RENDER] Backend recipe:', recipe)
   console.log('[3D RENDER] Recipe name:', recipe.name)
@@ -618,17 +661,26 @@ function cocktailConfigToRecipeSchema(config: CocktailConfig): DrinkRecipeSchema
 
 async function loadAndDisplayShelf() {
   try {
-    // TEMPORARY: Using example data for styling - comment out API call
-    // const response = await cocktailAPI.getUserShelf();
-    // updateShelfDisplay(response.cocktails, response.agent_greeting);
+    // Fetch saved cocktails from in-memory storage
+    const response = await cocktailAPI.getUserShelf();
+    const savedCocktails = response.cocktails || [];
 
-    // Load example cocktails (first 3 for display)
-    const exampleSummaries = exampleCocktails.slice(0, 3).map(cocktailConfigToSummary);
-    updateShelfDisplay(exampleSummaries, 'Welcome to your cocktail shelf! Here are some example drinks.');
+    // Load example cocktails (exclude first, show next 3)
+    const exampleSummaries = exampleCocktails.slice(1, 4).map(cocktailConfigToSummary);
+
+    // Combine example cocktails at the start with saved cocktails
+    const allCocktails = [...exampleSummaries, ...savedCocktails];
+
+    // Use API greeting if available
+    const greeting = response.agent_greeting || 'Welcome to your cocktail shelf!';
+    updateShelfDisplay(allCocktails, greeting);
 
   } catch (error) {
     console.error('Failed to load shelf:', error);
-    // Don't show error UI - let the app continue working
+
+    // Fallback to example data only if fails
+    const exampleSummaries = exampleCocktails.slice(1, 4).map(cocktailConfigToSummary);
+    updateShelfDisplay(exampleSummaries, 'Welcome to your cocktail shelf! Here are some example drinks.');
   }
 }
 
@@ -648,11 +700,9 @@ function updateShelfDisplay(cocktails: any[], greeting: string) {
   if (isShelfTabActive) {
     const recipePanel = document.querySelector('.recipe-content');
     if (recipePanel) {
-      cocktails.forEach((cocktail, index) => {
-        if (index < 3) { // Limit to 3 visible cocktails
-          const shelfBox = createShelfBox(cocktail);
-          recipePanel.appendChild(shelfBox);
-        }
+      cocktails.forEach((cocktail) => {
+        const shelfBox = createShelfBox(cocktail);
+        recipePanel.appendChild(shelfBox);
       });
     }
   }
@@ -663,10 +713,20 @@ function createShelfBox(cocktail: any) {
   shelfBox.className = 'shelf-box';
   shelfBox.style.cursor = 'pointer';
 
-  // TEMPORARY: Use example cocktail data to get the glass type and liquid color
-  const exampleCocktail = exampleCocktails.find(c => c.id === cocktail.id);
-  const glassType = (exampleCocktail?.glassType as GlassIconName) || 'cocktail';
-  const liquidColor = exampleCocktail?.liquidColor || '#CC2739';
+  // Use cocktail's own visual data if available (for saved cocktails), otherwise look for example
+  let glassType: GlassIconName;
+  let liquidColor: string;
+
+  if (cocktail.glassType && cocktail.liquidColor) {
+    // Saved cocktail with visual data
+    glassType = cocktail.glassType as GlassIconName;
+    liquidColor = cocktail.liquidColor;
+  } else {
+    // Example cocktail - look it up
+    const exampleCocktail = exampleCocktails.find(c => c.id === cocktail.id);
+    glassType = (exampleCocktail?.glassType as GlassIconName) || 'cocktail';
+    liquidColor = exampleCocktail?.liquidColor || '#CC2739';
+  }
 
   // Generate glass icon SVG
   const generator = glassIconGenerators[glassType];
@@ -801,7 +861,7 @@ function showRecipeLoading() {
   }
 }
 
-async function selectAndDisplayCocktail(cocktail: CocktailDetail) {
+async function selectAndDisplayCocktail(cocktail: any) {
   try {
     // Update drink title with the cocktail name
     console.log('[DRINK TITLE] Updating drink title to:', cocktail.name);
@@ -813,7 +873,7 @@ async function selectAndDisplayCocktail(cocktail: CocktailDetail) {
       // Clear previous content and errors
       ingredientsBox.innerHTML = '';
 
-      cocktail.ingredients.forEach((ing, index) => {
+      cocktail.ingredients.forEach((ing: any, index: number) => {
         const messageDiv = document.createElement('div');
         messageDiv.className = 'message bot';
         messageDiv.textContent = `${index + 1}. ${ing.quantity} ${ing.unit} ${ing.name}`;
@@ -833,8 +893,14 @@ async function selectAndDisplayCocktail(cocktail: CocktailDetail) {
       recipeBox.appendChild(messageDiv);
     }
 
-    // Update 3D scene if needed
-    updateSceneForCocktail(cocktail);
+    // Render in 3D if recipe data is available (for saved cocktails)
+    if (cocktail.recipe && (window as any).renderDrinkFromBackend) {
+      console.log('[3D RENDER] Rendering saved cocktail in 3D');
+      (window as any).renderDrinkFromBackend(cocktail.recipe);
+    } else {
+      // Update 3D scene for older cocktails without full recipe
+      updateSceneForCocktail(cocktail);
+    }
 
   } catch (error) {
     console.error('Error displaying cocktail:', error);
@@ -853,6 +919,43 @@ function updateDrinkTitle(cocktailName: string) {
         </svg>
       </button>
     `;
+
+    // Attach click handler to save button
+    const saveBtn = drinkTitleContainer.querySelector('.drink-action-btn');
+    saveBtn?.addEventListener('click', handleSaveDrink);
+  }
+}
+
+// Handle saving the current drink to shelf
+async function handleSaveDrink() {
+  if (!currentDisplayedRecipe) {
+    showNotification('No drink to save', 'error');
+    console.error('No drink to save');
+    return;
+  }
+
+  try {
+    // Check if drink already exists in shelf (to prevent duplicates)
+    const exists = await cocktailAPI.checkDrinkExists(currentDisplayedRecipe.name);
+
+    if (exists) {
+      showNotification(`${currentDisplayedRecipe.name} is already in your shelf`, 'info');
+      return;
+    }
+
+    // Save drink to in-memory shelf
+    await cocktailAPI.saveDrinkToShelf(currentDisplayedRecipe);
+
+    // Show success notification
+    showNotification(`${currentDisplayedRecipe.name} saved to shelf!`, 'success');
+
+    // Refresh shelf panel
+    if ((window as any).refreshShelfPanel) {
+      (window as any).refreshShelfPanel();
+    }
+  } catch (error) {
+    console.error('Failed to save drink:', error);
+    showNotification('Failed to save drink', 'error');
   }
 }
 
@@ -985,6 +1088,9 @@ chatInput?.addEventListener('keypress', (e) => {
 // Expose renderDrinkFromBackend globally for WebSocket updates
 (window as any).renderDrinkFromBackend = renderDrinkFromBackend;
 
+// Expose handleSaveDrink globally for ShelfPanel
+(window as any).handleSaveDrink = handleSaveDrink;
+
 // Handle placeholder label visibility
 const chatInputElement = document.getElementById('chat-input') as HTMLInputElement;
 const sendMessageTitle = document.querySelector('.send-message-title') as HTMLElement;
@@ -1060,7 +1166,7 @@ setTimeout(showArthurGreeting, 2000);
 setTimeout(() => {
   const profileImg = document.getElementById('profile-img') as HTMLImageElement;
   if (profileImg) {
-    profileImg.src = '/src/img/image_3.png';
+    profileImg.src = '/img/image_3.png';
   }
 }, 0);
 

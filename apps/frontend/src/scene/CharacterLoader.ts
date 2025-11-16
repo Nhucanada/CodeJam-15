@@ -18,7 +18,7 @@ export class CharacterLoader {
     this.scene = scene
 
     return new Promise((resolve, reject) => {
-      const modelPath = './src/models/male_character_ps1-style/scene.gltf'
+      const modelPath = '/models/male_character_ps1-style/scene.gltf'
 
       this.loader.load(
         modelPath,
