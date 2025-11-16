@@ -22,11 +22,11 @@ class Prompt:
 
     def prepend(self, part: str) -> None:
         """Prepend a segment to the prompt."""
-        self._segments.insert(0, part)
+        np.insert(self._segments, 0, part)
 
     def append(self, part: str) -> None:
         """Append a segment to the prompt."""
-        self._segments.append(part)
+        np.append(self._segments, part)
 
     def set(self, parts: Iterable[str]) -> None:
         """Set the segments explicitly."""
@@ -45,28 +45,28 @@ class Prompt:
         if not result:
             return
         if isinstance(result, str):
-            self.append(result)
+            np.append(self._segments, result)
         elif isinstance(result, Iterable):
             for seg in result:
-                if seg: self.append(seg)
+                if seg: np.append(self._segments, seg)
 
     def clear(self) -> None:
         """Reset complete prompt."""
-        self._segments.clear()
+        np.empty(self._segments)
 
     def copy(self) -> "Prompt":
         """Create a copy."""
         p = Prompt(sep=self._sep)
-        p.set(self._segments.copy())
+        p._segments = np.copy(self._segments)
         return p
 
     def __add__(self, other: Any) -> "Prompt":
         p = self.copy()
-        p.append(str(other))
+        np.append(p._segments, str(other))
         return p
 
     def __iadd__(self, other: Any) -> "Prompt":
-        self.append(str(other))
+        np.append(self._segments, str(other))
         return self
 
     def __repr__(self) -> str:

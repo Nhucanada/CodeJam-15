@@ -9,6 +9,9 @@ from src.api.v1 import auth_routes, chat_routes, static_asset_routes, cocktail_r
 from src.core.config import get_settings
 from src.infra.supabase_client import init_supabase
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -18,7 +21,6 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown: Cleanup if needed
     pass
-
 
 # Initialize FastAPI app
 settings = get_settings()

@@ -33,7 +33,7 @@ class OutgoingMessage(BaseModel):
     """Message sent to client via WebSocket."""
     type: str = Field(description="Message type")
     message_id: str = Field(description="Unique message identifier")
-    content: Optional[str] = Field(None, description="Message content")
+    content: Optional[Dict[str, Any]] = Field(None, description="Message content as JSON schema")
     delta: Optional[str] = Field(None, description="Stream delta content")
     complete: Optional[bool] = Field(None, description="Whether stream is complete")
     timestamp: str = Field(default_factory=lambda: datetime.utcnow().isoformat())

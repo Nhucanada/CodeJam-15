@@ -4,8 +4,7 @@ import json
 import logging
 import re
 import uuid
-from typing import Any, AsyncGenerator, Dict, List, Optional
-from uuid import UUID
+from typing import Optional
 
 from fastapi import WebSocket, status
 from supabase import Client
@@ -419,7 +418,7 @@ async def process_user_message(
     message: IncomingMessage,
     session: ChatSession,
     supabase: Client
-) -> AsyncGenerator[OutgoingMessage, None]:
+) -> OutgoingMessage:
     """
     Process a user message and generate AI response using AgenticEngine.
     
@@ -431,8 +430,8 @@ async def process_user_message(
         session: Current chat session
         supabase: Supabase client instance
         
-    Yields:
-        OutgoingMessage instances (streaming response)
+    Returns:
+        OutgoingMessage with the complete response
     """
     try:
         from src.infra.agent_core.factory import get_agentic_engine
@@ -443,16 +442,6 @@ async def process_user_message(
         # Add user message to history
         if message.content:
             session.add_to_history("user", message.content)
-        
-        # Send stream start
-        yield OutgoingMessage(
-            type=MessageType.STREAM_START,
-            message_id=message_id,
-            metadata={
-                "user_id": session.user.id,
-                "session_id": session.session_id
-            }
-        )
         
         # Get conversation context
         context = session.get_context_string(max_messages=10)
@@ -474,38 +463,31 @@ async def process_user_message(
             top_k=5,
             rag_enabled=True
         )
+
+        # print(result)
+        logger.info(result)
         
-        # Extract the completion
-        completion = result.get("completion", "")
-        template_name = result.get("template_name", "unknown")
-        retrieved_chunks = result.get("retrieved_chunks", [])
+        # Extract the completion as dict/JSON object
+        completion = result.get("completion", {})
         
-        # Stream the response in chunks for better UX
-        if completion:
-            chunk_size = 20  # Stream in chunks of 20 characters
-            for i in range(0, len(completion), chunk_size):
-                chunk = completion[i:i + chunk_size]
-                yield OutgoingMessage(
-                    type=MessageType.STREAM_DELTA,
-                    message_id=message_id,
-                    delta=chunk,
-                    complete=False
-                )
+        # print(completion)
+        logger.info(completion)
         
-        # Add assistant response to history
-        session.add_to_history("assistant", completion)
+        # Add assistant response to history (use conversation field for text history)
+        conversation_text = completion.get("conversation", "") if isinstance(completion, dict) else str(completion)
+        session.add_to_history("assistant", conversation_text)
         
-        # Send stream end with full response and metadata
-        yield OutgoingMessage(
-            type=MessageType.STREAM_END,
+        # Return complete response with metadata
+        return OutgoingMessage(
+            type=MessageType.ASSISTANT,
             message_id=message_id,
             complete=True,
             content=completion,
             metadata={
                 "user_id": session.user.id,
                 "session_id": session.session_id,
-                "template_used": template_name,
-                "retrieved_count": len(retrieved_chunks),
+                "template_used": result.get("template_name", ""),
+                "retrieved_count": len(result.get("retrieved_chunks", [])),
                 "conversation_length": len(session.conversation_history)
             }
         )
@@ -517,12 +499,17 @@ async def process_user_message(
         logger.error(f"Error processing message: {str(e)}", exc_info=True)
         
         # Add error to history for context
+        error_msg = f"I encountered an error processing your request: {str(e)}"
         session.add_to_history("system", f"Error: {str(e)}")
         
-        yield OutgoingMessage(
+        return OutgoingMessage(
             type=MessageType.ERROR,
             message_id=session.generate_message_id(),
-            content=f"I encountered an error processing your request: {str(e)}"
+            content={
+                "error": str(e),
+                "conversation": error_msg,
+                "action_type": None
+            }
         )
 
 
@@ -554,7 +541,7 @@ async def handle_chat_connection(
                 should_reconnect=False,
                 redirect_to="/login"
             )
-            await websocket.send_json(error_msg.model_dump())
+            await websocket.send_json(error_msg.model_dump(mode='json'))
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
             return None
 
@@ -567,8 +554,8 @@ async def handle_chat_connection(
             user_id=user.id,
             session_id=session_id
         )
-        await websocket.send_json(connection_msg.model_dump())
-
+        await websocket.send_json(connection_msg.model_dump(mode='json'))
+        
         logger.info(f"User {user.id} connected to chat session {session_id}")
         return session
 
@@ -579,7 +566,7 @@ async def handle_chat_connection(
             detail=f"Failed to establish connection: {str(e)}",
             code=status.WS_1011_INTERNAL_ERROR
         )
-        await websocket.send_json(error_msg.model_dump())
+        await websocket.send_json(error_msg.model_dump(mode='json'))
         await websocket.close(code=status.WS_1011_INTERNAL_ERROR)
         return None
 
@@ -617,7 +604,7 @@ async def handle_message(
                     should_reconnect=False,
                     redirect_to="/login"
                 )
-                await websocket.send_json(error_msg.model_dump())
+                await websocket.send_json(error_msg.model_dump(mode='json'))
                 return False
 
             # Verify it's the same user
@@ -629,15 +616,15 @@ async def handle_message(
                     should_reconnect=False,
                     redirect_to="/login"
                 )
-                await websocket.send_json(error_msg.model_dump())
+                await websocket.send_json(error_msg.model_dump(mode='json'))
                 return False
 
         # Process message based on type
         if message.type == MessageType.USER or message.type == "user":
-            # Process user message and stream response
-            async for response in process_user_message(message, session, supabase):
-                await websocket.send_json(response.model_dump())
-
+            # Process user message and send response
+            response = await process_user_message(message, session, supabase)
+            await websocket.send_json(response.model_dump(mode='json'))
+        
         elif message.type == MessageType.TYPING:
             # Handle typing indicator (could broadcast to other participants)
             pass
@@ -654,5 +641,5 @@ async def handle_message(
             detail=f"Failed to process message: {str(e)}",
             code=status.WS_1011_INTERNAL_ERROR
         )
-        await websocket.send_json(error_msg.model_dump())
+        await websocket.send_json(error_msg.model_dump(mode='json'))
         return True  # Continue connection despite error
