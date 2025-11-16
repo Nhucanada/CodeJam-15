@@ -66,6 +66,14 @@ async def signup_user(
 
         import logging
         logging.debug(f"[auth_service.signup_user] Signup data: email={signup_data.email}, full_name={signup_data.full_name}")
+
+        # Check if user already exists
+        existing_user_response = supabase.auth.admin.get_user_by_email(signup_data.email)
+        if existing_user_response and existing_user_response.user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A user with this email already exists"
+            )
         
         # Sign up user
         response = supabase.auth.sign_up({
