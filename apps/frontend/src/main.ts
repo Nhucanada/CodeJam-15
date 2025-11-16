@@ -10,12 +10,13 @@ import { CameraSetup } from './scene/CameraSetup'
 import { ControlsSetup } from './scene/ControlsSetup'
 import { chatWebSocket } from './websocket/chatHandler'
 import { cocktailAPI } from './api/client'
-import type { CocktailDetail, DrinkRecipeSchema } from './types/cocktail'
+import type { CocktailDetail, DrinkRecipeSchema, CocktailSummary } from './types/cocktail'
 import { LoginOverlay } from './components/LoginOverlay'
 import { authAPI } from './api/client'
 import { exampleCocktails } from './data/cocktails'
-import { glassTypeToRenderer, garnishToRenderer } from './types'
+import { glassTypeToRenderer, garnishToRenderer, type CocktailConfig } from './types'
 import { mapBackendDrinkToFrontend } from './utils/drinkMapper'
+import { glassIconGenerators, type GlassIconName } from './ui/GlassIcons'
 
 // Token refresh management
 class TokenManager {
@@ -595,10 +596,25 @@ chatWebSocket.onMessage((message) => {
   console.log('Received WebSocket message:', message);
 });
 
+// TEMPORARY: Helper function to convert example cocktail data to CocktailSummary format
+function cocktailConfigToSummary(config: CocktailConfig): CocktailSummary {
+  return {
+    id: config.id || '',
+    name: config.name || '',
+    ingredients_summary: config.ingredients.map(i => i.name).join(', '),
+    created_at: new Date().toISOString()
+  };
+}
+
 async function loadAndDisplayShelf() {
   try {
-    const response = await cocktailAPI.getUserShelf();
-    updateShelfDisplay(response.cocktails, response.agent_greeting);
+    // TEMPORARY: Using example data for styling - comment out API call
+    // const response = await cocktailAPI.getUserShelf();
+    // updateShelfDisplay(response.cocktails, response.agent_greeting);
+
+    // Load example cocktails (first 3 for display)
+    const exampleSummaries = exampleCocktails.slice(0, 3).map(cocktailConfigToSummary);
+    updateShelfDisplay(exampleSummaries, 'Welcome to your cocktail shelf! Here are some example drinks.');
 
     // Reset drink title to default when shelf loads successfully
     resetDrinkTitle();
@@ -683,8 +699,19 @@ function createShelfBox(cocktail: any) {
   shelfBox.className = 'shelf-box';
   shelfBox.style.cursor = 'pointer';
 
+  // TEMPORARY: Use example cocktail data to get the glass type and liquid color
+  const exampleCocktail = exampleCocktails.find(c => c.id === cocktail.id);
+  const glassType = (exampleCocktail?.glassType as GlassIconName) || 'cocktail';
+  const liquidColor = exampleCocktail?.liquidColor || '#CC2739';
+
+  // Generate glass icon SVG
+  const generator = glassIconGenerators[glassType];
+  const glassIconSvg = generator
+    ? generator({ liquidColor, width: 64, height: 64 })
+    : glassIconGenerators.cocktail({ liquidColor, width: 64, height: 64 });
+
   shelfBox.innerHTML = `
-    <img src="/src/img/ArthurIcon.png" alt="Cocktail" class="drink-img">
+    <div class="drink-img">${glassIconSvg}</div>
     <div class="drink-text">
       <div class="message drink-title">${cocktail.name}</div>
       <div class="message drink-info">${cocktail.ingredients_summary}</div>

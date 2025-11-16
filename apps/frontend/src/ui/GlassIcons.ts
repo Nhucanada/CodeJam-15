@@ -15,7 +15,7 @@ export interface GlassIconProps {
  */
 export function createCocktailIcon({
   liquidColor = '#CC2739',
-  glassColor = '#514E51',
+  glassColor = '#8C8C8C',
   width = 64,
   height = 64,
 }: GlassIconProps = {}): string {
@@ -34,7 +34,7 @@ export function createCocktailIcon({
  */
 export function createHighballIcon({
   liquidColor = '#CC2739',
-  glassColor = '#514E51',
+  glassColor = '#8C8C8C',
   width = 64,
   height = 64,
 }: GlassIconProps = {}): string {
@@ -49,7 +49,7 @@ export function createHighballIcon({
  */
 export function createHurricaneIcon({
   liquidColor = '#CC2739',
-  glassColor = '#514E51',
+  glassColor = '#8C8C8C',
   width = 64,
   height = 64,
 }: GlassIconProps = {}): string {
@@ -67,7 +67,7 @@ export function createHurricaneIcon({
  */
 export function createMargaritaIcon({
   liquidColor = '#CC2739',
-  glassColor = '#514E51',
+  glassColor = '#8C8C8C',
   width = 64,
   height = 64,
 }: GlassIconProps = {}): string {
@@ -83,7 +83,7 @@ export function createMargaritaIcon({
  */
 export function createMartiniIcon({
   liquidColor = '#CC2739',
-  glassColor = '#514E51',
+  glassColor = '#8C8C8C',
   width = 64,
   height = 64,
 }: GlassIconProps = {}): string {
@@ -99,7 +99,7 @@ export function createMartiniIcon({
  */
 export function createPintIcon({
   liquidColor = '#CC2739',
-  glassColor = '#514E51',
+  glassColor = '#8C8C8C',
   width = 64,
   height = 64,
 }: GlassIconProps = {}): string {
@@ -114,7 +114,7 @@ export function createPintIcon({
  */
 export function createRocksIcon({
   liquidColor = '#CC2739',
-  glassColor = '#514E51',
+  glassColor = '#8C8C8C',
   width = 64,
   height = 64,
 }: GlassIconProps = {}): string {
@@ -129,7 +129,7 @@ export function createRocksIcon({
  */
 export function createSeidelIcon({
   liquidColor = '#CC2739',
-  glassColor = '#514E51',
+  glassColor = '#8C8C8C',
   width = 64,
   height = 64,
 }: GlassIconProps = {}): string {
@@ -147,7 +147,7 @@ export function createSeidelIcon({
  */
 export function createShotIcon({
   liquidColor = '#CC2739',
-  glassColor = '#514E51',
+  glassColor = '#8C8C8C',
   width = 64,
   height = 64,
 }: GlassIconProps = {}): string {
@@ -162,7 +162,7 @@ export function createShotIcon({
  */
 export function createZombieIcon({
   liquidColor = '#CC2739',
-  glassColor = '#514E51',
+  glassColor = '#8C8C8C',
   width = 64,
   height = 64,
 }: GlassIconProps = {}): string {

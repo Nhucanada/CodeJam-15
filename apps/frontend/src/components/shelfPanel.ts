@@ -1,7 +1,9 @@
   import { cocktailAPI } from '../api/client';
   import type { CocktailSummary, CocktailDetail } from '../types/cocktail';
+  // TEMPORARY: Import example data for styling
+  import { exampleCocktails } from '../data/cocktails';
+  import type { CocktailConfig } from '../types';
   import { glassIconGenerators, type GlassIconName } from '../ui/GlassIcons';
-
   export class ShelfPanel {
     private cocktails: CocktailSummary[] = [];
     private loading: boolean = true;
@@ -24,9 +26,17 @@
     public async loadShelf(): Promise<void> {
       try {
         this.loading = true;
-        const response = await cocktailAPI.getUserShelf();
-        this.cocktails = response.cocktails;
-        this.greeting = response.agent_greeting;
+        // TEMPORARY: Using example data for styling - comment out API call
+        // const response = await cocktailAPI.getUserShelf();
+        // this.cocktails = response.cocktails;
+        // this.greeting = response.agent_greeting;
+
+        // Load example cocktails (first 3 for display)
+        this.cocktails = exampleCocktails.slice(0, 3).map(config =>
+          this.cocktailConfigToSummary(config)
+        );
+        this.greeting = 'Welcome to your cocktail shelf! Here are some example drinks.';
+
         this.updateDisplay();
       } catch (error) {
         console.error('Failed to load shelf:', error);
@@ -75,11 +85,16 @@
       shelfBox.style.cursor = 'pointer';
       shelfBox.style.display = 'none'; // Start hidden, will be shown when shelf view is active
 
-      // Generate a default glass icon (you can make this dynamic based on cocktail type)
-      const glassIcon = this.generateGlassIcon('cocktail', '#CC2739');
+      // TEMPORARY: Use example cocktail data to get the glass type and liquid color
+      const exampleCocktail = exampleCocktails.find(c => c.id === cocktail.id);
+      const glassType = (exampleCocktail?.glassType as GlassIconName) || 'cocktail';
+      const liquidColor = exampleCocktail?.liquidColor || '#CC2739';
+
+      // Generate glass icon SVG
+      const glassIconSvg = this.generateGlassIcon(glassType, liquidColor);
 
       shelfBox.innerHTML = `
-        <div class="drink-img">${glassIcon}</div>
+        <div class="drink-img">${glassIconSvg}</div>
         <div class="drink-text">
           <div class="message drink-title">${this.escapeHtml(cocktail.name)}</div>
           <div class="message drink-info">${this.escapeHtml(cocktail.ingredients_summary)}</div>
@@ -203,6 +218,16 @@
         </div>
       `;
       container.appendChild(emptyDiv);
+    }
+
+    // TEMPORARY: Helper function to convert example cocktail data to CocktailSummary format
+    private cocktailConfigToSummary(config: CocktailConfig): CocktailSummary {
+      return {
+        id: config.id || '',
+        name: config.name || '',
+        ingredients_summary: config.ingredients.map(i => i.name).join(', '),
+        created_at: new Date().toISOString()
+      };
     }
 
     private escapeHtml(text: string): string {
