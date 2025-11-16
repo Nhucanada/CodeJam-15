@@ -57,7 +57,7 @@ private getOverlayHTML(): string {
         
         <div class="toggle-mode">
             <span class="toggle-link" id="toggle-mode">
-            ${this.isSignupMode ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
+            ${this.isSignupMode ? 'Already have an account? Log in' : "Don't have an account? Sign up"}
             </span>
         </div>
         </div>
@@ -146,8 +146,20 @@ private toggleMode(): void {
 }
 
 private refreshOverlay(): void {
-    this.overlay.innerHTML = this.getOverlayHTML();
-    this.attachEventListeners();
+    const parent = this.overlay.parentNode;
+    if (parent) {
+        // Remove old overlay
+        parent.removeChild(this.overlay);
+        // Create new overlay
+        this.overlay = this.createOverlay();
+        this.attachEventListeners();
+        // Add new overlay to parent
+        parent.appendChild(this.overlay);
+    } else {
+        // If not in DOM, just update innerHTML
+        this.overlay.innerHTML = this.getOverlayHTML();
+        this.attachEventListeners();
+    }
 }
 
 private showMessage(element: HTMLElement, message: string): void {
