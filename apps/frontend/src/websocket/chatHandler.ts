@@ -60,7 +60,14 @@ constructor() {
     };
   }
 
-    private showChatError(title: string, message?: string) {
+  private showChatError(title: string, message?: string) {
+    // Don't show WebSocket errors if login overlay is visible
+    const loginOverlay = document.querySelector('.login-overlay') as HTMLElement;
+    if (loginOverlay && loginOverlay.style.display === 'flex') {
+      console.log('Suppressing WebSocket error while login overlay is visible:', title);
+      return;
+    }
+
     const chatMessages = document.querySelector('.chat-messages .message-container');
     if (!chatMessages) return;
 
@@ -235,6 +242,15 @@ private attemptReconnect() {
     console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
     setTimeout(() => this.connect(), 2000 * this.reconnectAttempts);
     }
+}
+
+public reconnect() {
+    console.log('Manually reconnecting WebSocket...');
+    this.disconnect();
+    // Small delay before reconnecting to ensure cleanup is complete
+    setTimeout(() => {
+        this.connect();
+    }, 500);
 }
 
 public sendMessage(content: string) {

@@ -55,6 +55,43 @@ export const authAPI = {
 
     isAuthenticated: () => {
         return !!localStorage.getItem('access_token');
+    },
+
+    refreshToken: async () => {
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (!refreshToken) {
+            throw new Error('No refresh token available');
+        }
+
+        const response = await fetch('http://localhost:8000/api/v1/auth/refresh', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                refresh_token: refreshToken
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Refresh token failed:', errorData);
+            // Refresh token is invalid, need to re-authenticate
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            throw new Error(errorData.detail || 'Refresh token expired');
+        }
+
+        const data = await response.json();
+        console.log('Token refresh successful:', data);
+
+        // Update tokens in localStorage
+        if (data.tokens) {
+            localStorage.setItem('access_token', data.tokens.access_token);
+            localStorage.setItem('refresh_token', data.tokens.refresh_token);
+        }
+
+        return data;
     }
 };
 
