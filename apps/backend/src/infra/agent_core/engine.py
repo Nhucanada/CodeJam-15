@@ -148,16 +148,11 @@ class AgenticEngine:
             # Add JSON formatting instructions to prompt
             schema_json = response_schema.model_json_schema()
             schema_str = json.dumps(schema_json, indent=2)
-            enhanced_prompt = f"""{prompt}\n
-            [OUTPUT SCHEMA]\n
-            You MUST respond with valid JSON matching the output schema.\n
-            {schema_str}\n
-            Response (JSON only, no other text):\n
-            """
+            enhanced_prompt = f"""{prompt}\n[OUTPUT SCHEMA]\nYou MUST respond with valid JSON matching the output schema.\n{schema_str}\nResponse (JSON only, no other text):\n"""
 
             # TODO: Make inference output enforces schema output
 
-            # logger.info(enhanced_prompt)
+            logger.info(enhanced_prompt)
             
             # Use Gemini's JSON mode or response_mime_type
             response = client.models.generate_content(
@@ -238,7 +233,7 @@ class AgenticEngine:
                     with open(example_path, 'r', encoding='utf-8') as f:
                         content = f.read()
                         curr_example_str += content
-                        self.logger.info(f"Content: {curr_example_str}")
+                        # self.logger.info(f"Content: {curr_example_str}")
                         
                     self.logger.debug(f"Loaded example from {example_file}")
                     examples.append(content)
