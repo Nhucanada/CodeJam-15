@@ -13,7 +13,6 @@ private maxReconnectAttempts = 5;
 private chatHistory: ChatHistoryMessage[] = [];
 private readonly HISTORY_STORAGE_KEY = 'chat_history';
 private readonly MAX_HISTORY_SIZE = 50; // Store last 50 messages
-private readonly HISTORY_TO_SEND = 10; // Send last 10 messages to backend
 
 constructor() {
     this.loadHistory();

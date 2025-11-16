@@ -235,9 +235,8 @@ export class IceLoader {
    * Animate ice cube bobbing up and down continuously using smooth sine wave
    * @param iceName - Name of the ice cube
    * @param centerY - Center Y position for bobbing
-   * @param phaseVariation - Optional phase variation for visual variety (ignored for smooth transition)
    */
-  public animateIceBobbing(iceName: IceName, centerY: number, phaseVariation: number = 0): void {
+  public animateIceBobbing(iceName: IceName, centerY: number): void {
     const ice = this.iceObjects.get(iceName)
     if (!ice) return
 
