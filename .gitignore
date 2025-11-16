@@ -7,6 +7,14 @@ dist/
 build/
 *.tsbuildinfo
 
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+
 # Environment files
 .env
 .env.local

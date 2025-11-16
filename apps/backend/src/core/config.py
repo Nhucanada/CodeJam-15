@@ -10,7 +10,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     """Application settings with environment variable support."""
-    
+    # Pydantic settings
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -58,10 +58,36 @@ class Settings(BaseSettings):
         default=10,
         description="Number of concurrent Gemini API requests allowed"
     )
+    gemini_general_model: str = Field(
+        default="gemini-2.0-flash",
+        description="Default Gemini general model"
+    )
+    gemini_embedding_model: str = Field(
+        default="embedding-001",
+        description="Default Gemini embedding model"
+    )
+
+    # AWS Settings
+    aws_access_key_id: Optional[str] = Field(
+        default=None,
+        description="AWS Access Key ID for S3"
+    )
+    aws_secret_access_key: Optional[str] = Field(
+        default=None,
+        description="AWS Secret Access Key for S3"
+    )
+    aws_region: str = Field(
+        default="us-east-1",
+        description="AWS region for S3 operations"
+    )
+    aws_s3_bucket: Optional[str] = Field(
+        default=None,
+        description="Default S3 bucket name for RAG assets"
+    )
     
     # CORS Settings
     cors_origins: list[str] = Field(
-        default=["http://localhost:5173", "http://localhost:5173"],
+        default=["http://localhost:5173", "http://localhost:8000"],
         description="Allowed CORS origins"
     )
 
