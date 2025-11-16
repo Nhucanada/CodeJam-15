@@ -219,7 +219,7 @@ canvas {
 .ingredients-box {
   flex: 1;
   padding: 20px;
-  height: 12.8%;
+  height: 25%;
   margin-top: 6px;
   margin-left: 19px;
   margin-right: 19px;
@@ -233,7 +233,7 @@ canvas {
 .recipe-box {
   flex: 1;
   padding: 20px;
-  height: 42%;
+  height: 50%;
   margin-top: 6px;
   margin-left: 19px;
   margin-right: 19px;
