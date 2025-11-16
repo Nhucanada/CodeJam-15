@@ -461,11 +461,27 @@ async def process_user_message(
 
         # Extract the completion as dict/JSON object
         completion = result.get("completion", {})
-        
-        # Add assistant response to history (use conversation field for text history)
+
+        # Fix text corruption: if conversation text doesn't match the drink being made, correct it
+        if isinstance(completion, dict):
+            conversation_text = completion.get("conversation", "")
+            drink_recipe = completion.get("drink_recipe", {})
+            drink_name = drink_recipe.get("name", "") if isinstance(drink_recipe, dict) else ""
+            action_type = completion.get("action_type", "")
+
+            # Detect and fix text corruption
+            if drink_name and action_type == "create_drink" and drink_name.lower() not in conversation_text.lower():
+                # Generate corrected conversation text
+                corrected_conversation = f"Ah, a {drink_name}! An excellent choice. I'll prepare one for you right away."
+
+                # Update the completion object with corrected text
+                completion["conversation"] = corrected_conversation
+                conversation_text = corrected_conversation
+
+        # Add assistant response to history (use corrected conversation field for text history)
         conversation_text = completion.get("conversation", "") if isinstance(completion, dict) else str(completion)
         session.add_to_history("assistant", conversation_text)
-        
+
         # Return complete response with metadata
         return OutgoingMessage(
             type=MessageType.ASSISTANT,
