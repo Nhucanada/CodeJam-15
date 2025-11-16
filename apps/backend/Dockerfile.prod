@@ -24,7 +24,7 @@ COPY --from=build /usr/local /usr/local
 COPY --from=build /app /app
 
 # Add AWS Lambda Web Adapter as an extension
-COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9 \
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 \
     /lambda-adapter \
     /opt/extensions/aws-lambda-adapter
 
