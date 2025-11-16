@@ -445,28 +445,18 @@ async def process_user_message(
         # Frontend now sends full conversation history in content field
         # No need to process separate history array or build context
         user_input = message.content or ""
-
-        logger.info(f"[DEBUG] ========== MESSAGE PROCESSING ==========")
-        logger.info(f"[DEBUG] Full content with history from frontend:\n{user_input}")
-        logger.info(f"[DEBUG] ==========================================")
-
-        # TEMP: Disable RAG to test if it's causing confusion
-        # Let's see if the model works correctly without RAG
-        test_rag_disabled = False  # Set to True to test without RAG
-        actual_rag_enabled = False if test_rag_disabled else True
-
-        logger.info(f"[DEBUG] RAG testing mode: {'DISABLED' if test_rag_disabled else 'ENABLED'}")
-
+        enhanced_input = user_input
+        
         # Get the singleton AgenticEngine
         engine = get_agentic_engine()
 
         # Run the agent with the full content (which includes history)
-        logger.info(f"Running agent with params - user_id: {session.user.id}, top_k: 5, rag_enabled: {actual_rag_enabled}")
+        logger.info(f"Running agent with params - user_id: {session.user.id}, top_k: 5, rag_enabled: True")
         result = await engine.run(
             user_input=user_input,
             user_id=session.user.id,
             top_k=5,
-            rag_enabled=actual_rag_enabled
+            rag_enabled=True
         )
 
         # Extract the completion as dict/JSON object

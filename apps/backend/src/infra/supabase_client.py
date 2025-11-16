@@ -1,6 +1,7 @@
 """Supabase client initialization and management."""
 
 from functools import lru_cache
+from math import log
 from typing import Optional
 
 from supabase import Client, create_client
