@@ -138,6 +138,8 @@ export class IceLoader {
     if (ice && this.scene) {
       this.scene.remove(ice)
       this.iceObjects.delete(iceName)
+      // Clear bobbing parameters for this ice
+      this.bobbingParams.delete(iceName)
     }
   }
 
@@ -150,6 +152,8 @@ export class IceLoader {
         this.scene!.remove(ice)
       })
       this.iceObjects.clear()
+      // Clear bobbing parameters to prevent new ice from inheriting old animations
+      this.bobbingParams.clear()
     }
   }
 
@@ -196,7 +200,7 @@ export class IceLoader {
 
     // Start position: 5 units above target
     const startY = targetY + 5
-    ice.position.y = startY
+    // Don't set ice.position.y here - let the tween handle it to avoid visible pop-in
 
     // Falling animation with elastic effect - goes below target then bounces back
     const dipDepth = 0.15 // How far below target the ice dips into the water
@@ -216,6 +220,8 @@ export class IceLoader {
             ice.position.y = obj.y
           })
           .onComplete(() => {
+            // Explicitly set to targetY to ensure no floating point errors
+            ice.position.y = targetY
             if (onComplete) {
               onComplete()
             }
@@ -227,19 +233,46 @@ export class IceLoader {
 
   /**
    * Animate ice cube bobbing up and down continuously using smooth sine wave
+   * @param iceName - Name of the ice cube
+   * @param centerY - Center Y position for bobbing
+   * @param phaseVariation - Optional phase variation for visual variety (ignored for smooth transition)
    */
-  public animateIceBobbing(iceName: IceName, centerY: number, timeOffset: number = 0): void {
+  public animateIceBobbing(iceName: IceName, centerY: number, phaseVariation: number = 0): void {
     const ice = this.iceObjects.get(iceName)
     if (!ice) return
+
+    // Calculate the phase offset needed to start the sine wave at the current position
+    // This prevents jitter when transitioning from falling to bobbing
+    const speed = Math.PI * 2 / 3 // Full cycle in 3 seconds
+    const currentOffset = ice.position.y - centerY
+    const amplitude = 0.05
+
+    // Calculate initial phase so that sin(phase) * amplitude = currentOffset
+    // This ensures smooth transition from current position
+    let initialPhase = 0
+    if (Math.abs(currentOffset) <= amplitude) {
+      initialPhase = Math.asin(Math.max(-1, Math.min(1, currentOffset / amplitude)))
+    } else {
+      // If current offset exceeds amplitude, clamp to amplitude and adjust
+      initialPhase = currentOffset > 0 ? Math.PI / 2 : -Math.PI / 2
+    }
+
+    // Calculate timeOffset so that the FIRST frame matches the current position exactly
+    // We want: sin((bobbingTime + timeOffset) * speed) = currentOffset / amplitude
+    // So: (bobbingTime + timeOffset) * speed = initialPhase
+    // Therefore: timeOffset = (initialPhase / speed) - bobbingTime
+    // NOTE: We ignore phaseVariation to ensure smooth transition. Variety comes naturally
+    // from ice cubes starting bobbing at different times with different positions.
+    const timeOffset = (initialPhase / speed) - this.bobbingTime
 
     // Store bobbing parameters instead of creating a tween
     // Speed is in radians per second, calculated to match the original 1500ms period (3000ms full cycle)
     // Angular frequency = 2π / period = 2π / 3 ≈ 2.094
     this.bobbingParams.set(iceName, {
       centerY: centerY,
-      amplitude: 0.05,
-      speed: Math.PI * 2 / 3, // Full cycle in 3 seconds
-      timeOffset: timeOffset, // Each ice cube can have different phase
+      amplitude: amplitude,
+      speed: speed,
+      timeOffset: timeOffset,
     })
   }
 
@@ -303,5 +336,15 @@ export class IceLoader {
    */
   public setScene(scene: THREE.Scene): void {
     this.scene = scene
+  }
+
+  /**
+   * Move all ice cubes by a given X offset
+   * Used during glass switching to make ice follow the glass
+   */
+  public moveAllIceByOffset(deltaX: number): void {
+    this.iceObjects.forEach((ice) => {
+      ice.position.x += deltaX
+    })
   }
 }

@@ -3,6 +3,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import * as TWEEN from '@tweenjs/tween.js'
 import { LiquidHandler } from './LiquidHandler'
+import { IceLoader } from './IceLoader'
+import { GarnishLoader } from './GarnishLoader'
 
 type GlassName =
   | 'zombie_glass_0'
@@ -297,7 +299,7 @@ export class GlassLoader {
    * - Current glass swipes out in x direction
    * - New glass drops in from top with bounce
    */
-  public async switchGlass(newGlassName: GlassName): Promise<void> {
+  public async switchGlass(newGlassName: GlassName, iceLoader: IceLoader, garnishLoader?: GarnishLoader): Promise<void> {
     if (!this.scene || !this.controls || !this.camera) {
       throw new Error('Scene, controls, or camera not initialized')
     }
@@ -318,11 +320,16 @@ export class GlassLoader {
       await new Promise<void>((resolve) => {
         const startPos = { x: oldGlass.position.x }
         const endPos = { x: oldGlass.position.x + 5 } // Swipe 5 units to the right
+        let previousX = startPos.x
 
         new TWEEN.Tween(startPos, this.tweenGroup)
           .to(endPos, 500) // 500ms duration
           .easing(TWEEN.Easing.Quadratic.In) // Accelerate out
           .onUpdate(() => {
+            // Calculate the change in X position
+            const deltaX = startPos.x - previousX
+            previousX = startPos.x
+
             oldGlass.position.x = startPos.x
             // Move liquid with glass
             if (liquid) {
@@ -331,15 +338,27 @@ export class GlassLoader {
             if (liquidTop) {
               liquidTop.position.x = startPos.x
             }
+            // Move ice with glass
+            iceLoader.moveAllIceByOffset(deltaX)
+            // Move garnishes with glass
+            if (garnishLoader) {
+              garnishLoader.moveVisibleGarnishesByOffset(deltaX)
+            }
           })
           .onComplete(() => {
-            // Clean up old glass and liquid
+            // Clean up old glass, liquid, and ice
             this.scene!.remove(oldGlass)
             if (liquid) {
               this.scene!.remove(liquid)
             }
             if (liquidTop) {
               this.scene!.remove(liquidTop)
+            }
+            // Remove all ice after the old glass has swiped out
+            iceLoader.removeAllIce()
+            // Remove all garnishes after the old glass has swiped out
+            if (garnishLoader) {
+              garnishLoader.removeAllGarnishes()
             }
             resolve()
           })
