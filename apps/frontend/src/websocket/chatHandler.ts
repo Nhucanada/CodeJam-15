@@ -10,42 +10,91 @@ constructor() {
     this.connect();
 }
 
-private connect() {
+  private connect() {
     const token = localStorage.getItem('access_token');
     if (!token) {
-    console.error('No access token found');
-    return;
+      console.error('No access token found');
+      this.showChatError('No authentication token found. Please log in.');
+      return;
     }
 
     const wsUrl = `ws://localhost:8000/api/v1/chat/ws?token=${token}`;
     this.socket = new WebSocket(wsUrl);
 
     this.socket.onopen = () => {
-    console.log('WebSocket connected');
-    this.reconnectAttempts = 0;
+      console.log('WebSocket connected');
+      this.reconnectAttempts = 0;
+      this.clearChatError(); // Clear any previous errors
     };
 
     this.socket.onmessage = (event) => {
-    try {
+      try {
         const message: EnhancedChatMessage = JSON.parse(event.data);
         this.handleMessage(message);
         if (this.onMessageCallback) {
-        this.onMessageCallback(message);
+          this.onMessageCallback(message);
         }
-    } catch (error) {
+      } catch (error) {
         console.error('Failed to parse WebSocket message:', error);
-    }
+        this.showChatError('Failed to parse server response');
+      }
     };
 
-    this.socket.onclose = () => {
-    console.log('WebSocket disconnected');
-    this.attemptReconnect();
+    this.socket.onclose = (event) => {
+      console.log('WebSocket disconnected', event.code, event.reason);
+
+      if (event.code === 1006) {
+        this.showChatError('🔌 Backend Not Running', 'The chat server needs to be started. Run: npm run dev in the backend folder');
+      } else if (event.code === 1008) {
+        this.showChatError('🔐 Authentication Failed', 'Please log in again.');
+      } else {
+        this.showChatError('📡 Connection Lost', 'Attempting to reconnect...');
+      }
+
+      this.attemptReconnect();
     };
 
     this.socket.onerror = (error) => {
-    console.error('WebSocket error:', error);
+      console.error('WebSocket error:', error);
+      this.showChatError('❌ Connection Error', 'Failed to connect to chat server');
     };
-}
+  }
+
+  private showChatError(title: string, message?: string) {
+    const chatMessages = document.querySelector('.chat-messages .message-container');
+    if (!chatMessages) return;
+
+    // Remove any existing error messages
+    const existingErrors = chatMessages.querySelectorAll('.chat-error');
+    existingErrors.forEach(error => error.remove());
+
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'message bot chat-error';
+    errorDiv.style.cssText = `
+      background: #ffebee;
+      border-left: 4px solid #f44336;
+      color: #c62828;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 4px;
+    `;
+
+    errorDiv.innerHTML = `
+      <div style="font-weight: bold;">${title}</div>
+      ${message ? `<div style="font-size: 0.9em; margin-top: 4px;">${message}</div>` : ''}
+    `;
+
+    chatMessages.appendChild(errorDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  private clearChatError() {
+    const chatMessages = document.querySelector('.chat-messages .message-container');
+    if (chatMessages) {
+      const existingErrors = chatMessages.querySelectorAll('.chat-error');
+      existingErrors.forEach(error => error.remove());
+    }
+  }
 
 private handleMessage(message: EnhancedChatMessage) {
     // Handle chat UI updates
