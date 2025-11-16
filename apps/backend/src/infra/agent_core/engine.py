@@ -1,4 +1,10 @@
 from typing import Any, Optional, Dict, Union
+from pathlib import Path
+
+from sklearn.metrics.pairwise import config_context
+
+from src.core.config import get_settings
+from src.domain.agent_models import AgentActionSchema
 
 from src.core.config import get_settings
 from src.infra.agent_core.prompt import Prompt
@@ -7,9 +13,13 @@ from src.infra.agent_core.prototypes import get_prompt_prototype
 from src.infra.gemini_client import get_gemini_client
 
 from pydantic import BaseModel
+from google.genai import types
 
 import numpy as np
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 class AgenticEngine:
     """
@@ -22,7 +32,8 @@ class AgenticEngine:
     def __init__(
         self,
         rag_strategy: RAGStrategy,
-        fast_template_selector: Optional[Any] = None
+        fast_template_selector: Optional[Any] = None,
+        personality: str = "You are Arthur, the Three.js PS1 throwback Agentic Bartender, who can help the user make classy cocktails."
     ) -> None:
         """
         Args:
@@ -31,6 +42,14 @@ class AgenticEngine:
         """
         self.rag_strategy = rag_strategy
         self.fast_template_selector = fast_template_selector or self._default_selector
+        self.personality = personality
+        self.logger = logging.getLogger(__name__)
+        
+        # Get the examples directory path
+        self.examples_dir = Path(__file__).parent / "examples"
+        
+        # Cache examples per template
+        self._example_cache = {}
 
     def _default_selector(self, user_input: str) -> str:
         """
@@ -47,6 +66,11 @@ class AgenticEngine:
         if user_input.endswith("?"):
             return "question_answering"
         return "classic_completion"
+        
+    async def _llm_selector(self, user_input: str) -> str:
+        # TODO: Use LLM to select the best prompt template based on the user input
+        ...
+        
 
     async def run(
         self,
@@ -65,8 +89,12 @@ class AgenticEngine:
         prompt = get_prompt_prototype(template_name, user_input)
 
         # Append few-shot examples for structured outputs
-        # for example in self._get_few_shot_examples(template_name):
-        #     prompt.append(example)
+        few_shot_examples = self._get_few_shot_examples(template_name)
+        if few_shot_examples:
+            prompt.append("\n\n--- FEW-SHOT EXAMPLES ---")
+            for idx, example in enumerate(few_shot_examples, 1):
+                prompt.append(f"\n\nExample {idx}:\n{example}")
+            prompt.append("\n\n--- END EXAMPLES ---\n")
 
         # Optionally augment via RAG
         retrieved_chunks = []
@@ -81,12 +109,15 @@ class AgenticEngine:
             retrieval_results = self.rag_strategy(user_input, user_id=user_id, top_k=top_k)
             retrieved_chunks = [doc.content for doc in retrieval_results if hasattr(doc, "content")]
             for chunk in retrieved_chunks:
-                prompt.append(f"\n[RETRIEVED]\n{chunk}")
+                prompt.append(f"\n[RETRIEVED] FROM RAG CHUNKS \n{chunk}")
+
+        # logger.info(prompt.as_string())
 
         # Send to Gemini
         completion = await self._invoke_llm(
             model=settings.gemini_model,
             prompt=prompt.as_string(),
+            response_schema=AgentActionSchema,
             **kwargs
         )
 
@@ -102,7 +133,7 @@ class AgenticEngine:
         prompt: str, 
         response_schema: Optional[BaseModel] = None, 
         **kwargs
-    ) -> Union[str, Dict[str, Any]]:
+    ) -> Union[Dict[str, Any], str]:
         """
         Adapter for Gemini API 
 
@@ -124,113 +155,100 @@ class AgenticEngine:
             schema_json = response_schema.model_json_schema()
             enhanced_prompt = f"""{prompt}
 
-            You MUST respond with valid JSON matching this exact schema:
-            {schema_json}
+            You MUST respond with valid JSON matching the output schema.
 
             Response (JSON only, no other text):
             """
+
+            # TODO: Make inference output enforces schema output
+
+            logger.info(enhanced_prompt)
             
             # Use Gemini's JSON mode or response_mime_type
-            response = await client.generate_content_async(
+            response = client.models.generate_content(
                 model=model or settings.gemini_model,
-                prompt=enhanced_prompt,
-                generation_config={
-                    "response_mime_type": "application/json",
-                    "response_schema": schema_json
-                }
+                contents=enhanced_prompt,
+                config={
+                    "temperature": 1.0,
+                    "system_instruction": self.personality,
+                    "response_mime_type": "application/json"
+                },
             )
             
             # Parse and validate
             result = json.loads(response.text)
             validated = response_schema(**result)
-            return validated.model_dump()
+            return validated.model_dump(mode='json')
+
         else:
             # Regular text completion
-            response = await client.generate_content_async(prompt)
+
+            logging.info(f"Prompt: {prompt}")
+        
+            response = client.models.generate_content(
+                model=model or settings.gemini_model,
+                contents=prompt,
+                config={
+                    "temperature": 1.0,
+                    "system_instruction": self.personality,
+                    "response_mime_type": "application/json"
+                },
+            )
+
         return response.text
 
     def _get_few_shot_examples(self, template_name: str) -> list[str]:
         """
         Provide few-shot examples to guide structured outputs per template.
+        Reads examples from .txt files in the examples/ directory.
+        
+        Args:
+            template_name: The name of the prompt template (e.g., "action_generation")
+            
+        Returns:
+            List of example strings showing conversation history -> action schema mappings
         """
-        examples: dict[str, list[str]] = {
-            "question_answering": [
-                (
-                    "[FEW-SHOT][QUESTION_ANSWERING]\n"
-                    "Question: \"What ingredients are required for a classic Negroni?\"\n"
-                    "Answer JSON:\n"
-                    "{\n"
-                    "  \"type\": \"question_answering\",\n"
-                    "  \"question\": \"What ingredients are required for a classic Negroni?\",\n"
-                    "  \"answer\": \"Combine equal parts gin, sweet vermouth, and Campari over ice, then garnish with an orange peel.\",\n"
-                    "  \"citations\": [\n"
-                    "    {\"source\": \"recipes.negroni\", \"relevance\": 0.95}\n"
-                    "  ],\n"
-                    "  \"confidence\": 0.94\n"
-                    "}"
-                ),
-                (
-                    "[FEW-SHOT][QUESTION_ANSWERING]\n"
-                    "Question: \"Which glass should I use for an Old Fashioned?\"\n"
-                    "Answer JSON:\n"
-                    "{\n"
-                    "  \"type\": \"question_answering\",\n"
-                    "  \"question\": \"Which glass should I use for an Old Fashioned?\",\n"
-                    "  \"answer\": \"Serve an Old Fashioned in a chilled rocks glass to preserve the aromatics and provide enough space for the ice cube.\",\n"
-                    "  \"citations\": [\n"
-                    "    {\"source\": \"bar_guide.glassware\", \"relevance\": 0.88}\n"
-                    "  ],\n"
-                    "  \"confidence\": 0.91\n"
-                    "}"
-                ),
-            ],
+        # Check cache first
+        if template_name in self._example_cache:
+            return self._example_cache[template_name]
+        
+        # Map template names to example files
+        template_to_examples = {
             "action_generation": [
-                (
-                    "[FEW-SHOT][ACTION_GENERATION]\n"
-                    "Request: \"Create a tropical mocktail with mango and coconut.\"\n"
-                    "StructuredResponse:\n"
-                    "{\n"
-                    "  \"action\": \"create_drink\",\n"
-                    "  \"input\": \"Create a tropical mocktail with mango and coconut.\",\n"
-                    "  \"output\": {\n"
-                    "    \"name\": \"Tropical Calm\",\n"
-                    "    \"description\": \"A refreshing mango-coconut mocktail with bright citrus.\",\n"
-                    "    \"ingredients\": [\n"
-                    "      {\"name\": \"mango puree\", \"amount\": 3, \"unit\": \"oz\"},\n"
-                    "      {\"name\": \"coconut water\", \"amount\": 2, \"unit\": \"oz\"},\n"
-                    "      {\"name\": \"lime juice\", \"amount\": 0.5, \"unit\": \"oz\"}\n"
-                    "    ],\n"
-                    "    \"instructions\": [\n"
-                    "      \"Shake all ingredients with ice\",\n"
-                    "      \"Strain into a chilled coupe\"\n"
-                    "    ],\n"
-                    "    \"glass_type\": \"coupe\",\n"
-                    "    \"garnish\": \"toasted coconut flakes\"\n"
-                    "  }\n"
-                    "}"
-                )
+                "create_drink_example.txt",
+                "search_drink_example.txt",
+                "suggest_drink_example.txt",
+                "create_drink_custom_example.txt"
+            ],
+            "retrieval_augmented": [
+                "create_drink_example.txt",
+                "search_drink_example.txt"
+            ],
+            "chat_style": [
+                "create_drink_example.txt",
+                "suggest_drink_example.txt"
             ],
             "classic_completion": [
-                (
-                    "[FEW-SHOT][CLASSIC_COMPLETION]\n"
-                    "Prompt: \"Describe the mouthfeel of a Manhattan.\"\n"
-                    "Response:\n"
-                    "{\n"
-                    "  \"structure\": \"descriptive_paragraph\",\n"
-                    "  \"content\": \"A Manhattan coats the palate with a silky texture from sweet vermouth, balanced by rye spice and a lingering herbal finish from bitters.\"\n"
-                    "}"
-                ),
-                (
-                    "[FEW-SHOT][CLASSIC_COMPLETION]\n"
-                    "Prompt: \"Give a tasting note for a citrus-forward gin.\"\n"
-                    "Response:\n"
-                    "{\n"
-                    "  \"structure\": \"tasting_note\",\n"
-                    "  \"content\": \"Bright lemon verbena on the nose, candied grapefruit peel mid-palate, and a crisp juniper snap on the finish.\"\n"
-                    "}"
-                ),
-            ],
+                "create_drink_example.txt"
+            ]
         }
-
-        return examples.get(template_name, [])
-
+        
+        examples = []
+        example_files = template_to_examples.get(template_name, [])
+        
+        for example_file in example_files:
+            example_path = self.examples_dir / example_file
+            try:
+                if example_path.exists():
+                    with open(example_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                        examples.append(content)
+                        self.logger.debug(f"Loaded example from {example_file}")
+                else:
+                    self.logger.warning(f"Example file not found: {example_path}")
+            except Exception as e:
+                self.logger.error(f"Error reading example file {example_file}: {e}")
+        
+        # Cache examples for this template
+        self._example_cache[template_name] = examples
+        return examples

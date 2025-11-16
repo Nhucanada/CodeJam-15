@@ -1,0 +1,70 @@
+CONVERSATION:
+User: Can you make me something with gin and cucumber? Something refreshing?
+Arthur: Absolutely! Let me craft a refreshing cucumber gin cocktail for you.
+
+EXPECTED_OUTPUT:
+{
+  "id": "example-004",
+  "name": "Create Cucumber Gin Cocktail",
+  "created_at": "2025-11-16T12:00:00Z",
+  "updated_at": "2025-11-16T12:00:00Z",
+  "action_type": "create_drink",
+  "confidence": 0.87,
+  "reasoning": "User requested a drink with specific ingredients (gin and cucumber) and a flavor profile (refreshing). This is a drink creation request with customization.",
+  "conversation": "Perfect! I'm crafting a refreshing Cucumber Cooler for you - it's light, crisp, and incredibly refreshing with gin and fresh cucumber.",
+  "drink_recipe": {
+    "name": "Cucumber Cooler",
+    "description": "A light and refreshing cocktail with gin, cucumber, lime, and elderflower",
+    "ingredients": [
+      {
+        "name": "Gin",
+        "amount": 50,
+        "color": "#e6f2f0",
+        "unit": "ml"
+      },
+      {
+        "name": "Fresh Cucumber",
+        "amount": 3,
+        "color": "#90ee90",
+        "unit": "slices"
+      },
+      {
+        "name": "Lime Juice",
+        "amount": 20,
+        "color": "#ccff00",
+        "unit": "ml"
+      },
+      {
+        "name": "Elderflower Liqueur",
+        "amount": 15,
+        "color": "#fffacd",
+        "unit": "ml"
+      },
+      {
+        "name": "Simple Syrup",
+        "amount": 10,
+        "color": "#ffffff",
+        "unit": "ml"
+      },
+      {
+        "name": "Soda Water",
+        "amount": 50,
+        "color": "#e6f7ff",
+        "unit": "ml"
+      }
+    ],
+    "instructions": [
+      "Muddle cucumber slices in a shaker",
+      "Add gin, lime juice, elderflower liqueur, and simple syrup",
+      "Fill shaker with ice and shake vigorously",
+      "Double strain into a rocks glass over fresh ice",
+      "Top with soda water",
+      "Garnish with cucumber ribbon"
+    ],
+    "glass_type": "rocks glass",
+    "garnish": "cucumber ribbon",
+    "has_ice": true
+  },
+  "suggest_drink": null
+}
+

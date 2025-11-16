@@ -1,4 +1,4 @@
-# cocktail_db.py
+# sets up the database archetecture locally for when .py files were being used.
 import os
 
 from sqlalchemy import (
