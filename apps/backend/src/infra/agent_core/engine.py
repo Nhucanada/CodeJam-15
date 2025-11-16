@@ -5,6 +5,8 @@ from sklearn.metrics.pairwise import config_context
 
 from src.core.config import get_settings
 from src.domain.agent_models import AgentActionSchema
+
+from src.core.config import get_settings
 from src.infra.agent_core.prompt import Prompt
 from src.infra.agent_core.rag import RAGStrategy, RAGRetrievalResult
 from src.infra.agent_core.prototypes import get_prompt_prototype
