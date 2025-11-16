@@ -1125,7 +1125,7 @@ async function performLogout() {
     // Call backend logout endpoint
     const token = localStorage.getItem('access_token');
     if (token) {
-      const response = await fetch('http://localhost:8000/api/v1/auth/logout', {
+      const response = await fetch('https://barline-30370655280.us-east4.run.app:8000/api/v1/auth/logout', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

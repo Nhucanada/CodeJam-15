@@ -1,6 +1,6 @@
 export const authAPI = {
     signup: async (email: string, password: string, full_name: string) => {
-        const response = await fetch('http://localhost:8000/api/v1/auth/signup', {
+        const response = await fetch('https://barline-30370655280.us-east4.run.app:8000/api/v1/auth/signup', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -21,7 +21,7 @@ export const authAPI = {
     },
 
     login: async (email: string, password: string) => {
-        const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+        const response = await fetch('https://barline-30370655280.us-east4.run.app:8000/api/v1/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -63,7 +63,7 @@ export const authAPI = {
             throw new Error('No refresh token available');
         }
 
-        const response = await fetch('http://localhost:8000/api/v1/auth/refresh', {
+        const response = await fetch('https://barline-30370655280.us-east4.run.app:8000/api/v1/auth/refresh', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

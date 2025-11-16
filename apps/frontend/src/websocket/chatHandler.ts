@@ -27,7 +27,7 @@ constructor() {
       return;
     }
 
-    const wsUrl = `ws://localhost:8000/api/v1/chat/ws?token=${token}`;
+    const wsUrl = `ws://barline-30370655280.us-east4.run.app:8000/api/v1/chat/ws?token=${token}`;
     this.socket = new WebSocket(wsUrl);
 
     this.socket.onopen = () => {
