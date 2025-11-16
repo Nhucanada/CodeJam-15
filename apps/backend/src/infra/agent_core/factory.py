@@ -31,7 +31,8 @@ def get_agentic_engine() -> AgenticEngine:
         RAG_TABLES = [
             "saq_product_embedding",
             "ingredient_embedding",
-            "cocktail_embedding"
+            "cocktail_embedding",
+            "garnish_embedding"
         ]
         
         # Initialize RAG strategy with Supabase vector database

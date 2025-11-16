@@ -10,12 +10,13 @@ import { CameraSetup } from './scene/CameraSetup'
 import { ControlsSetup } from './scene/ControlsSetup'
 import { chatWebSocket } from './websocket/chatHandler'
 import { cocktailAPI } from './api/client'
-import type { CocktailDetail, DrinkRecipeSchema } from './types/cocktail'
+import type { CocktailDetail, DrinkRecipeSchema, CocktailSummary } from './types/cocktail'
 import { LoginOverlay } from './components/LoginOverlay'
 import { authAPI } from './api/client'
 import { exampleCocktails } from './data/cocktails'
-import { glassTypeToRenderer, garnishToRenderer } from './types'
+import { glassTypeToRenderer, garnishToRenderer, type CocktailConfig } from './types'
 import { mapBackendDrinkToFrontend } from './utils/drinkMapper'
+import { glassIconGenerators, type GlassIconName } from './ui/GlassIcons'
 
 // Token refresh management
 class TokenManager {
@@ -446,8 +447,7 @@ function createIceCubesForGlass(glassName: GlassName, loadGarnishAfter: boolean 
           // Animate falling
           iceLoader.animateIceFalling(iceName, baseY, () => {
             // After falling completes, start bobbing with different time offset for each cube
-            const timeOffset = Math.random() * Math.PI * 2 // Random phase 0 to 2π
-            iceLoader.animateIceBobbing(iceName, baseY, timeOffset)
+            iceLoader.animateIceBobbing(iceName, baseY)
 
             // If this is the last ice cube and we should load garnish, trigger garnish falling
             if (i === lastIceIndex && loadGarnishAfter) {
@@ -542,7 +542,6 @@ const recipeBox = document.querySelector('.recipe-box') as HTMLElement
 const allPanelHeaders = document.querySelectorAll('.message.panel-header') as NodeListOf<HTMLElement>
 const ingredientsHeader = allPanelHeaders[0] // First header is "Ingredients:"
 const recipeHeader = allPanelHeaders[1] // Second header is "Recipe:"
-const shelfBoxes = document.querySelectorAll('.shelf-box') as NodeListOf<HTMLElement>
 
 function showRecipe() {
   // Show recipe elements
@@ -551,7 +550,8 @@ function showRecipe() {
   if (ingredientsHeader) ingredientsHeader.style.display = 'block'
   if (recipeHeader) recipeHeader.style.display = 'block'
 
-  // Hide shelf elements
+  // Hide shelf elements (re-query each time to catch dynamically added boxes)
+  const shelfBoxes = document.querySelectorAll('.shelf-box') as NodeListOf<HTMLElement>
   shelfBoxes.forEach(box => box.style.display = 'none')
 
   // Update button states
@@ -566,7 +566,8 @@ function showShelf() {
   if (ingredientsHeader) ingredientsHeader.style.display = 'none'
   if (recipeHeader) recipeHeader.style.display = 'none'
 
-  // Show shelf elements (with images and text)
+  // Show shelf elements (re-query each time to catch dynamically added boxes)
+  const shelfBoxes = document.querySelectorAll('.shelf-box') as NodeListOf<HTMLElement>
   shelfBoxes.forEach(box => box.style.display = 'flex')
 
   // Update button states
@@ -582,67 +583,54 @@ shelfButton?.addEventListener('click', showShelf)
 showShelf()
 
 // WebSocket and Chat Integration
-let selectedCocktail: CocktailDetail | null = null;
-
 // Initialize WebSocket
 chatWebSocket.onMessage((message) => {
   console.log('Received WebSocket message:', message);
 });
 
+// TEMPORARY: Helper function to convert example cocktail data to CocktailSummary format
+function cocktailConfigToSummary(config: CocktailConfig): CocktailSummary {
+  return {
+    id: config.id || '',
+    name: config.name || '',
+    ingredients_summary: config.ingredients.map(i => i.name).join(', '),
+    created_at: new Date().toISOString()
+  };
+}
+
+// Helper function to convert CocktailConfig to DrinkRecipeSchema for 3D rendering
+function cocktailConfigToRecipeSchema(config: CocktailConfig): DrinkRecipeSchema {
+  return {
+    name: config.name || 'Unnamed Cocktail',
+    description: config.description || `A delicious ${config.glassType} cocktail`,
+    ingredients: config.ingredients.map(ing => ({
+      name: ing.name,
+      amount: ing.amount,
+      color: ing.color,
+      unit: 'ml'
+    })),
+    instructions: config.instructions || ['Mix ingredients', 'Pour into glass', 'Enjoy!'],
+    glass_type: config.glassType,
+    garnish: config.garnish || null,
+    has_ice: config.hasIce
+  };
+}
+
 async function loadAndDisplayShelf() {
   try {
-    console.log('[SHELF] Loading shelf...');
-    const response = await cocktailAPI.getUserShelf();
-    console.log('[SHELF] Shelf loaded successfully:', response);
+    // TEMPORARY: Using example data for styling - comment out API call
+    // const response = await cocktailAPI.getUserShelf();
+    // updateShelfDisplay(response.cocktails, response.agent_greeting);
 
-    // Clear any existing error messages when backend is working
-    clearAllErrorMessages();
-
-    updateShelfDisplay(response.cocktails, response.agent_greeting);
-
-  // Only reset drink title to default if we're actually switching to shelf view
-  // and don't have a currently selected cocktail
-  console.log('[DRINK TITLE] Checking if we should reset title for shelf view');
-  const shelfButton = Array.from(document.querySelectorAll('.recipe-btn')).find(btn =>
-    btn.textContent === 'SHELF'
-  ) as HTMLButtonElement;
-  const isShelfView = shelfButton?.classList.contains('selected');
-
-  if (isShelfView && !selectedCocktail) {
-    console.log('[DRINK TITLE] Resetting to default for shelf view (no selected cocktail)');
-    resetDrinkTitle();
-  } else if (selectedCocktail) {
-    console.log('[DRINK TITLE] Keeping current cocktail title:', selectedCocktail.name);
-    updateDrinkTitle(selectedCocktail.name);
-  }
+    // Load example cocktails (first 3 for display)
+    const exampleSummaries = exampleCocktails.slice(0, 3).map(cocktailConfigToSummary);
+    updateShelfDisplay(exampleSummaries, 'Welcome to your cocktail shelf! Here are some example drinks.');
 
   } catch (error) {
     console.error('Failed to load shelf:', error);
     // Don't show error UI - let the app continue working
   }
-
-    // Only show error if we're actually in shelf view
-    const shelfButton = document.querySelector('.recipe-btn') as HTMLButtonElement;
-    const isShelfView = shelfButton?.classList.contains('selected');
-
-    if (isShelfView) {
-      // Show user-friendly error message in shelf
-      const recipeContent = document.querySelector('.recipe-content');
-      if (recipeContent) {
-        // Clear any existing content first
-        const existingShelfBoxes = document.querySelectorAll('.shelf-box, .shelf-empty, .shelf-error');
-        existingShelfBoxes.forEach(box => box.remove());
-
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'shelf-error';
-
-        recipeContent.appendChild(errorDiv);
-      }
-    } else {
-      // If we're not in shelf view, just log the error but don't show UI errors
-      console.log('[SHELF] Not in shelf view, skipping error display');
-    }
-  }
+}
 
 function updateShelfDisplay(cocktails: any[], greeting: string) {
   const shelfBoxes = document.querySelectorAll('.shelf-box');
@@ -653,15 +641,20 @@ function updateShelfDisplay(cocktails: any[], greeting: string) {
   // Add greeting message if needed
   console.log('Agent greeting:', greeting);
 
-  // Create new shelf boxes for each cocktail
-  const recipePanel = document.querySelector('.recipe-content');
-  if (recipePanel) {
-    cocktails.forEach((cocktail, index) => {
-      if (index < 3) { // Limit to 3 visible cocktails
-        const shelfBox = createShelfBox(cocktail);
-        recipePanel.appendChild(shelfBox);
-      }
-    });
+  // Check if we're currently in shelf tab before rendering
+  const isShelfTabActive = shelfButton?.classList.contains('selected');
+
+  // Only create shelf boxes if we're in the shelf tab
+  if (isShelfTabActive) {
+    const recipePanel = document.querySelector('.recipe-content');
+    if (recipePanel) {
+      cocktails.forEach((cocktail, index) => {
+        if (index < 3) { // Limit to 3 visible cocktails
+          const shelfBox = createShelfBox(cocktail);
+          recipePanel.appendChild(shelfBox);
+        }
+      });
+    }
   }
 }
 
@@ -670,8 +663,19 @@ function createShelfBox(cocktail: any) {
   shelfBox.className = 'shelf-box';
   shelfBox.style.cursor = 'pointer';
 
+  // TEMPORARY: Use example cocktail data to get the glass type and liquid color
+  const exampleCocktail = exampleCocktails.find(c => c.id === cocktail.id);
+  const glassType = (exampleCocktail?.glassType as GlassIconName) || 'cocktail';
+  const liquidColor = exampleCocktail?.liquidColor || '#CC2739';
+
+  // Generate glass icon SVG
+  const generator = glassIconGenerators[glassType];
+  const glassIconSvg = generator
+    ? generator({ liquidColor, width: 64, height: 64 })
+    : glassIconGenerators.cocktail({ liquidColor, width: 64, height: 64 });
+
   shelfBox.innerHTML = `
-    <img src="/src/img/1742270047720.jpeg" alt="Cocktail" class="drink-img">
+    <div class="drink-img">${glassIconSvg}</div>
     <div class="drink-text">
       <div class="message drink-title">${cocktail.name}</div>
       <div class="message drink-info">${cocktail.ingredients_summary}</div>
@@ -684,15 +688,68 @@ function createShelfBox(cocktail: any) {
       // Show loading state
       showRecipeLoading();
 
-      const detail = await cocktailAPI.getCocktailDetail(cocktail.id);
-      await selectAndDisplayCocktail(detail);
+      // TEMPORARY: Use local example data instead of API call
+      const exampleCocktail = exampleCocktails.find(c => c.id === cocktail.id);
 
-      // Switch to recipe view
-      const recipeButton = Array.from(document.querySelectorAll('.recipe-btn')).find(btn =>
-        btn.textContent === 'RECIPE'
-      ) as HTMLButtonElement;
-      if (recipeButton) {
-        recipeButton.click();
+      if (exampleCocktail) {
+        // Convert to recipe schema and render in 3D
+        const recipeSchema = cocktailConfigToRecipeSchema(exampleCocktail);
+        renderDrinkFromBackend(recipeSchema);
+
+        // Update drink title
+        updateDrinkTitle(exampleCocktail.name || 'Unnamed Cocktail');
+
+        // Update ingredients display
+        const ingredientsBox = document.querySelector('.ingredients-box .message-container');
+        if (ingredientsBox) {
+          ingredientsBox.innerHTML = '';
+          exampleCocktail.ingredients.forEach((ing, index) => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot';
+            messageDiv.textContent = `${index + 1}. ${ing.amount} ml ${ing.name}`;
+            ingredientsBox.appendChild(messageDiv);
+          });
+        }
+
+        // Update recipe display
+        const recipeBox = document.querySelector('.recipe-box .message-container');
+        if (recipeBox) {
+          recipeBox.innerHTML = '';
+
+          // Add description
+          const descDiv = document.createElement('div');
+          descDiv.className = 'message bot';
+          descDiv.textContent = recipeSchema.description;
+          recipeBox.appendChild(descDiv);
+
+          // Add instructions
+          recipeSchema.instructions.forEach((instruction, index) => {
+            const instructionDiv = document.createElement('div');
+            instructionDiv.className = 'message bot';
+            instructionDiv.textContent = `${index + 1}. ${instruction}`;
+            recipeBox.appendChild(instructionDiv);
+          });
+        }
+
+        // Switch to recipe view
+        const recipeButton = Array.from(document.querySelectorAll('.recipe-btn')).find(btn =>
+          btn.textContent === 'RECIPE'
+        ) as HTMLButtonElement;
+        if (recipeButton) {
+          recipeButton.click();
+        }
+      } else {
+        // Fall back to API if local data not found
+        const detail = await cocktailAPI.getCocktailDetail(cocktail.id);
+        await selectAndDisplayCocktail(detail);
+
+        // Switch to recipe view
+        const recipeButton = Array.from(document.querySelectorAll('.recipe-btn')).find(btn =>
+          btn.textContent === 'RECIPE'
+        ) as HTMLButtonElement;
+        if (recipeButton) {
+          recipeButton.click();
+        }
       }
     } catch (error) {
       console.error('Failed to load cocktail details:', error);
@@ -745,8 +802,6 @@ function showRecipeLoading() {
 }
 
 async function selectAndDisplayCocktail(cocktail: CocktailDetail) {
-  selectedCocktail = cocktail;
-
   try {
     // Update drink title with the cocktail name
     console.log('[DRINK TITLE] Updating drink title to:', cocktail.name);
@@ -802,60 +857,7 @@ function updateDrinkTitle(cocktailName: string) {
 }
 
 function showDrinkTitleLoading() {
-  const drinkTitleContainer = document.querySelector('.drink-title-container');
-  if (drinkTitleContainer) {
-    drinkTitleContainer.innerHTML = `
-      <div class="drink-title-loading" style="
-        background: #e3f2fd;
-        border-left: 4px solid #2196f3;
-        color: #1976d2;
-        padding: 12px;
-        border-radius: 4px;
-        text-align: center;
-        font-size: 14px;
-        font-style: italic;
-      ">⏳ Loading drink...</div>
-      <button class="drink-action-btn">
-        <svg width="24" height="24" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M46 8V4H18V8H14V60H18V56H22V52H26V48H30V44H34V48H38V52H42V56H46V60H50V8H46Z" fill="currentColor"/>
-        </svg>
-      </button>
-    `;
-  }
-}
-
-function resetDrinkTitle() {
-  const drinkTitleContainer = document.querySelector('.drink-title-container');
-  if (drinkTitleContainer) {
-    drinkTitleContainer.innerHTML = `
-      <h2 class="drink-title">Select a Drink</h2>
-      <button class="drink-action-btn">
-        <svg width="24" height="24" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M46 8V4H18V8H14V60H18V56H22V52H26V48H30V44H34V48H38V52H42V56H46V60H50V8H46Z" fill="currentColor"/>
-        </svg>
-      </button>
-    `;
-  }
-}
-
-function clearAllErrorMessages() {
-  console.log('[CLEAR ERRORS] Clearing all error messages because backend is working');
-
-  // Clear shelf errors
-  const existingShelfErrors = document.querySelectorAll('.shelf-error');
-  existingShelfErrors.forEach(error => error.remove());
-
-  // Clear recipe errors
-  const existingRecipeErrors = document.querySelectorAll('.recipe-error');
-  existingRecipeErrors.forEach(error => error.remove());
-
-  // Clear chat errors
-  const existingChatErrors = document.querySelectorAll('.chat-error');
-  existingChatErrors.forEach(error => error.remove());
-
-  // Clear drink title errors but preserve current state
-  // Don't handle drink title errors - they shouldn't persist
-  console.log('[CLEAR ERRORS] Skipping drink title error handling');
+  // Do nothing - loading indicator removed
 }
 
 function updateSceneForCocktail(cocktail: CocktailDetail) {
@@ -1061,9 +1063,6 @@ setTimeout(() => {
     profileImg.src = '/src/img/image_3.png';
   }
 }, 0);
-
-// Update login overlay to start token manager after successful login
-const originalLoginOverlay = LoginOverlay;
 
 // Enhanced logout functionality with custom dialog
 function logoutWithConfirmation() {
