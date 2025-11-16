@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 
 from src.core.dependencies import get_current_user, get_supabase_client
-from src.domain.auth_models import User
+from src.domain.auth_models import UserResponse
 from src.domain.cocktail_models import (
     CocktailDetail,
     CocktailResponse,
@@ -16,7 +16,7 @@ from src.domain.cocktail_models import (
     CreateCocktailRequest,
     UserShelfResponse
 )
-from src.infra.repositories.cocktail_repo import CocktailRepository
+from src.infra.cocktail_repo import CocktailRepository
 from supabase import Client as SupabaseClient
 
 logger = logging.getLogger(__name__)
@@ -31,7 +31,7 @@ router = APIRouter(prefix="/cocktails", tags=["Cocktails"])
     description="Retrieve all cocktails associated with the authenticated user for shelf display"
 )
 async def get_user_shelf(
-    current_user: User = Depends(get_current_user),
+    current_user: UserResponse = Depends(get_current_user),
     supabase: SupabaseClient = Depends(get_supabase_client)
 ) -> UserShelfResponse:
     """
@@ -75,7 +75,7 @@ async def get_user_shelf(
 )
 async def get_cocktail(
     cocktail_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: UserResponse = Depends(get_current_user),
     supabase: SupabaseClient = Depends(get_supabase_client)
 ) -> CocktailDetail:
     """
@@ -131,7 +131,7 @@ async def get_cocktail(
 )
 async def create_cocktail(
     cocktail_data: CreateCocktailRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: UserResponse = Depends(get_current_user),
     supabase: SupabaseClient = Depends(get_supabase_client)
 ) -> CocktailResponse:
     """
@@ -187,7 +187,7 @@ async def create_cocktail(
 )
 async def get_cocktail_ingredients(
     cocktail_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: UserResponse = Depends(get_current_user),
     supabase: SupabaseClient = Depends(get_supabase_client)
 ):
     """
@@ -244,7 +244,7 @@ async def get_cocktail_ingredients(
 )
 async def delete_cocktail(
     cocktail_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: UserResponse = Depends(get_current_user),
     supabase: SupabaseClient = Depends(get_supabase_client)
 ):
     """

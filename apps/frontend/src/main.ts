@@ -10,6 +10,33 @@ import { ControlsSetup } from './scene/ControlsSetup'
 import { chatWebSocket } from './websocket/chatHandler'
 import { cocktailAPI } from './api/client'
 import type { CocktailDetail } from './types/cocktail'
+import { LoginOverlay } from './components/LoginOverlay'
+import { authAPI } from './api/client'
+
+// Authentication check and login overlay
+let loginOverlay: LoginOverlay;
+
+function initializeAuth(): void {
+  if (!authAPI.isAuthenticated()) {
+    loginOverlay = new LoginOverlay(() => {
+      console.log('Authentication successful!');
+      // Reload shelf and any other authenticated content
+      if (typeof loadAndDisplayShelf === 'function') {
+        loadAndDisplayShelf();
+      }
+    });
+    loginOverlay.show();
+  }
+}
+
+// Initialize authentication on page load
+initializeAuth();
+
+// Add logout functionality (optional - you can add a logout button later)
+(window as any).logout = () => {
+  authAPI.logout();
+  initializeAuth();
+};
 
 // Scene setup
 const scene = new THREE.Scene()

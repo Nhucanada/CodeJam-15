@@ -1,3 +1,63 @@
+export const authAPI = {
+    signup: async (email: string, password: string, full_name: string) => {
+        const response = await fetch('http://localhost:8000/api/v1/auth/signup', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email,
+                password,
+                full_name
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Registration failed');
+        }
+
+        return response.json();
+    },
+
+    login: async (email: string, password: string) => {
+        const response = await fetch('http://localhost:8000/api/v1/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email,
+                password
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Login failed');
+        }
+
+        const data = await response.json();
+
+        // Store tokens in localStorage
+        if (data.tokens) {
+            localStorage.setItem('access_token', data.tokens.access_token);
+            localStorage.setItem('refresh_token', data.tokens.refresh_token);
+        }
+
+        return data;
+    },
+
+    logout: () => {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+    },
+
+    isAuthenticated: () => {
+        return !!localStorage.getItem('access_token');
+    }
+};
+
 export const cocktailAPI = {
 getUserShelf: async () => {
     const token = localStorage.getItem('access_token');

@@ -19,7 +19,7 @@ from src.domain.chat_models import (
     OutgoingMessage,
 )
 from src.domain.cocktail_models import CreateCocktailRequest
-from src.infra.repositories.cocktail_repo import CocktailRepository
+from src.infra.cocktail_repo import CocktailRepository
 from src.services.auth_service import verify_access_token
 
 logger = logging.getLogger(__name__)
