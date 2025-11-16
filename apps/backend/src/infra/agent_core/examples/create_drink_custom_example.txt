@@ -62,7 +62,7 @@ EXPECTED_OUTPUT:
       "Garnish with cucumber ribbon"
     ],
     "glass_type": "rocks glass",
-    "garnish": "cucumber ribbon",
+    "garnish": "lime",
     "has_ice": true
   },
   "suggest_drink": null

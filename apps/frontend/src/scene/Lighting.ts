@@ -5,6 +5,7 @@ export class Lighting {
   private directionalLight: THREE.DirectionalLight
   private ambientLight: THREE.AmbientLight
   private fillLight: THREE.DirectionalLight
+  private drinkSpotlight: THREE.SpotLight
 
   constructor(scene: THREE.Scene) {
     this.scene = scene
@@ -41,6 +42,20 @@ export class Lighting {
     const barLight2 = new THREE.PointLight(0x44ffff, 0.4, 20)
     barLight2.position.set(5, 3, -10)
     this.scene.add(barLight2)
+
+    // Spotlight focused on the drink for better visibility
+    this.drinkSpotlight = new THREE.SpotLight(0xffffff, 1.5)
+    this.drinkSpotlight.position.set(0, 6, 0)
+    this.drinkSpotlight.angle = Math.PI / 6 // 30 degree cone
+    this.drinkSpotlight.penumbra = 0.3 // Soft edges
+    this.drinkSpotlight.decay = 2
+    this.drinkSpotlight.distance = 10
+    this.drinkSpotlight.castShadow = true
+    this.drinkSpotlight.shadow.mapSize.width = 1024
+    this.drinkSpotlight.shadow.mapSize.height = 1024
+    this.drinkSpotlight.target.position.set(0, 0, 0)
+    this.scene.add(this.drinkSpotlight)
+    this.scene.add(this.drinkSpotlight.target)
   }
 
   public setIntensity(intensity: number): void {

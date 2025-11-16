@@ -19,31 +19,31 @@ EXPECTED_OUTPUT:
       {
         "name": "White Rum",
         "amount": 50,
-        "color": "#ffffff",
+        "color": "#F5F5DC",
         "unit": "ml"
       },
       {
         "name": "Fresh Lime Juice",
         "amount": 25,
-        "color": "#ccff00",
+        "color": "#BFFF00",
         "unit": "ml"
       },
       {
         "name": "Simple Syrup",
         "amount": 20,
-        "color": "#ffffff",
+        "color": "#FFFACD",
         "unit": "ml"
       },
       {
         "name": "Fresh Mint Leaves",
         "amount": 10,
-        "color": "#00ff66",
+        "color": "#3EB489",
         "unit": "leaves"
       },
       {
         "name": "Soda Water",
         "amount": 100,
-        "color": "#e6f7ff",
+        "color": "#E0F7FA",
         "unit": "ml"
       }
     ],
@@ -52,11 +52,10 @@ EXPECTED_OUTPUT:
       "Fill glass with ice cubes",
       "Add white rum",
       "Top with soda water",
-      "Stir gently to combine",
-      "Garnish with mint sprig and lime wheel"
+      "Stir gently to combine"
     ],
-    "glass_type": "highball",
-    "garnish": "mint sprig and lime wheel",
+    "glass_type": "highball glass",
+    "garnish": "mint",
     "has_ice": true
   },
   "suggest_drink": null

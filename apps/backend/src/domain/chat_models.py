@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -21,11 +21,18 @@ class MessageType(str, Enum):
     STREAM_END = "stream_end"
 
 
+class ChatHistoryMessage(BaseModel):
+    """Individual message in chat history."""
+    role: str = Field(description="Message role: 'user' or 'assistant'")
+    content: str = Field(description="Message content")
+
+
 class IncomingMessage(BaseModel):
     """Message received from client via WebSocket."""
     type: str = Field(default="user", description="Message type")
     content: Optional[str] = Field(None, description="Message content")
     token: Optional[str] = Field(None, description="Access token for authentication")
+    history: Optional[List[ChatHistoryMessage]] = Field(None, description="Chat history from frontend")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
 

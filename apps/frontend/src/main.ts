@@ -10,11 +10,12 @@ import { CameraSetup } from './scene/CameraSetup'
 import { ControlsSetup } from './scene/ControlsSetup'
 import { chatWebSocket } from './websocket/chatHandler'
 import { cocktailAPI } from './api/client'
-import type { CocktailDetail } from './types/cocktail'
+import type { CocktailDetail, DrinkRecipeSchema } from './types/cocktail'
 import { LoginOverlay } from './components/LoginOverlay'
 import { authAPI } from './api/client'
 import { exampleCocktails } from './data/cocktails'
 import { glassTypeToRenderer, garnishToRenderer } from './types'
+import { mapBackendDrinkToFrontend } from './utils/drinkMapper'
 
 // Token refresh management
 class TokenManager {
@@ -316,6 +317,86 @@ function renderCocktail(index: number) {
   }).catch(console.error)
 }
 
+// Helper function to render drink from backend recipe data
+function renderDrinkFromBackend(recipe: DrinkRecipeSchema) {
+  console.log('[3D RENDER] ========== Starting renderDrinkFromBackend ==========')
+  console.log('[3D RENDER] Backend recipe:', recipe)
+  console.log('[3D RENDER] Recipe name:', recipe.name)
+  console.log('[3D RENDER] Backend glass_type:', recipe.glass_type)
+  console.log('[3D RENDER] Backend garnish:', recipe.garnish)
+  console.log('[3D RENDER] Backend has_ice:', recipe.has_ice)
+  console.log('[3D RENDER] Backend ingredients:', recipe.ingredients)
+
+  // Convert backend recipe to frontend cocktail config
+  console.log('[3D RENDER] Calling mapBackendDrinkToFrontend...')
+  const cocktailConfig = mapBackendDrinkToFrontend(recipe)
+  console.log('[3D RENDER] Mapped cocktailConfig:', cocktailConfig)
+  console.log('[3D RENDER] Frontend glassType:', cocktailConfig.glassType)
+  console.log('[3D RENDER] Frontend liquidColor:', cocktailConfig.liquidColor)
+  console.log('[3D RENDER] Frontend garnish:', cocktailConfig.garnish)
+  console.log('[3D RENDER] Frontend hasIce:', cocktailConfig.hasIce)
+
+  // Map user-friendly types to renderer types
+  const glassName = glassTypeToRenderer[cocktailConfig.glassType]
+  console.log('[3D RENDER] Renderer glass name:', glassName)
+
+  const garnishName = cocktailConfig.garnish && cocktailConfig.garnish !== 'none'
+    ? garnishToRenderer[cocktailConfig.garnish]
+    : null
+  console.log('[3D RENDER] Renderer garnish name:', garnishName)
+
+  // Update drink title
+  const drinkTitleElement = document.querySelector('.drink-title')
+  console.log('[3D RENDER] Drink title element:', drinkTitleElement)
+  if (drinkTitleElement) {
+    drinkTitleElement.textContent = recipe.name
+    console.log('[3D RENDER] Updated drink title to:', recipe.name)
+  } else {
+    console.warn('[3D RENDER] Drink title element not found!')
+  }
+
+  // Switch to new glass
+  glassLoader.switchGlass(glassName, iceLoader, garnishLoader).then(() => {
+    // Update liquid color
+    const liquidHandler = glassLoader.getLiquidHandler()
+    if (liquidHandler) {
+      const color = new THREE.Color(cocktailConfig.liquidColor)
+      liquidHandler.setLiquidColor(color)
+
+      // Play pour sound when liquid starts filling
+      playSound(pourSound, 1.5, 2.0)
+    }
+
+    // Add ice if needed
+    if (cocktailConfig.hasIce) {
+      createIceCubesForGlass(glassName, !!garnishName)
+    }
+
+    // Add garnish if specified
+    if (garnishName) {
+      garnishLoader.loadGarnish(scene, garnishName, glassName, true, cocktailConfig.garnish && cocktailConfig.garnish !== 'none' ? cocktailConfig.garnish : undefined).then(() => {
+        console.log(`[GARNISH] ${garnishName} loaded`)
+
+        // If no ice, trigger garnish falling immediately after liquid fills
+        if (!cocktailConfig.hasIce) {
+          const liquidHandler = glassLoader.getLiquidHandler()
+          if (liquidHandler) {
+            liquidHandler.setOnFillComplete(() => {
+              const garnish = garnishLoader.getGarnish(garnishName)
+              if (garnish) {
+                const targetY = garnish.position.y - 8
+                garnishLoader.animateGarnishFalling(garnishName, targetY, () => {
+                  console.log('[GARNISH] Garnish falling complete')
+                })
+              }
+            })
+          }
+        }
+      }).catch(console.error)
+    }
+  }).catch(console.error)
+}
+
 // Helper function to create multiple ice cubes for a glass
 function createIceCubesForGlass(glassName: GlassName, loadGarnishAfter: boolean = false) {
   const liquid = glassLoader.getLiquid()
@@ -430,17 +511,6 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
-// Cocktail cycling with spacebar
-window.addEventListener('keydown', (event) => {
-  if (event.code === 'Space') {
-    event.preventDefault() // Prevent page scroll
-
-    currentCocktailIndex = (currentCocktailIndex + 1) % exampleCocktails.length
-    console.log(`Cycling to cocktail ${currentCocktailIndex + 1}/${exampleCocktails.length}`)
-
-    renderCocktail(currentCocktailIndex)
-  }
-})
 
 // Animation loop with delta time tracking
 let lastTime = performance.now()
@@ -947,6 +1017,9 @@ chatInput?.addEventListener('keypress', (e) => {
 
 // Expose refresh function globally for WebSocket updates
 (window as any).refreshShelfPanel = loadAndDisplayShelf;
+
+// Expose renderDrinkFromBackend globally for WebSocket updates
+(window as any).renderDrinkFromBackend = renderDrinkFromBackend;
 
 chatInput?.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
