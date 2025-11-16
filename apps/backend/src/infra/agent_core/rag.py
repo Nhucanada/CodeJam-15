@@ -5,6 +5,9 @@ from supabase import Client as SupabaseClient
 from sklearn.metrics.pairwise import cosine_similarity
 
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 class RAGRetrievalResult(BaseModel):
     content: str = Field(..., description="Content of the retrieved document")
@@ -26,8 +29,8 @@ class SupabaseVectorDatabaseSearch(RAGStrategy):
     """
 
     def __init__(self, supabase: SupabaseClient, table: str, embedding_model: str):
-        self.supabase = supabase    
-        self.table = table
+        self.supabase = supabase
+        self.tables: list[str] = table if isinstance(table, list) else [table]
         self.embedding_model = embedding_model
 
     def __call__(self, query: str, user_id: Optional[str] = None, top_k: int = 5, **kwargs) -> np.ndarray[RAGRetrievalResult]:
@@ -51,34 +54,36 @@ class SupabaseVectorDatabaseSearch(RAGStrategy):
                 return []
 
             # Multi-table vector search
-            table_list: list[str] = self.table if isinstance(self.table, list) else [self.table]
+            table_list: list[str] = self.tables
             all_results: list[RAGRetrievalResult] = []
 
-            for tbl in table_list:
-                query_builder = self.supabase.table(tbl).select(
-                    "content, metadata, embedding"
-                ).order("embedding <-> %s" % query_embedding, desc=False).limit(top_k)
-                if user_id:
-                    query_builder = query_builder.eq("user_id", user_id)
-                response = query_builder.execute()
-                if not response.data:
-                    continue
-                for item in response.data:
-                    # Compute cosine similarity score
-                    doc_embedding = np.array(item.get("embedding", []))
-                    similarity_score = (
-                        float(cosine_similarity(query_embedding.reshape(1, -1), doc_embedding.reshape(1, -1))[0][0])
-                        if doc_embedding.size > 0 and query_embedding.size > 0 else 0.0
-                    )
-                    all_results.append(
-                        RAGRetrievalResult(
-                            content=item.get("content", ""),
-                            metadata=item.get("metadata", {}),
-                            score=similarity_score
+            if table_list:
+                for tbl in table_list:
+                    query_builder = self.supabase.table(tbl).select(
+                        "content, metadata, embedding"
+                    ).order("embedding <-> %s" % query_embedding, desc=False).limit(top_k)
+                    if user_id:
+                        query_builder = query_builder.eq("user_id", user_id)
+                    response = query_builder.execute()
+                    if not response.data:
+                        continue
+                    for item in response.data:
+                        # Compute cosine similarity score
+                        doc_embedding = np.array(item.get("embedding", []))
+                        similarity_score = (
+                            float(cosine_similarity(query_embedding.reshape(1, -1), doc_embedding.reshape(1, -1))[0][0])
+                            if doc_embedding.size > 0 and query_embedding.size > 0 else 0.0
                         )
-                    )
+                        all_results.append(
+                            RAGRetrievalResult(
+                                content=item.get("content", ""),
+                                metadata=item.get("metadata", {}),
+                                score=similarity_score
+                            )
+                        )
 
             # Sort all results by score descending, take top_k overall
+            logger.info(f"All results: {all_results}")
             all_results.sort(key=lambda x: x.score if x.score is not None else 0.0, reverse=True)
             return all_results[:top_k]
 

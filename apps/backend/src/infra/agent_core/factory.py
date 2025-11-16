@@ -27,11 +27,17 @@ def get_agentic_engine() -> AgenticEngine:
     if _engine_instance is None:
         settings = get_settings()
         supabase = get_supabase_client()
+
+        RAG_TABLES = [
+            "saq_product_embedding",
+            "ingredient_embedding",
+            "cocktail_embedding"
+        ]
         
         # Initialize RAG strategy with Supabase vector database
         rag_strategy = SupabaseVectorDatabaseSearch(
             supabase=supabase,
-            table="drink_recipes",  # TODO: Make this configurable via settings
+            table=RAG_TABLES, 
             embedding_model=settings.gemini_embedding_model
         )
         

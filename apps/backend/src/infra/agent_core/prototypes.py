@@ -12,9 +12,15 @@ class ActionSchema(BaseModel):
 
 # --- Prompt Prototype Pattern ---
 
-def prompt_prototype_factory(base: str, *, description: str = "", system_message: str = "", instructions: str = "") -> Prompt:
+def prompt_prototype_factory(
+    _: str,
+    *,
+    description: str = "",
+    system_message: str = "",
+    instructions: str = ""
+) -> Prompt:
     """
-    Create a Prompt prototype with a structured set of segments.
+    Create a Prompt prototype with a structured set of segments, omitting USER INPUT.
     """
     segments = []
     if description:
@@ -23,15 +29,13 @@ def prompt_prototype_factory(base: str, *, description: str = "", system_message
         segments.append(f"[SYSTEM]\n{system_message}")
     if instructions:
         segments.append(f"[INSTRUCTIONS]\n{instructions}")
-    if base:
-        segments.append(f"[USER INPUT]\n{base}")
     return Prompt("\n".join(segments))
 
 # --- Prototype Prompt Registry ---
 
-def get_classic_completion_prompt(user_input: str) -> Prompt:
+def get_classic_completion_prompt(_: str) -> Prompt:
     return prompt_prototype_factory(
-        user_input,
+        "",
         description="Freeform completion of text based on user input.",
         system_message="You are an intelligent assistant that thinks step-by-step.",
         instructions=(
@@ -44,9 +48,9 @@ def get_classic_completion_prompt(user_input: str) -> Prompt:
         )
     )
 
-def get_retrieval_augmented_prompt(user_input: str) -> Prompt:
+def get_retrieval_augmented_prompt(_: str) -> Prompt:
     return prompt_prototype_factory(
-        user_input,
+        "",
         description="Answer with retrieved context from knowledge base or documentation.",
         system_message="You use external document retrieval to ground your answers. Think through your reasoning step-by-step.",
         instructions=(
@@ -60,9 +64,9 @@ def get_retrieval_augmented_prompt(user_input: str) -> Prompt:
         )
     )
 
-def get_question_answering_prompt(user_input: str) -> Prompt:
+def get_question_answering_prompt(_: str) -> Prompt:
     return prompt_prototype_factory(
-        user_input,
+        "",
         description="Question answering based on available data.",
         system_message="You answer questions concisely and accurately by reasoning through them step-by-step.",
         instructions=(
@@ -76,9 +80,9 @@ def get_question_answering_prompt(user_input: str) -> Prompt:
         )
     )
 
-def get_action_generation_prompt(user_input: str) -> Prompt:
+def get_action_generation_prompt(_: str) -> Prompt:
     return prompt_prototype_factory(
-        user_input,
+        "",
         description="Generate a structured action for an API call.",
         system_message="Generate JSON to represent the user's intended action. Think through the requirements step-by-step.",
         instructions=(
@@ -92,9 +96,9 @@ def get_action_generation_prompt(user_input: str) -> Prompt:
         )
     )
 
-def get_summarization_prompt(user_input: str) -> Prompt:
+def get_summarization_prompt(_: str) -> Prompt:
     return prompt_prototype_factory(
-        user_input,
+        "",
         description="Summarize user-provided content.",
         system_message="You summarize and rephrase user input for clarity by thinking through the content systematically.",
         instructions=(
@@ -108,9 +112,9 @@ def get_summarization_prompt(user_input: str) -> Prompt:
         )
     )
 
-def get_chat_style_prompt(user_input: str) -> Prompt:
+def get_chat_style_prompt(_: str) -> Prompt:
     return prompt_prototype_factory(
-        user_input,
+        "",
         description="Multi-turn conversational assistant.",
         system_message="Respond in a friendly, helpful chat style. Think through your responses step-by-step.",
         instructions=(
@@ -124,7 +128,7 @@ def get_chat_style_prompt(user_input: str) -> Prompt:
         )
     )
 
-# Map: name -> prototype retrieval function  Singleton
+# Map: name -> prototype retrieval function Singleton
 PROMPT_PROTOTYPE_REGISTRY: Dict[str, Callable[[str], Prompt]] = {
     "classic_completion": get_classic_completion_prompt,
     "retrieval_augmented": get_retrieval_augmented_prompt,

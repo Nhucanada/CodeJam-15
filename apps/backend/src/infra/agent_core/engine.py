@@ -65,6 +65,10 @@ class AgenticEngine:
             return "question_answering"
         return "classic_completion"
         
+    async def _llm_selector(self, user_input: str) -> str:
+        # TODO: Use LLM to select the best prompt template based on the user input
+        ...
+        
 
     async def run(
         self,
@@ -105,7 +109,7 @@ class AgenticEngine:
             for chunk in retrieved_chunks:
                 prompt.append(f"\n[RETRIEVED] FROM RAG CHUNKS \n{chunk}")
 
-        logger.info(prompt.as_string())
+        # logger.info(prompt.as_string())
 
         # Send to Gemini
         completion = await self._invoke_llm(
@@ -149,8 +153,7 @@ class AgenticEngine:
             schema_json = response_schema.model_json_schema()
             enhanced_prompt = f"""{prompt}
 
-            You MUST respond with valid JSON matching this exact schema:
-            {schema_json}
+            You MUST respond with valid JSON matching the output schema.
 
             Response (JSON only, no other text):
             """
