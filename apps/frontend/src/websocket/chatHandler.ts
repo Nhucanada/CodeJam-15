@@ -61,6 +61,13 @@ constructor() {
   }
 
   private showChatError(title: string, message?: string) {
+    // Don't show WebSocket errors if login overlay is visible
+    const loginOverlay = document.querySelector('.login-overlay') as HTMLElement;
+    if (loginOverlay && loginOverlay.style.display === 'flex') {
+      console.log('Suppressing WebSocket error while login overlay is visible:', title);
+      return;
+    }
+
     const chatMessages = document.querySelector('.chat-messages .message-container');
     if (!chatMessages) return;
 
@@ -85,7 +92,24 @@ constructor() {
     `;
 
     chatMessages.appendChild(errorDiv);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    const chatContainer = document.querySelector('.chat-messages');
+    if (chatContainer) {
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // If authentication failed, show login overlay
+    if (title.includes('Authentication Failed') || title.includes('🔐 Authentication Failed')) {
+      // Clear the access token
+      localStorage.removeItem('access_token');
+
+      // Show login overlay
+      setTimeout(() => {
+        const loginOverlay = document.querySelector('.login-overlay');
+        if (loginOverlay) {
+          (loginOverlay as HTMLElement).style.display = 'flex';
+        }
+      }, 1000); // Show login after 1 second delay
+    }
   }
 
   private clearChatError() {
@@ -218,6 +242,15 @@ private attemptReconnect() {
     console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
     setTimeout(() => this.connect(), 2000 * this.reconnectAttempts);
     }
+}
+
+public reconnect() {
+    console.log('Manually reconnecting WebSocket...');
+    this.disconnect();
+    // Small delay before reconnecting to ensure cleanup is complete
+    setTimeout(() => {
+        this.connect();
+    }, 500);
 }
 
 public sendMessage(content: string) {

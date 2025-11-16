@@ -13,19 +13,166 @@ import type { CocktailDetail } from './types/cocktail'
 import { LoginOverlay } from './components/LoginOverlay'
 import { authAPI } from './api/client'
 
+// Token refresh management
+class TokenManager {
+    private refreshInterval: number | null = null;
+    private readonly REFRESH_INTERVAL = 4 * 60 * 1000; // 4 minutes (refresh before 5min expiry)
+
+    start() {
+        this.stop(); // Clear any existing interval
+
+        if (authAPI.isAuthenticated()) {
+            console.log('Starting token refresh manager');
+            this.scheduleNextRefresh();
+        }
+    }
+
+    stop() {
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+            console.log('Token refresh manager stopped');
+        }
+    }
+
+    private scheduleNextRefresh() {
+        this.refreshInterval = window.setInterval(async () => {
+            await this.refreshTokenIfNeeded();
+        }, this.REFRESH_INTERVAL);
+    }
+
+    private async refreshTokenIfNeeded() {
+    try {
+        if (!authAPI.isAuthenticated()) {
+            console.log('User not authenticated, stopping token refresh');
+            this.stop();
+            return;
+        }
+
+        console.log('Refreshing access token...');
+        console.log('Current tokens:', {
+            access_token: localStorage.getItem('access_token')?.substring(0, 20) + '...',
+            refresh_token: localStorage.getItem('refresh_token')?.substring(0, 20) + '...'
+        });
+
+        await authAPI.refreshToken();
+        console.log('Token refreshed successfully');
+
+    } catch (error) {
+        console.error('Token refresh failed:', error);
+
+        // If refresh fails, user needs to log in again
+        this.stop();
+        authAPI.logout();
+
+        // Show login overlay
+        const loginOverlay = document.querySelector('.login-overlay');
+        if (loginOverlay) {
+            (loginOverlay as HTMLElement).style.display = 'flex';
+        } else {
+            initializeAuth();
+        }
+
+        // Show notification to user
+        this.showTokenExpiredNotification();
+    }
+}
+
+    private showTokenExpiredNotification() {
+        const notification = document.createElement('div');
+        notification.className = 'notification error';
+        notification.textContent = 'Your session has expired. Please log in again.';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #f44336;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 4px;
+            z-index: 10000;
+            font-family: 'Sixtyfour', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        `;
+
+        document.body.appendChild(notification);
+
+        // Remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 5000);
+    }
+}
+
+// Create and start token manager
+const tokenManager = new TokenManager();
+
+// Start token refresh when authenticated
+if (authAPI.isAuthenticated()) {
+    tokenManager.start();
+}
+
 // Authentication check and login overlay
 let loginOverlay: LoginOverlay;
 
+// Update the initializeAuth function to include token manager
 function initializeAuth(): void {
   if (!authAPI.isAuthenticated()) {
+    // Hide both panels during login
+    const chatPanel = document.querySelector('.chat-panel') as HTMLElement;
+    const recipePanel = document.querySelector('.recipe-panel') as HTMLElement;
+    if (chatPanel) {
+      chatPanel.style.display = 'none';
+    }
+    if (recipePanel) {
+      recipePanel.style.display = 'none';
+    }
+
     loginOverlay = new LoginOverlay(() => {
       console.log('Authentication successful!');
+
+      // Show both panels after login
+      const chatPanel = document.querySelector('.chat-panel') as HTMLElement;
+      const recipePanel = document.querySelector('.recipe-panel') as HTMLElement;
+      if (chatPanel) {
+        chatPanel.style.display = 'block';
+      }
+      if (recipePanel) {
+        recipePanel.style.display = 'block';
+      }
+
+      // Clear any existing WebSocket errors
+      const chatMessages = document.querySelector('.chat-messages .message-container');
+      if (chatMessages) {
+        const existingErrors = chatMessages.querySelectorAll('.chat-error');
+        existingErrors.forEach(error => error.remove());
+      }
+
+      tokenManager.start(); // Start token refresh after login
+
+      // Reconnect WebSocket with new token
+      chatWebSocket.reconnect();
+
       // Reload shelf and any other authenticated content
       if (typeof loadAndDisplayShelf === 'function') {
         loadAndDisplayShelf();
       }
     });
     loginOverlay.show();
+  } else {
+    // Show both panels if already authenticated
+    const chatPanel = document.querySelector('.chat-panel') as HTMLElement;
+    const recipePanel = document.querySelector('.recipe-panel') as HTMLElement;
+    if (chatPanel) {
+      chatPanel.style.display = 'block';
+    }
+    if (recipePanel) {
+      recipePanel.style.display = 'block';
+    }
+    tokenManager.start(); // Start token refresh if already authenticated
   }
 }
 
@@ -590,6 +737,25 @@ function sendChatMessage() {
   }
 }
 
+// Debug functions for testing token refresh
+(window as any).testTokenRefresh = async () => {
+    console.log('Testing token refresh manually...');
+    try {
+        await authAPI.refreshToken();
+        console.log('Manual token refresh successful');
+    } catch (error) {
+        console.error('Manual token refresh failed:', error);
+    }
+};
+
+(window as any).checkTokens = () => {
+    console.log('Current tokens:', {
+        access_token: localStorage.getItem('access_token'),
+        refresh_token: localStorage.getItem('refresh_token'),
+        isAuthenticated: authAPI.isAuthenticated()
+    });
+};
+
 sendButton?.addEventListener('click', sendChatMessage);
 chatInput?.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') {
@@ -602,6 +768,101 @@ chatInput?.addEventListener('keypress', (e) => {
 
 // Load shelf on startup
 loadAndDisplayShelf();
+
+// Update login overlay to start token manager after successful login
+const originalLoginOverlay = LoginOverlay;
+
+// Enhanced logout functionality with custom dialog
+function logoutWithConfirmation() {
+  showLogoutDialog();
+}
+
+function showLogoutDialog() {
+  // Create logout overlay if it doesn't exist
+  let logoutOverlay = document.querySelector('.logout-overlay') as HTMLElement;
+
+  if (!logoutOverlay) {
+    logoutOverlay = document.createElement('div');
+    logoutOverlay.className = 'logout-overlay';
+    logoutOverlay.innerHTML = `
+      <div class="logout-modal">
+        <div class="logout-content">
+          <h2 class="logout-title">Confirm Logout</h2>
+          <p class="logout-message">Are you sure you want to log out?<br>You'll need to sign in again to continue.</p>
+          <div class="logout-buttons">
+            <button class="logout-cancel-btn">Cancel</button>
+            <button class="logout-confirm-btn">Log Out</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(logoutOverlay);
+
+    // Add event listeners
+    const cancelBtn = logoutOverlay.querySelector('.logout-cancel-btn');
+    const confirmBtn = logoutOverlay.querySelector('.logout-confirm-btn');
+
+    cancelBtn?.addEventListener('click', hideLogoutDialog);
+    confirmBtn?.addEventListener('click', () => {
+      hideLogoutDialog();
+      performLogout();
+    });
+
+    // Close on overlay click
+    logoutOverlay.addEventListener('click', (e) => {
+      if (e.target === logoutOverlay) {
+        hideLogoutDialog();
+      }
+    });
+  }
+
+  logoutOverlay.style.display = 'flex';
+}
+
+function hideLogoutDialog() {
+  const logoutOverlay = document.querySelector('.logout-overlay') as HTMLElement;
+  if (logoutOverlay) {
+    logoutOverlay.style.display = 'none';
+  }
+}
+
+async function performLogout() {
+  tokenManager.stop(); // Stop token refresh before logout
+
+  try {
+    // Call backend logout endpoint
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      const response = await fetch('http://localhost:8000/api/v1/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Log response for debugging but continue even if it fails
+      if (!response.ok) {
+        console.warn('Backend logout failed, but continuing with local logout');
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to contact logout endpoint, but continuing with local logout:', error);
+  }
+
+  // Always clear local storage and show login
+  authAPI.logout();
+  initializeAuth();
+}
+
+// Add logout button event listener
+const logoutBtn = document.querySelector('.logout-btn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', logoutWithConfirmation);
+}
+
+// Update the global logout function to use the new confirmation
+(window as any).logout = logoutWithConfirmation;
 
 function showShelfEnhanced() {
   // Hide recipe elements
