@@ -13,13 +13,13 @@ export class Floor {
     // Configure texture tiling and wrapping
     floorDiffuse.wrapS = THREE.RepeatWrapping
     floorDiffuse.wrapT = THREE.RepeatWrapping
-    floorDiffuse.repeat.set(4, 4) // Tile 4x4 times across the 30x30 floor
+    floorDiffuse.repeat.set(6, 4) // Tile 6x4 times across the 45x20 floor
 
     floorDisplacement.wrapS = THREE.RepeatWrapping
     floorDisplacement.wrapT = THREE.RepeatWrapping
-    floorDisplacement.repeat.set(4, 4)
+    floorDisplacement.repeat.set(6, 4)
 
-    const floorGeometry = new THREE.PlaneGeometry(30, 30, 100, 100) // Added segments for displacement
+    const floorGeometry = new THREE.PlaneGeometry(45, 20, 400, 400) // Longer bar counter
     const floorMaterial = new THREE.MeshStandardMaterial({
       map: floorDiffuse,
       displacementMap: floorDisplacement,

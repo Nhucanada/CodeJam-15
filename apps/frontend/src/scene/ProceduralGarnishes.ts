@@ -1,10 +1,13 @@
 import * as THREE from 'three'
 
 // Common materials
-const TOOTHPICK_MATERIAL = new THREE.MeshStandardMaterial({
+const TOOTHPICK_MATERIAL = new THREE.MeshPhysicalMaterial({
   color: 0x8b7355, // Light brown
   metalness: 0.0,
   roughness: 0.8,
+  transmission: 0.0, // Fully opaque
+  transparent: false,
+  clippingPlanes: [], // Prevent liquid clipping from affecting toothpick
 })
 
 interface FruitConfig {
@@ -24,10 +27,13 @@ function createFruitOnToothpick(config: FruitConfig): THREE.Group {
   const fruitGroup = new THREE.Group()
 
   // Fruit material
-  const fruitMaterial = new THREE.MeshStandardMaterial({
+  const fruitMaterial = new THREE.MeshPhysicalMaterial({
     color: config.color,
     metalness: config.metalness,
     roughness: config.roughness,
+    transmission: 0.0, // Fully opaque
+    transparent: false,
+    clippingPlanes: [], // Prevent liquid clipping from affecting fruit
   })
 
   // Create fruit geometry
@@ -99,10 +105,13 @@ export function createProceduralOrangeRound(): THREE.Group {
   const orangeGroup = new THREE.Group()
 
   // Orange slice material (bright orange)
-  const orangeMaterial = new THREE.MeshStandardMaterial({
+  const orangeMaterial = new THREE.MeshPhysicalMaterial({
     color: 0xff8c00, // Dark orange
     metalness: 0.1,
     roughness: 0.3,
+    transmission: 0.0, // Fully opaque
+    transparent: false,
+    clippingPlanes: [], // Prevent liquid clipping from affecting orange
   })
 
   // Create thin cylinder for the orange round
@@ -112,10 +121,13 @@ export function createProceduralOrangeRound(): THREE.Group {
   slice.receiveShadow = true
 
   // Add white pith ring (inner circle)
-  const pithMaterial = new THREE.MeshStandardMaterial({
+  const pithMaterial = new THREE.MeshPhysicalMaterial({
     color: 0xffffff, // White
     metalness: 0.0,
     roughness: 0.8,
+    transmission: 0.0, // Fully opaque
+    transparent: false,
+    clippingPlanes: [], // Prevent liquid clipping from affecting pith
   })
   const pithGeometry = new THREE.CylinderGeometry(0.12, 0.12, 0.051, 32)
   const pith = new THREE.Mesh(pithGeometry, pithMaterial)
@@ -131,7 +143,7 @@ export function createProceduralOrangeRound(): THREE.Group {
 /**
  * Create a procedural salt rim using particles
  * @param rimRadius - The radius of the glass rim
- * @param rimHeight - The height position of the rim
+ * @param rimHeight - The height position of the rim (not used, kept for backward compatibility)
  * @returns THREE.Points object with salt particles
  */
 export function createProceduralSaltRim(
@@ -142,7 +154,7 @@ export function createProceduralSaltRim(
   const positions = new Float32Array(particleCount * 3)
   const sizes = new Float32Array(particleCount)
 
-  // Generate particles around the rim
+  // Generate particles around the rim (centered at origin)
   for (let i = 0; i < particleCount; i++) {
     const i3 = i * 3
 
@@ -156,13 +168,13 @@ export function createProceduralSaltRim(
     const radialOffset = (Math.random() - 0.5) * 0.08
     const radius = rimRadius + radialOffset
 
-    // Calculate X, Z position on the rim circle
+    // Calculate X, Z position on the rim circle (relative to origin)
     positions[i3] = Math.cos(angle + angleVariation) * radius // X
     positions[i3 + 2] = Math.sin(angle + angleVariation) * radius // Z
 
-    // Y position with slight vertical variation for natural clumping
+    // Y position with slight vertical variation for natural clumping (relative to origin)
     const verticalVariation = (Math.random() - 0.5) * 0.05
-    positions[i3 + 1] = rimHeight + verticalVariation // Y
+    positions[i3 + 1] = verticalVariation // Y - centered at 0, will be positioned by parent object
 
     // Coarse grain: particle sizes between 0.015 and 0.035
     sizes[i] = 0.015 + Math.random() * 0.02

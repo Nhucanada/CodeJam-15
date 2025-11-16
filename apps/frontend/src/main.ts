@@ -3,7 +3,8 @@ import * as THREE from 'three'
 import { Floor } from './scene/Floor'
 import { GlassLoader } from './scene/GlassLoader'
 import { IceLoader } from './scene/IceLoader'
-import { GarnishLoader } from './scene/GarnishLoader'
+import { GarnishLoader, getAllowedGarnishes } from './scene/GarnishLoader'
+import { CharacterLoader } from './scene/CharacterLoader'
 import { Lighting } from './scene/Lighting'
 import { CameraSetup } from './scene/CameraSetup'
 import { ControlsSetup } from './scene/ControlsSetup'
@@ -225,15 +226,16 @@ new Lighting(scene)
 new Floor(scene)
 
 // Load glass model
-const GLASS_TO_LOAD = 'margarita_glass_8' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
+const GLASS_TO_LOAD = 'martini_glass_9' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
                                             // hurricane_glass_3, pint_glass_4, seidel_Glass_5,
                                             // shot_glass_6, highball_glass_7, margarita_glass_8, martini_glass_9
 const glassLoader = new GlassLoader()
 const iceLoader = new IceLoader()
 const garnishLoader = new GarnishLoader()
+const characterLoader = new CharacterLoader()
 
 // Helper function to create multiple ice cubes for a glass
-function createIceCubesForGlass(glassName: typeof glassNames[number]) {
+function createIceCubesForGlass(glassName: typeof glassNames[number], loadGarnishAfter: boolean = false) {
   const liquid = glassLoader.getLiquid()
   const liquidHandler = glassLoader.getLiquidHandler()
 
@@ -266,9 +268,8 @@ function createIceCubesForGlass(glassName: typeof glassNames[number]) {
 
   // Set callback to trigger ice falling when water fill completes
   liquidHandler.setOnFillComplete(() => {
-    console.log('Water fill complete, starting ice animations')
-
     // Animate each ice cube with staggered timing for natural effect
+    let lastIceIndex = iceConfig.count - 1
     for (let i = 0; i < iceConfig.count; i++) {
       const iceName = `cube_ice_${i}`
       const pos = iceConfig.positions[i]
@@ -286,6 +287,20 @@ function createIceCubesForGlass(glassName: typeof glassNames[number]) {
             // After falling completes, start bobbing with different time offset for each cube
             const timeOffset = Math.random() * Math.PI * 2 // Random phase 0 to 2π
             iceLoader.animateIceBobbing(iceName, baseY, timeOffset)
+
+            // If this is the last ice cube and we should load garnish, trigger garnish falling
+            if (i === lastIceIndex && loadGarnishAfter) {
+              // Get the garnish's target Y position (it was loaded with startHidden, so subtract 8)
+              const garnish = garnishLoader.getGarnish('mint')
+              if (garnish) {
+                const targetY = garnish.position.y - 8 // Currently at hidden position, target is 8 below
+
+                console.log('[GARNISH] Triggering garnish falling animation')
+                garnishLoader.animateGarnishFalling('mint', targetY, () => {
+                  console.log('[GARNISH] Garnish falling complete')
+                })
+              }
+            }
           })
         }
       }, delay)
@@ -296,15 +311,16 @@ function createIceCubesForGlass(glassName: typeof glassNames[number]) {
 glassLoader.loadGlass(scene, GLASS_TO_LOAD, controls, camera).then(() => {
   createIceCubesForGlass(GLASS_TO_LOAD)
 
-  // Load mint garnish for testing
-  garnishLoader.loadGarnish(scene, 'mint', GLASS_TO_LOAD).then(() => {
-    console.log('Mint garnish loaded!')
-    // Scale it down a lot
-    garnishLoader.setGarnishScale('mint', 0.2)
-    garnishLoader.setGarnishPosition('mint', new THREE.Vector3(0.1, 3.2,-1 )) // Adjust position above liquid
-  }).catch((error) => {
-    console.error('Failed to load mint:', error)
-  })
+  // Load all garnishes for tweaking
+  loadAllGarnishes()
+
+  // Load character behind the cocktail glass
+  characterLoader.loadCharacter(
+    scene,
+    new THREE.Vector3(0, -30, -20), // Position closer behind the glass
+    24, // Scale (16 times bigger than original 1.5)
+    new THREE.Euler(0, 0, 0) // Rotation
+  ).catch(console.error)
 })
 
 // Handle window resize
@@ -328,21 +344,53 @@ const glassNames = [
 
 let currentGlassIndex = 8 // Start with margarita_glass_8
 
+// Load all garnishes for tweaking (press 'G' key)
+function loadAllGarnishes() {
+  console.log('Loading all garnishes for showcase...')
+
+  // Remove any existing garnishes
+  garnishLoader.removeAllGarnishes()
+
+  // Get allowed garnishes for the current glass type
+  const allowedGarnishes = getAllowedGarnishes(GLASS_TO_LOAD)
+  console.log(`Allowed garnishes for ${GLASS_TO_LOAD}:`, allowedGarnishes)
+
+  // Load only allowed garnishes for this glass type
+  allowedGarnishes.forEach((garnishName) => {
+    garnishLoader.loadGarnish(scene, garnishName, GLASS_TO_LOAD).then(() => {
+      console.log(`${garnishName} loaded`)
+    }).catch(console.error)
+  })
+}
+
 window.addEventListener('keydown', (event) => {
   if (event.code === 'Space') {
     event.preventDefault() // Prevent page scroll
-
-    // Remove all existing ice cubes before switching
-    iceLoader.removeAllIce()
 
     currentGlassIndex = (currentGlassIndex + 1) % glassNames.length
     const newGlassName = glassNames[currentGlassIndex]
     console.log(`Switching to ${newGlassName}`)
 
-    glassLoader.switchGlass(newGlassName).then(() => {
+    glassLoader.switchGlass(newGlassName, iceLoader, garnishLoader).then(() => {
       // Create ice cubes for the new glass
-      createIceCubesForGlass(newGlassName)
+      createIceCubesForGlass(newGlassName, true)
+
+      // Load garnish for new glass (positioned above scene, ready to fall)
+      garnishLoader.loadGarnish(scene, 'mint', newGlassName, true).then(() => {
+        console.log('[GARNISH] Mint garnish loaded (hidden above scene)')
+        garnishLoader.setGarnishScale('mint', 0.2)
+        // Garnish is positioned 8 units above final position
+        // The falling animation will be triggered after ice completes
+      }).catch((error) => {
+        console.error('Failed to load mint:', error)
+      })
     }).catch(console.error)
+  }
+
+  // Press 'G' to load all garnishes for tweaking
+  if (event.code === 'KeyG') {
+    event.preventDefault()
+    loadAllGarnishes()
   }
 })
 
@@ -362,6 +410,9 @@ function animate() {
 
   // Update ice animations with delta time
   iceLoader.update(deltaTime)
+
+  // Update garnish animations
+  garnishLoader.update()
 
   controlsSetup.update()
   renderer.render(scene, camera)
