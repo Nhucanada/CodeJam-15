@@ -1,18 +1,22 @@
 import './style.css'
 import * as THREE from 'three'
-import { Floor } from './scene/Floor'
 import { GlassLoader } from './scene/GlassLoader'
 import { IceLoader } from './scene/IceLoader'
-import { GarnishLoader, getAllowedGarnishes } from './scene/GarnishLoader'
+import { GarnishLoader, type GlassName } from './scene/GarnishLoader'
 import { CharacterLoader } from './scene/CharacterLoader'
+import { BarLoader } from './scene/BarLoader'
 import { Lighting } from './scene/Lighting'
 import { CameraSetup } from './scene/CameraSetup'
 import { ControlsSetup } from './scene/ControlsSetup'
 import { chatWebSocket } from './websocket/chatHandler'
 import { cocktailAPI } from './api/client'
-import type { CocktailDetail } from './types/cocktail'
+import type { CocktailDetail, DrinkRecipeSchema, CocktailSummary } from './types/cocktail'
 import { LoginOverlay } from './components/LoginOverlay'
 import { authAPI } from './api/client'
+import { exampleCocktails } from './data/cocktails'
+import { glassTypeToRenderer, garnishToRenderer, type CocktailConfig } from './types'
+import { mapBackendDrinkToFrontend } from './utils/drinkMapper'
+import { glassIconGenerators, type GlassIconName } from './ui/GlassIcons'
 
 // Token refresh management
 class TokenManager {
@@ -201,9 +205,30 @@ initializeAuth();
   initializeAuth();
 };
 
+// Audio setup
+const pourSound = new Audio('/src/assets/SFX/PourSFX.mp3')
+const iceSound = new Audio('/src/assets/SFX/IceSFX.mp3')
+
+// Helper function to play audio with optional start time trimming and duration
+function playSound(audio: HTMLAudioElement, startTime: number = 0, duration?: number) {
+  audio.currentTime = startTime
+  audio.play().catch(err => console.error('Audio playback error:', err))
+
+  // If duration is specified, stop playback after that duration
+  if (duration) {
+    setTimeout(() => {
+      audio.pause()
+    }, duration * 1000) // Convert to milliseconds
+  }
+}
+
 // Scene setup
 const scene = new THREE.Scene()
 scene.background = new THREE.Color(0x0a0a0f) // Darker background for bar atmosphere
+
+// Add fog for atmospheric depth - objects fade into darkness with distance
+// Fog(color, near distance, far distance)
+scene.fog = new THREE.Fog(0x0a0a0f, 30, 140)
 
 // Renderer setup
 const renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -225,20 +250,150 @@ const controls = controlsSetup.getControls()
 new Lighting(scene)
 
 
-// Create floor
-new Floor(scene)
+// // Create floor
+// new Floor(scene)
 
-// Load glass model
-const GLASS_TO_LOAD = 'martini_glass_9' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
-                                            // hurricane_glass_3, pint_glass_4, seidel_Glass_5,
-                                            // shot_glass_6, highball_glass_7, margarita_glass_8, martini_glass_9
+// Initialize loaders
 const glassLoader = new GlassLoader()
 const iceLoader = new IceLoader()
 const garnishLoader = new GarnishLoader()
 const characterLoader = new CharacterLoader()
+const barLoader = new BarLoader()
+
+// Cocktail state
+let currentCocktailIndex = 0
+
+// Helper function to render a complete cocktail
+function renderCocktail(index: number) {
+  const cocktail = exampleCocktails[index]
+  console.log(`Rendering cocktail: ${cocktail.name}`)
+
+  // Map user-friendly types to renderer types
+  const glassName = glassTypeToRenderer[cocktail.glassType]
+  const garnishName = cocktail.garnish && cocktail.garnish !== 'none'
+    ? garnishToRenderer[cocktail.garnish]
+    : null
+
+  // Switch to new glass
+  glassLoader.switchGlass(glassName, iceLoader, garnishLoader).then(() => {
+    // Update liquid color
+    const liquidHandler = glassLoader.getLiquidHandler()
+    if (liquidHandler) {
+      const color = new THREE.Color(cocktail.liquidColor)
+      liquidHandler.setLiquidColor(color)
+
+      // Play pour sound when liquid starts filling
+      // Trim start by 1.0 second and play for 1 second to match fill duration
+      playSound(pourSound, 1.5, 2.0)
+    }
+
+    // Add ice if needed
+    if (cocktail.hasIce) {
+      createIceCubesForGlass(glassName, !!garnishName)
+    }
+
+    // Add garnish if specified
+    if (garnishName) {
+      // Always start hidden (above the glass) so it can fall
+      garnishLoader.loadGarnish(scene, garnishName, glassName, true, cocktail.garnish && cocktail.garnish !== 'none' ? cocktail.garnish : undefined).then(() => {
+        console.log(`[GARNISH] ${garnishName} loaded`)
+
+        // If no ice, trigger garnish falling immediately after liquid fills
+        if (!cocktail.hasIce) {
+          const liquidHandler = glassLoader.getLiquidHandler()
+          if (liquidHandler) {
+            liquidHandler.setOnFillComplete(() => {
+              const garnish = garnishLoader.getGarnish(garnishName)
+              if (garnish) {
+                const targetY = garnish.position.y - 8
+                garnishLoader.animateGarnishFalling(garnishName, targetY, () => {
+                  console.log('[GARNISH] Garnish falling complete')
+                })
+              }
+            })
+          }
+        }
+      }).catch(console.error)
+    }
+  }).catch(console.error)
+}
+
+// Helper function to render drink from backend recipe data
+function renderDrinkFromBackend(recipe: DrinkRecipeSchema) {
+  console.log('[3D RENDER] ========== Starting renderDrinkFromBackend ==========')
+  console.log('[3D RENDER] Backend recipe:', recipe)
+  console.log('[3D RENDER] Recipe name:', recipe.name)
+  console.log('[3D RENDER] Backend glass_type:', recipe.glass_type)
+  console.log('[3D RENDER] Backend garnish:', recipe.garnish)
+  console.log('[3D RENDER] Backend has_ice:', recipe.has_ice)
+  console.log('[3D RENDER] Backend ingredients:', recipe.ingredients)
+
+  // Convert backend recipe to frontend cocktail config
+  console.log('[3D RENDER] Calling mapBackendDrinkToFrontend...')
+  const cocktailConfig = mapBackendDrinkToFrontend(recipe)
+  console.log('[3D RENDER] Mapped cocktailConfig:', cocktailConfig)
+  console.log('[3D RENDER] Frontend glassType:', cocktailConfig.glassType)
+  console.log('[3D RENDER] Frontend liquidColor:', cocktailConfig.liquidColor)
+  console.log('[3D RENDER] Frontend garnish:', cocktailConfig.garnish)
+  console.log('[3D RENDER] Frontend hasIce:', cocktailConfig.hasIce)
+
+  // Map user-friendly types to renderer types
+  const glassName = glassTypeToRenderer[cocktailConfig.glassType]
+  console.log('[3D RENDER] Renderer glass name:', glassName)
+
+  const garnishName = cocktailConfig.garnish && cocktailConfig.garnish !== 'none'
+    ? garnishToRenderer[cocktailConfig.garnish]
+    : null
+  console.log('[3D RENDER] Renderer garnish name:', garnishName)
+
+  // Update drink title using the proper function
+  console.log('[3D RENDER] Updating drink title to:', recipe.name)
+  updateDrinkTitle(recipe.name)
+
+  // Switch to new glass
+  glassLoader.switchGlass(glassName, iceLoader, garnishLoader).then(() => {
+    // Update liquid color
+    const liquidHandler = glassLoader.getLiquidHandler()
+    if (liquidHandler) {
+      const color = new THREE.Color(cocktailConfig.liquidColor)
+      liquidHandler.setLiquidColor(color)
+
+      // Play pour sound when liquid starts filling
+      playSound(pourSound, 1.5, 2.0)
+    }
+
+    // Add ice if needed
+    if (cocktailConfig.hasIce) {
+      createIceCubesForGlass(glassName, !!garnishName)
+    }
+
+    // Add garnish if specified
+    if (garnishName) {
+      garnishLoader.loadGarnish(scene, garnishName, glassName, true, cocktailConfig.garnish && cocktailConfig.garnish !== 'none' ? cocktailConfig.garnish : undefined).then(() => {
+        console.log(`[GARNISH] ${garnishName} loaded`)
+
+        // If no ice, trigger garnish falling immediately after liquid fills
+        if (!cocktailConfig.hasIce) {
+          const liquidHandler = glassLoader.getLiquidHandler()
+          if (liquidHandler) {
+            liquidHandler.setOnFillComplete(() => {
+              const garnish = garnishLoader.getGarnish(garnishName)
+              if (garnish) {
+                const targetY = garnish.position.y - 8
+                garnishLoader.animateGarnishFalling(garnishName, targetY, () => {
+                  console.log('[GARNISH] Garnish falling complete')
+                })
+              }
+            })
+          }
+        }
+      }).catch(console.error)
+    }
+  }).catch(console.error)
+}
 
 // Helper function to create multiple ice cubes for a glass
-function createIceCubesForGlass(glassName: typeof glassNames[number], loadGarnishAfter: boolean = false) {
+function createIceCubesForGlass(glassName: GlassName, loadGarnishAfter: boolean = false) {
   const liquid = glassLoader.getLiquid()
   const liquidHandler = glassLoader.getLiquidHandler()
 
@@ -271,8 +426,12 @@ function createIceCubesForGlass(glassName: typeof glassNames[number], loadGarnis
 
   // Set callback to trigger ice falling when water fill completes
   liquidHandler.setOnFillComplete(() => {
+    // Play ice sound when ice starts falling
+    // Trim start by 0.5 seconds
+    playSound(iceSound, 1)
+
     // Animate each ice cube with staggered timing for natural effect
-    let lastIceIndex = iceConfig.count - 1
+    const lastIceIndex = iceConfig.count - 1
     for (let i = 0; i < iceConfig.count; i++) {
       const iceName = `cube_ice_${i}`
       const pos = iceConfig.positions[i]
@@ -293,15 +452,22 @@ function createIceCubesForGlass(glassName: typeof glassNames[number], loadGarnis
 
             // If this is the last ice cube and we should load garnish, trigger garnish falling
             if (i === lastIceIndex && loadGarnishAfter) {
-              // Get the garnish's target Y position (it was loaded with startHidden, so subtract 8)
-              const garnish = garnishLoader.getGarnish('mint')
-              if (garnish) {
-                const targetY = garnish.position.y - 8 // Currently at hidden position, target is 8 below
+              // Get all garnishes and trigger falling for each
+              const currentCocktail = exampleCocktails[currentCocktailIndex]
+              const garnishName = currentCocktail.garnish && currentCocktail.garnish !== 'none'
+                ? garnishToRenderer[currentCocktail.garnish]
+                : null
 
-                console.log('[GARNISH] Triggering garnish falling animation')
-                garnishLoader.animateGarnishFalling('mint', targetY, () => {
-                  console.log('[GARNISH] Garnish falling complete')
-                })
+              if (garnishName) {
+                const garnish = garnishLoader.getGarnish(garnishName)
+                if (garnish) {
+                  const targetY = garnish.position.y - 8
+
+                  console.log('[GARNISH] Triggering garnish falling animation')
+                  garnishLoader.animateGarnishFalling(garnishName, targetY, () => {
+                    console.log('[GARNISH] Garnish falling complete')
+                  })
+                }
               }
             }
           })
@@ -311,18 +477,27 @@ function createIceCubesForGlass(glassName: typeof glassNames[number], loadGarnis
   })
 }
 
-glassLoader.loadGlass(scene, GLASS_TO_LOAD, controls, camera).then(() => {
-  createIceCubesForGlass(GLASS_TO_LOAD)
+// Load first cocktail and character
+const firstCocktail = exampleCocktails[0]
+const firstGlass = glassTypeToRenderer[firstCocktail.glassType]
 
-  // Load all garnishes for tweaking
-  loadAllGarnishes()
+glassLoader.loadGlass(scene, firstGlass, controls, camera).then(() => {
+  renderCocktail(0)
 
   // Load character behind the cocktail glass
   characterLoader.loadCharacter(
     scene,
-    new THREE.Vector3(0, -30, -20), // Position closer behind the glass
-    24, // Scale (16 times bigger than original 1.5)
-    new THREE.Euler(0, 0, 0) // Rotation
+    new THREE.Vector3(0, -30, -20),
+    24,
+    new THREE.Euler(0, 0, 0)
+  ).catch(console.error)
+
+  // Load sci-fi bar in the background
+  barLoader.loadBar(
+    scene,
+    new THREE.Vector3(-7, -21.85, 40),
+    200,
+    new THREE.Euler(0, Math.PI/2, 0)
   ).catch(console.error)
 })
 
@@ -331,71 +506,6 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
-// Glass switching with spacebar
-const glassNames = [
-  'zombie_glass_0',
-  'cocktail_glass_1',
-  'rocks_glass_2',
-  'hurricane_glass_3',
-  'pint_glass_4',
-  'seidel_Glass_5',
-  'shot_glass_6',
-  'highball_glass_7',
-  'margarita_glass_8',
-  'martini_glass_9',
-] as const
-
-let currentGlassIndex = 8 // Start with margarita_glass_8
-
-// Load all garnishes for tweaking (press 'G' key)
-function loadAllGarnishes() {
-  console.log('Loading all garnishes for showcase...')
-
-  // Remove any existing garnishes
-  garnishLoader.removeAllGarnishes()
-
-  // Get allowed garnishes for the current glass type
-  const allowedGarnishes = getAllowedGarnishes(GLASS_TO_LOAD)
-  console.log(`Allowed garnishes for ${GLASS_TO_LOAD}:`, allowedGarnishes)
-
-  // Load only allowed garnishes for this glass type
-  allowedGarnishes.forEach((garnishName) => {
-    garnishLoader.loadGarnish(scene, garnishName, GLASS_TO_LOAD).then(() => {
-      console.log(`${garnishName} loaded`)
-    }).catch(console.error)
-  })
-}
-
-window.addEventListener('keydown', (event) => {
-  if (event.code === 'Space') {
-    event.preventDefault() // Prevent page scroll
-
-    currentGlassIndex = (currentGlassIndex + 1) % glassNames.length
-    const newGlassName = glassNames[currentGlassIndex]
-    console.log(`Switching to ${newGlassName}`)
-
-    glassLoader.switchGlass(newGlassName, iceLoader, garnishLoader).then(() => {
-      // Create ice cubes for the new glass
-      createIceCubesForGlass(newGlassName, true)
-
-      // Load garnish for new glass (positioned above scene, ready to fall)
-      garnishLoader.loadGarnish(scene, 'mint', newGlassName, true).then(() => {
-        console.log('[GARNISH] Mint garnish loaded (hidden above scene)')
-        garnishLoader.setGarnishScale('mint', 0.2)
-        // Garnish is positioned 8 units above final position
-        // The falling animation will be triggered after ice completes
-      }).catch((error) => {
-        console.error('Failed to load mint:', error)
-      })
-    }).catch(console.error)
-  }
-
-  // Press 'G' to load all garnishes for tweaking
-  if (event.code === 'KeyG') {
-    event.preventDefault()
-    loadAllGarnishes()
-  }
-})
 
 // Animation loop with delta time tracking
 let lastTime = performance.now()
@@ -433,7 +543,6 @@ const recipeBox = document.querySelector('.recipe-box') as HTMLElement
 const allPanelHeaders = document.querySelectorAll('.message.panel-header') as NodeListOf<HTMLElement>
 const ingredientsHeader = allPanelHeaders[0] // First header is "Ingredients:"
 const recipeHeader = allPanelHeaders[1] // Second header is "Recipe:"
-const shelfBoxes = document.querySelectorAll('.shelf-box') as NodeListOf<HTMLElement>
 
 function showRecipe() {
   // Show recipe elements
@@ -442,7 +551,8 @@ function showRecipe() {
   if (ingredientsHeader) ingredientsHeader.style.display = 'block'
   if (recipeHeader) recipeHeader.style.display = 'block'
 
-  // Hide shelf elements
+  // Hide shelf elements (re-query each time to catch dynamically added boxes)
+  const shelfBoxes = document.querySelectorAll('.shelf-box') as NodeListOf<HTMLElement>
   shelfBoxes.forEach(box => box.style.display = 'none')
 
   // Update button states
@@ -457,7 +567,8 @@ function showShelf() {
   if (ingredientsHeader) ingredientsHeader.style.display = 'none'
   if (recipeHeader) recipeHeader.style.display = 'none'
 
-  // Show shelf elements (with images and text)
+  // Show shelf elements (re-query each time to catch dynamically added boxes)
+  const shelfBoxes = document.querySelectorAll('.shelf-box') as NodeListOf<HTMLElement>
   shelfBoxes.forEach(box => box.style.display = 'flex')
 
   // Update button states
@@ -473,72 +584,52 @@ shelfButton?.addEventListener('click', showShelf)
 showShelf()
 
 // WebSocket and Chat Integration
-let selectedCocktail: CocktailDetail | null = null;
-
 // Initialize WebSocket
 chatWebSocket.onMessage((message) => {
   console.log('Received WebSocket message:', message);
 });
 
+// TEMPORARY: Helper function to convert example cocktail data to CocktailSummary format
+function cocktailConfigToSummary(config: CocktailConfig): CocktailSummary {
+  return {
+    id: config.id || '',
+    name: config.name || '',
+    ingredients_summary: config.ingredients.map(i => i.name).join(', '),
+    created_at: new Date().toISOString()
+  };
+}
+
+// Helper function to convert CocktailConfig to DrinkRecipeSchema for 3D rendering
+function cocktailConfigToRecipeSchema(config: CocktailConfig): DrinkRecipeSchema {
+  return {
+    name: config.name || 'Unnamed Cocktail',
+    description: config.description || `A delicious ${config.glassType} cocktail`,
+    ingredients: config.ingredients.map(ing => ({
+      name: ing.name,
+      amount: ing.amount,
+      color: ing.color,
+      unit: 'ml'
+    })),
+    instructions: config.instructions || ['Mix ingredients', 'Pour into glass', 'Enjoy!'],
+    glass_type: config.glassType,
+    garnish: config.garnish || null,
+    has_ice: config.hasIce
+  };
+}
+
 async function loadAndDisplayShelf() {
   try {
-    const response = await cocktailAPI.getUserShelf();
-    updateShelfDisplay(response.cocktails, response.agent_greeting);
+    // TEMPORARY: Using example data for styling - comment out API call
+    // const response = await cocktailAPI.getUserShelf();
+    // updateShelfDisplay(response.cocktails, response.agent_greeting);
 
-    // Reset drink title to default when shelf loads successfully
-    resetDrinkTitle();
+    // Load example cocktails (first 3 for display)
+    const exampleSummaries = exampleCocktails.slice(0, 3).map(cocktailConfigToSummary);
+    updateShelfDisplay(exampleSummaries, 'Welcome to your cocktail shelf! Here are some example drinks.');
 
   } catch (error) {
     console.error('Failed to load shelf:', error);
-
-    // Show user-friendly error message in shelf
-    const recipeContent = document.querySelector('.recipe-content');
-    if (recipeContent) {
-      // Clear any existing content first
-      const existingShelfBoxes = document.querySelectorAll('.shelf-box, .shelf-empty, .shelf-error');
-      existingShelfBoxes.forEach(box => box.remove());
-
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'shelf-error';
-
-      // Check error type for better messaging
-      if (error instanceof Error) {
-        if (error.message.includes('Backend server not running')) {
-          errorDiv.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #f44336;">
-              <h3>🔌 Backend Not Running</h3>
-              <p>The backend server needs to be started to load cocktails.</p>
-              <p style="font-size: 0.9em; opacity: 0.7;">Run: <code>npm run dev</code> in the backend folder</p>
-            </div>
-          `;
-
-          // Show same error in drink title
-          showDrinkTitleError('Backend server not running');
-
-        } else {
-          errorDiv.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #f44336;">
-              <h3>⚠️ Connection Error</h3>
-            </div>
-          `;
-
-          // Show same error in drink title
-          showDrinkTitleError('⚠️ Connection Error');
-        }
-      } else {
-        errorDiv.innerHTML = `
-          <div style="text-align: center; padding: 40px; color: #f44336;">
-            <h3>❌ Unknown Error</h3>
-            <p>Could not load cocktails.</p>
-          </div>
-        `;
-
-        // Show same error in drink title
-        showDrinkTitleError('Unknown Error');
-      }
-
-      recipeContent.appendChild(errorDiv);
-    }
+    // Don't show error UI - let the app continue working
   }
 }
 
@@ -551,15 +642,20 @@ function updateShelfDisplay(cocktails: any[], greeting: string) {
   // Add greeting message if needed
   console.log('Agent greeting:', greeting);
 
-  // Create new shelf boxes for each cocktail
-  const recipePanel = document.querySelector('.recipe-content');
-  if (recipePanel) {
-    cocktails.forEach((cocktail, index) => {
-      if (index < 3) { // Limit to 3 visible cocktails
-        const shelfBox = createShelfBox(cocktail);
-        recipePanel.appendChild(shelfBox);
-      }
-    });
+  // Check if we're currently in shelf tab before rendering
+  const isShelfTabActive = shelfButton?.classList.contains('selected');
+
+  // Only create shelf boxes if we're in the shelf tab
+  if (isShelfTabActive) {
+    const recipePanel = document.querySelector('.recipe-content');
+    if (recipePanel) {
+      cocktails.forEach((cocktail, index) => {
+        if (index < 3) { // Limit to 3 visible cocktails
+          const shelfBox = createShelfBox(cocktail);
+          recipePanel.appendChild(shelfBox);
+        }
+      });
+    }
   }
 }
 
@@ -568,8 +664,19 @@ function createShelfBox(cocktail: any) {
   shelfBox.className = 'shelf-box';
   shelfBox.style.cursor = 'pointer';
 
+  // TEMPORARY: Use example cocktail data to get the glass type and liquid color
+  const exampleCocktail = exampleCocktails.find(c => c.id === cocktail.id);
+  const glassType = (exampleCocktail?.glassType as GlassIconName) || 'cocktail';
+  const liquidColor = exampleCocktail?.liquidColor || '#CC2739';
+
+  // Generate glass icon SVG
+  const generator = glassIconGenerators[glassType];
+  const glassIconSvg = generator
+    ? generator({ liquidColor, width: 64, height: 64 })
+    : glassIconGenerators.cocktail({ liquidColor, width: 64, height: 64 });
+
   shelfBox.innerHTML = `
-    <img src="/src/img/1742270047720.jpeg" alt="Cocktail" class="drink-img">
+    <div class="drink-img">${glassIconSvg}</div>
     <div class="drink-text">
       <div class="message drink-title">${cocktail.name}</div>
       <div class="message drink-info">${cocktail.ingredients_summary}</div>
@@ -582,28 +689,72 @@ function createShelfBox(cocktail: any) {
       // Show loading state
       showRecipeLoading();
 
-      const detail = await cocktailAPI.getCocktailDetail(cocktail.id);
-      await selectAndDisplayCocktail(detail);
+      // TEMPORARY: Use local example data instead of API call
+      const exampleCocktail = exampleCocktails.find(c => c.id === cocktail.id);
 
-      // Switch to recipe view
-      const recipeButton = Array.from(document.querySelectorAll('.recipe-btn')).find(btn =>
-        btn.textContent === 'RECIPE'
-      ) as HTMLButtonElement;
-      if (recipeButton) {
-        recipeButton.click();
+      if (exampleCocktail) {
+        // Convert to recipe schema and render in 3D
+        const recipeSchema = cocktailConfigToRecipeSchema(exampleCocktail);
+        renderDrinkFromBackend(recipeSchema);
+
+        // Update drink title
+        updateDrinkTitle(exampleCocktail.name || 'Unnamed Cocktail');
+
+        // Update ingredients display
+        const ingredientsBox = document.querySelector('.ingredients-box .message-container');
+        if (ingredientsBox) {
+          ingredientsBox.innerHTML = '';
+          exampleCocktail.ingredients.forEach((ing, index) => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot';
+            messageDiv.textContent = `${index + 1}. ${ing.amount} ml ${ing.name}`;
+            ingredientsBox.appendChild(messageDiv);
+          });
+        }
+
+        // Update recipe display
+        const recipeBox = document.querySelector('.recipe-box .message-container');
+        if (recipeBox) {
+          recipeBox.innerHTML = '';
+
+          // Add description
+          const descDiv = document.createElement('div');
+          descDiv.className = 'message bot';
+          descDiv.textContent = recipeSchema.description;
+          recipeBox.appendChild(descDiv);
+
+          // Add instructions
+          recipeSchema.instructions.forEach((instruction, index) => {
+            const instructionDiv = document.createElement('div');
+            instructionDiv.className = 'message bot';
+            instructionDiv.textContent = `${index + 1}. ${instruction}`;
+            recipeBox.appendChild(instructionDiv);
+          });
+        }
+
+        // Switch to recipe view
+        const recipeButton = Array.from(document.querySelectorAll('.recipe-btn')).find(btn =>
+          btn.textContent === 'RECIPE'
+        ) as HTMLButtonElement;
+        if (recipeButton) {
+          recipeButton.click();
+        }
+      } else {
+        // Fall back to API if local data not found
+        const detail = await cocktailAPI.getCocktailDetail(cocktail.id);
+        await selectAndDisplayCocktail(detail);
+
+        // Switch to recipe view
+        const recipeButton = Array.from(document.querySelectorAll('.recipe-btn')).find(btn =>
+          btn.textContent === 'RECIPE'
+        ) as HTMLButtonElement;
+        if (recipeButton) {
+          recipeButton.click();
+        }
       }
     } catch (error) {
       console.error('Failed to load cocktail details:', error);
-
-      if (error instanceof Error) {
-        if (error.message.includes('Backend server not running')) {
-          showRecipeError('Backend server not running. Please start the backend.');
-        } else {
-          showRecipeError(`Failed to load cocktail: ${error.message}`);
-        }
-      } else {
-        showRecipeError('Failed to load cocktail details');
-      }
+      // Don't show persistent errors
     }
   });
 
@@ -652,10 +803,9 @@ function showRecipeLoading() {
 }
 
 async function selectAndDisplayCocktail(cocktail: CocktailDetail) {
-  selectedCocktail = cocktail;
-
   try {
-    // Update drink title
+    // Update drink title with the cocktail name
+    console.log('[DRINK TITLE] Updating drink title to:', cocktail.name);
     updateDrinkTitle(cocktail.name);
 
     // Update ingredients display
@@ -689,96 +839,60 @@ async function selectAndDisplayCocktail(cocktail: CocktailDetail) {
 
   } catch (error) {
     console.error('Error displaying cocktail:', error);
-    showRecipeError('Failed to display cocktail details');
-    showDrinkTitleError('Failed to load drink details');
+    // Don't show persistent errors
   }
 }
 
 function updateDrinkTitle(cocktailName: string) {
-  const drinkTitleElement = document.querySelector('.drink-title');
-  if (drinkTitleElement) {
-    drinkTitleElement.textContent = cocktailName;
-  }
-}
-
-function showDrinkTitleError(message: string) {
   const drinkTitleContainer = document.querySelector('.drink-title-container');
   if (drinkTitleContainer) {
-    drinkTitleContainer.innerHTML = '';
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'drink-title-error';
-    errorDiv.style.cssText = `
-      color: #c62828;
-      text-align: center;
-      font-size: 18px;
+    drinkTitleContainer.innerHTML = `
+      <h2 class="drink-title">${cocktailName}</h2>
+      <button class="drink-action-btn">
+        <svg width="24" height="24" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M46 8V4H18V8H14V60H18V56H22V52H26V48H30V44H34V48H38V52H42V56H46V60H50V8H46Z" fill="currentColor"/>
+        </svg>
+      </button>
     `;
-    errorDiv.textContent = `${message}`;
-    drinkTitleContainer.appendChild(errorDiv);
   }
 }
 
 function showDrinkTitleLoading() {
-  const drinkTitleContainer = document.querySelector('.drink-title-container');
-  if (drinkTitleContainer) {
-    drinkTitleContainer.innerHTML = '';
-    const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'drink-title-loading';
-    loadingDiv.style.cssText = `
-      background: #e3f2fd;
-      border-left: 4px solid #2196f3;
-      color: #1976d2;
-      padding: 12px;
-      border-radius: 4px;
-      text-align: center;
-      font-size: 14px;
-      font-style: italic;
-    `;
-    loadingDiv.textContent = '⏳ Loading drink...';
-    drinkTitleContainer.appendChild(loadingDiv);
-  }
+  // Do nothing - loading indicator removed
 }
 
 function resetDrinkTitle() {
   const drinkTitleContainer = document.querySelector('.drink-title-container');
   if (drinkTitleContainer) {
-    drinkTitleContainer.innerHTML = '<h2 class="drink-title">Select a Drink</h2>';
+    drinkTitleContainer.innerHTML = `
+      <h2 class="drink-title">Select a Drink</h2>
+      <button class="drink-action-btn">
+        <svg width="24" height="24" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M46 8V4H18V8H14V60H18V56H22V52H26V48H30V44H34V48H38V52H42V56H46V60H50V8H46Z" fill="currentColor"/>
+        </svg>
+      </button>
+    `;
   }
 }
 
-function showRecipeError(message: string) {
-  // Show error in ingredients box
-  const ingredientsBox = document.querySelector('.ingredients-box .message-container');
-  if (ingredientsBox) {
-    ingredientsBox.innerHTML = '';
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'message bot recipe-error';
-    errorDiv.style.cssText = `
-      background: #ffebee;
-      border-left: 4px solid #f44336;
-      color: #c62828;
-      padding: 8px;
-      border-radius: 4px;
-    `;
-    errorDiv.textContent = `❌ ${message}`;
-    ingredientsBox.appendChild(errorDiv);
-  }
+function clearAllErrorMessages() {
+  console.log('[CLEAR ERRORS] Clearing all error messages because backend is working');
 
-  // Show error in recipe box
-  const recipeBox = document.querySelector('.recipe-box .message-container');
-  if (recipeBox) {
-    recipeBox.innerHTML = '';
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'message bot recipe-error';
-    errorDiv.style.cssText = `
-      background: #ffebee;
-      border-left: 4px solid #f44336;
-      color: #c62828;
-      padding: 8px;
-      border-radius: 4px;
-    `;
-    errorDiv.textContent = `❌ ${message}`;
-    recipeBox.appendChild(errorDiv);
-  }
+  // Clear shelf errors
+  const existingShelfErrors = document.querySelectorAll('.shelf-error');
+  existingShelfErrors.forEach(error => error.remove());
+
+  // Clear recipe errors
+  const existingRecipeErrors = document.querySelectorAll('.recipe-error');
+  existingRecipeErrors.forEach(error => error.remove());
+
+  // Clear chat errors
+  const existingChatErrors = document.querySelectorAll('.chat-error');
+  existingChatErrors.forEach(error => error.remove());
+
+  // Clear drink title errors but preserve current state
+  // Don't handle drink title errors - they shouldn't persist
+  console.log('[CLEAR ERRORS] Skipping drink title error handling');
 }
 
 function updateSceneForCocktail(cocktail: CocktailDetail) {
@@ -903,11 +1017,8 @@ chatInput?.addEventListener('keypress', (e) => {
 // Expose refresh function globally for WebSocket updates
 (window as any).refreshShelfPanel = loadAndDisplayShelf;
 
-chatInput?.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    sendChatMessage();
-  }
-});
+// Expose renderDrinkFromBackend globally for WebSocket updates
+(window as any).renderDrinkFromBackend = renderDrinkFromBackend;
 
 // Handle placeholder label visibility
 const chatInputElement = document.getElementById('chat-input') as HTMLInputElement;
@@ -940,9 +1051,6 @@ if (chatInputElement && sendMessageTitle) {
   // Initial check
   updateLabelVisibility();
 }
-
-// Expose refresh function globally for WebSocket updates
-(window as any).refreshShelfPanel = loadAndDisplayShelf;
 
 // Load shelf on startup
 loadAndDisplayShelf();
@@ -990,9 +1098,6 @@ setTimeout(() => {
     profileImg.src = '/src/img/image_3.png';
   }
 }, 0);
-
-// Update login overlay to start token manager after successful login
-const originalLoginOverlay = LoginOverlay;
 
 // Enhanced logout functionality with custom dialog
 function logoutWithConfirmation() {
@@ -1087,6 +1192,8 @@ if (logoutBtn) {
 (window as any).logout = logoutWithConfirmation;
 
 function showShelfEnhanced() {
+  console.log('[SHELF] Showing enhanced shelf view');
+
   // Hide recipe elements
   if (ingredientsBox) ingredientsBox.style.display = 'none'
   if (recipeBox) recipeBox.style.display = 'none'

@@ -42,8 +42,8 @@ EXPECTED_OUTPUT:
       "Pour into a chilled hurricane glass",
       "Garnish with pineapple wedge and maraschino cherry"
     ],
-    "glass_type": "hurricane",
-    "garnish": "pineapple wedge and maraschino cherry",
+    "glass_type": "hurricane glass",
+    "garnish": "cherry",
     "has_ice": true
   }
 }

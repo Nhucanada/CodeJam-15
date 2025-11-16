@@ -1,0 +1,50 @@
+CONVERSATION:
+User: I want an Old Fashioned
+Arthur: Perfect choice! A classic whiskey cocktail coming right up.
+
+EXPECTED_OUTPUT:
+{
+  "id": "example-006",
+  "name": "Create Old Fashioned",
+  "created_at": "2025-11-16T12:00:00Z",
+  "updated_at": "2025-11-16T12:00:00Z",
+  "action_type": "create_drink",
+  "confidence": 0.97,
+  "reasoning": "User explicitly requested an Old Fashioned. This is a specific classic cocktail made with bourbon or rye whiskey, bitters, sugar, and orange. NOT a margarita, NOT a mojito, but an OLD FASHIONED.",
+  "conversation": "Ah, an Old Fashioned! A true classic. I'm preparing this timeless whiskey cocktail with bourbon, bitters, and a touch of sugar. Stirred, not shaken.",
+  "drink_recipe": {
+    "name": "Old Fashioned",
+    "description": "A classic whiskey cocktail with bourbon, sugar, bitters, and orange",
+    "ingredients": [
+      {
+        "name": "Bourbon",
+        "amount": 60,
+        "color": "#D4A574",
+        "unit": "ml"
+      },
+      {
+        "name": "Simple Syrup",
+        "amount": 5,
+        "color": "#FFFACD",
+        "unit": "ml"
+      },
+      {
+        "name": "Angostura Bitters",
+        "amount": 3,
+        "color": "#8B4513",
+        "unit": "dash"
+      }
+    ],
+    "instructions": [
+      "Add simple syrup and bitters to a rocks glass",
+      "Add a large ice cube",
+      "Pour in the bourbon",
+      "Stir gently for about 20 seconds",
+      "Express orange peel over the drink and drop it in"
+    ],
+    "glass_type": "rocks glass",
+    "garnish": "orange",
+    "has_ice": true
+  },
+  "suggest_drink": null
+}

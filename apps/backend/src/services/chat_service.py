@@ -441,27 +441,19 @@ async def process_user_message(
         
         # Generate unique message ID
         message_id = session.generate_message_id()
-        
-        # Add user message to history
-        if message.content:
-            session.add_to_history("user", message.content)
-        
-        # Get conversation context
-        context = session.get_context_string(max_messages=10)
-        
-        # Prepare enhanced input with context
+
+        # Frontend now sends full conversation history in content field
+        # No need to process separate history array or build context
         user_input = message.content or ""
-        if context:
-            enhanced_input = f"\n{context}\n"
-        else:
-            enhanced_input = user_input
+        enhanced_input = user_input
         
         # Get the singleton AgenticEngine
         engine = get_agentic_engine()
-        
-        # Run the agent with RAG
+
+        # Run the agent with the full content (which includes history)
+        logger.info(f"Running agent with params - user_id: {session.user.id}, top_k: 5, rag_enabled: True")
         result = await engine.run(
-            user_input=enhanced_input,
+            user_input=user_input,
             user_id=session.user.id,
             top_k=5,
             rag_enabled=True
@@ -585,7 +577,9 @@ async def handle_message(
     """
     try:
         # Parse incoming message
+        logger.info(f"Received WebSocket message: {message_data}")
         message = IncomingMessage(**message_data)
+        logger.info(f"Parsed message - Type: {message.type}, Content: {message.content}")
 
         # Re-authenticate if token is provided in message
         if message.token:

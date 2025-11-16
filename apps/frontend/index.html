@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <link rel="icon" type="image/svg+xml" href="/icon.svg" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cocktail 3D</title>
 </head>
@@ -13,7 +13,7 @@
     <div class="chat-content">
       <div class="title-header">
         <h2 class="bartender-title">B A R L I N E</h2>
-        <button class="logout-btn">O</button>
+        <button class="logout-btn"></button>
       </div>
       <div class="chat-header">
         <img src="" alt="Bartender" class="profile-img" id="profile-img">
@@ -35,9 +35,14 @@
 
   <div id="drink-panel" class="drink-panel">
     <div class="drink-content">
-      <div class="drink-title-container">
-        <h2 class="drink-title">Loading...</h2>
-      </div>
+        <div class="drink-title-container">
+          <h2 class="drink-title"></h2>
+          <button class="drink-action-btn">
+            <svg width="24" height="24" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M46 8V4H18V8H14V60H18V56H22V52H26V48H30V44H34V48H38V52H42V56H46V60H50V8H46Z" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
     </div>
   </div>
 
@@ -47,12 +52,12 @@
         <button class="recipe-btn">SHELF</button>
         <button class="recipe-btn">RECIPE</button>
       </div>
-      <div class="message panel-header">Ingredients:</div>
+      <div class="message panel-header">INGREDIENTS:</div>
       <div class="ingredients-box">
         <div class="message-container">
         </div>
       </div>
-      <div class="message panel-header">Recipe:</div>
+      <div class="message panel-header">RECIPE:</div>
       <div class="recipe-box">
         <div class="message-container">
         </div>

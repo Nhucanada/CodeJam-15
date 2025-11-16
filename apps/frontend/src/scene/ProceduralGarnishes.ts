@@ -99,57 +99,94 @@ export function createProceduralCherry(): THREE.Group {
 }
 
 /**
- * Create a procedural orange round (thin cylinder slice)
+ * Create a procedural citrus round (thin cylinder slice)
+ * @param citrusType - Type of citrus: 'orange', 'lime', or 'lemon'
  */
-export function createProceduralOrangeRound(): THREE.Group {
-  const orangeGroup = new THREE.Group()
+export function createProceduralCitrusRound(
+  citrusType: 'orange' | 'lime' | 'lemon' = 'orange'
+): THREE.Group {
+  const citrusGroup = new THREE.Group()
 
-  // Orange slice material (bright orange)
-  const orangeMaterial = new THREE.MeshPhysicalMaterial({
-    color: 0xff8c00, // Dark orange
+  // Map citrus type to color
+  const citrusColors = {
+    orange: 0xff8c00, // Dark orange
+    lime: 0x32cd32, // Lime green
+    lemon: 0xfff44f, // Bright yellow
+  }
+
+  const pithColors = {
+    orange: 0xffddaa, // Very light orange
+    lime: 0xe0ffcc, // Very light green
+    lemon: 0xffffcc, // Very light yellow
+  }
+
+  const centerColors = {
+    orange: 0xffb366, // Light orange
+    lime: 0x66ff66, // Light lime
+    lemon: 0xffff99, // Light yellow
+  }
+
+  // Citrus color material (for outer edge of cylinder)
+  const citrusMaterial = new THREE.MeshPhysicalMaterial({
+    color: citrusColors[citrusType],
     metalness: 0.1,
     roughness: 0.3,
     transmission: 0.0, // Fully opaque
     transparent: false,
-    clippingPlanes: [], // Prevent liquid clipping from affecting orange
+    clippingPlanes: [], // Prevent liquid clipping from affecting citrus
   })
 
-  // Create thin cylinder for the orange round
+  // Create thin cylinder for the outer edge (orange colored)
   const sliceGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.05, 32)
-  const slice = new THREE.Mesh(sliceGeometry, orangeMaterial)
+  const slice = new THREE.Mesh(sliceGeometry, citrusMaterial)
   slice.castShadow = true
   slice.receiveShadow = true
 
-  // Add white pith ring (inner circle)
+  // Very light colored pith material
   const pithMaterial = new THREE.MeshPhysicalMaterial({
-    color: 0xffffff, // White
+    color: pithColors[citrusType],
     metalness: 0.0,
     roughness: 0.8,
     transmission: 0.0, // Fully opaque
     transparent: false,
     clippingPlanes: [], // Prevent liquid clipping from affecting pith
   })
-  const pithGeometry = new THREE.CylinderGeometry(0.12, 0.12, 0.051, 32)
+
+  // Add pith ring on the faces (outer ring on the face)
+  const pithGeometry = new THREE.CylinderGeometry(0.19, 0.19, 0.051, 32)
   const pith = new THREE.Mesh(pithGeometry, pithMaterial)
   pith.castShadow = true
   pith.receiveShadow = true
 
-  orangeGroup.add(slice)
-  orangeGroup.add(pith)
+  // Light colored center material
+  const centerMaterial = new THREE.MeshPhysicalMaterial({
+    color: centerColors[citrusType],
+    metalness: 0.1,
+    roughness: 0.3,
+    transmission: 0.0, // Fully opaque
+    transparent: false,
+    clippingPlanes: [], // Prevent liquid clipping from affecting center
+  })
 
-  return orangeGroup
+  // Add center on the faces
+  const centerGeometry = new THREE.CylinderGeometry(0.16, 0.16, 0.052, 32)
+  const center = new THREE.Mesh(centerGeometry, centerMaterial)
+  center.castShadow = true
+  center.receiveShadow = true
+
+  citrusGroup.add(slice)
+  citrusGroup.add(pith)
+  citrusGroup.add(center)
+
+  return citrusGroup
 }
 
 /**
  * Create a procedural salt rim using particles
  * @param rimRadius - The radius of the glass rim
- * @param rimHeight - The height position of the rim (not used, kept for backward compatibility)
  * @returns THREE.Points object with salt particles
  */
-export function createProceduralSaltRim(
-  rimRadius: number,
-  rimHeight: number
-): THREE.Points {
+export function createProceduralSaltRim(rimRadius: number): THREE.Points {
   const particleCount = 400 // Coarse grain with good coverage
   const positions = new Float32Array(particleCount * 3)
   const sizes = new Float32Array(particleCount)

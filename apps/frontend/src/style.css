@@ -80,6 +80,7 @@ canvas {
   outline: 3px solid #252525;
   display: flex;
   gap: 10px;
+  position: relative;
 }
 
 .drink-title {
@@ -143,7 +144,7 @@ canvas {
   background: rgba(37, 37, 37, 0.4);
   color: rgba(255, 255, 255, 1);
   border: none;
-  padding: 20px 20px;
+  padding: 15px 15px;
   cursor: pointer;
   font-size: 12px;
   letter-spacing: 1px;
@@ -153,6 +154,12 @@ canvas {
   right: 7px;
   top: 50%;
   transform: translateY(-50%);
+  background-image: url('./img/exit.png');
+  background-size: 32px 32px;
+  background-repeat: no-repeat;
+  background-position: calc(50% - 2px);
+  width: 40px;
+  height: 40px;
 }
 
 .profile-img {
@@ -213,7 +220,7 @@ canvas {
 .ingredients-box {
   flex: 1;
   padding: 20px;
-  height: 12.8%;
+  max-height: 50%;
   margin-top: 6px;
   margin-left: 19px;
   margin-right: 19px;
@@ -227,7 +234,7 @@ canvas {
 .recipe-box {
   flex: 1;
   padding: 20px;
-  height: 42%;
+  height: 50%;
   margin-top: 6px;
   margin-left: 19px;
   margin-right: 19px;
@@ -379,8 +386,17 @@ canvas {
 
 .drink-img {
   height: 100%;
-  object-fit: contain;
+  width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-right: 3px solid #252525;
+  flex-shrink: 0;
+}
+
+.drink-img svg {
+  height: 80%;
+  width: auto;
 }
 
 
@@ -414,7 +430,7 @@ canvas {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(5px);
   z-index: 9999;
   display: flex;
@@ -430,6 +446,9 @@ canvas {
   padding: 0;
   width: 400px;
   max-width: 90%;
+  position: relative;
+  top: 0;
+  transform: none;
 }
 
 .login-content {
@@ -479,7 +498,7 @@ canvas {
   border: 2px solid #252525;
   color: #fff;
   padding: 12px 15px;
-  font-size: 16px;
+  font-size: 12px;
   font-family: 'Sixtyfour', monospace;
   outline: none;
   transition: border-color 0.3s ease;
@@ -571,7 +590,7 @@ canvas {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(5px);
   z-index: 9999;
   display: none;
@@ -643,4 +662,65 @@ canvas {
 .logout-cancel-btn:hover {
   background: rgba(102, 61, 91, 1);
   box-shadow: 4px 4px 8px rgba(255, 255, 255, 0.1);
+}
+
+.barline-title {
+  color: #fff;
+  font-size: 96px;
+  font-weight: normal;
+  letter-spacing: 6px;
+  font-family: 'Sixtyfour', monospace;
+  text-align: center;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.barline-subtitle {
+  color: #ccc;
+  font-size: 28px;
+  font-weight: normal;
+  letter-spacing: 3px;
+  font-family: 'Sixtyfour', monospace;
+  text-align: center;
+  margin-bottom: 40px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.login-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100%;
+  padding-top: calc(15vh - 50px);
+}
+
+.drink-action-btn {
+  background: rgba(48, 28, 46, 1);
+  color: #fff;
+  border: none;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  font-family: 'Sixtyfour', monospace;
+  transition: all 0.3s ease;
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drink-action-btn:hover {
+  background: rgba(102, 61, 91, 1);
+  box-shadow: 4px 4px 8px rgba(255, 255, 255, 0.2);
 }

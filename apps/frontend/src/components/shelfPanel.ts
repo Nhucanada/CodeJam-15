@@ -1,6 +1,9 @@
   import { cocktailAPI } from '../api/client';
   import type { CocktailSummary, CocktailDetail } from '../types/cocktail';
-
+  // TEMPORARY: Import example data for styling
+  import { exampleCocktails } from '../data/cocktails';
+  import type { CocktailConfig } from '../types';
+  import { glassIconGenerators, type GlassIconName } from '../ui/GlassIcons';
   export class ShelfPanel {
     private cocktails: CocktailSummary[] = [];
     private loading: boolean = true;
@@ -23,9 +26,17 @@
     public async loadShelf(): Promise<void> {
       try {
         this.loading = true;
-        const response = await cocktailAPI.getUserShelf();
-        this.cocktails = response.cocktails;
-        this.greeting = response.agent_greeting;
+        // TEMPORARY: Using example data for styling - comment out API call
+        // const response = await cocktailAPI.getUserShelf();
+        // this.cocktails = response.cocktails;
+        // this.greeting = response.agent_greeting;
+
+        // Load example cocktails (first 3 for display)
+        this.cocktails = exampleCocktails.slice(0, 3).map(config =>
+          this.cocktailConfigToSummary(config)
+        );
+        this.greeting = 'Welcome to your cocktail shelf! Here are some example drinks.';
+
         this.updateDisplay();
       } catch (error) {
         console.error('Failed to load shelf:', error);
@@ -74,8 +85,16 @@
       shelfBox.style.cursor = 'pointer';
       shelfBox.style.display = 'none'; // Start hidden, will be shown when shelf view is active
 
+      // TEMPORARY: Use example cocktail data to get the glass type and liquid color
+      const exampleCocktail = exampleCocktails.find(c => c.id === cocktail.id);
+      const glassType = (exampleCocktail?.glassType as GlassIconName) || 'cocktail';
+      const liquidColor = exampleCocktail?.liquidColor || '#CC2739';
+
+      // Generate glass icon SVG
+      const glassIconSvg = this.generateGlassIcon(glassType, liquidColor);
+
       shelfBox.innerHTML = `
-        <img src="/src/img/1742270047720.jpeg" alt="Cocktail" class="drink-img">
+        <div class="drink-img">${glassIconSvg}</div>
         <div class="drink-text">
           <div class="message drink-title">${this.escapeHtml(cocktail.name)}</div>
           <div class="message drink-info">${this.escapeHtml(cocktail.ingredients_summary)}</div>
@@ -86,6 +105,18 @@
       shelfBox.addEventListener('click', () => this.selectCocktail(cocktail.id));
 
       return shelfBox;
+    }
+
+    /**
+     * Generates a glass icon SVG
+     */
+    private generateGlassIcon(glassType: GlassIconName = 'cocktail', liquidColor: string = '#CC2739'): string {
+      const generator = glassIconGenerators[glassType];
+      if (!generator) {
+        console.warn(`Unknown glass type: ${glassType}, using default`);
+        return glassIconGenerators.cocktail({ liquidColor, width: 64, height: 64 });
+      }
+      return generator({ liquidColor, width: 64, height: 64 });
     }
 
     private async selectCocktail(cocktailId: string): Promise<void> {
@@ -99,6 +130,11 @@
 
         // Update the main display
         this.updateRecipeDisplay(detail);
+
+        // Render the drink in 3D scene if recipe data is available
+        if (detail.recipe && (window as any).renderDrinkFromBackend) {
+          (window as any).renderDrinkFromBackend(detail.recipe);
+        }
 
         // Switch to recipe view
         this.switchToRecipeView();
@@ -187,6 +223,16 @@
         </div>
       `;
       container.appendChild(emptyDiv);
+    }
+
+    // TEMPORARY: Helper function to convert example cocktail data to CocktailSummary format
+    private cocktailConfigToSummary(config: CocktailConfig): CocktailSummary {
+      return {
+        id: config.id || '',
+        name: config.name || '',
+        ingredients_summary: config.ingredients.map(i => i.name).join(', '),
+        created_at: new Date().toISOString()
+      };
     }
 
     private escapeHtml(text: string): string {

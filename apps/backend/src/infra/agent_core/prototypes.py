@@ -48,7 +48,7 @@ def get_classic_completion_prompt(_: str) -> Prompt:
             "2. Think through the logical steps needed to address the request\n"
             "3. Consider any relevant context or constraints\n"
             "4. Formulate a clear and helpful response\n"
-            "Show your reasoning, then provide the final answer."
+            "Put your reasoning in the 'reasoning' field and your response in the 'conversation' field of the JSON output."
         )
     )
 
@@ -68,7 +68,7 @@ def get_retrieval_augmented_prompt(_: str) -> Prompt:
             "3. Extract relevant facts and determine their reliability\n"
             "4. Synthesize the information into a coherent answer\n"
             "5. Cite sources and provide references for all claims\n"
-            "Show your reasoning process before presenting the final answer."
+            "Put your reasoning process in the 'reasoning' field and your final answer in the 'conversation' field of the JSON output."
         )
     )
 
@@ -88,7 +88,7 @@ def get_question_answering_prompt(_: str) -> Prompt:
             "3. What logical steps lead to the answer?\n"
             "4. Am I certain about this answer based on available data?\n"
             "If the answer is not known, explain your reasoning and state 'I don't know based on current data.'\n"
-            "Show your thought process, then provide your final answer."
+            "Put your thought process in the 'reasoning' field and your final answer in the 'conversation' field of the JSON output."
         )
     )
 
@@ -102,13 +102,26 @@ def get_action_generation_prompt(_: str) -> Prompt:
             "is executable in the current environment."
         ),
         instructions=(
-            "Let's break down the action generation:\n"
-            "1. Analyze what the user wants to accomplish\n"
-            "2. Identify the appropriate action type for this intent\n"
-            "3. Determine all required input parameters and their values\n"
-            "4. Define the expected output schema\n"
-            "5. Validate that the action structure is complete and correct\n"
-            "Show your reasoning process, then respond with the structured JSON containing action type, input parameters, and expected output schema."
+            "Let's break down the drink request:\n"
+            "1. Analyze what the user wants:\n"
+            "   - Specific drink by name? → action_type: 'create_drink' (populate drink_recipe)\n"
+            "   - Describe preferences/mood? → action_type: 'suggest_drink' (populate suggest_drink)\n"
+            "   - Ask about ingredients? → action_type: 'search_drink' (populate drink_recipe)\n\n"
+            "2. For CREATE_DRINK or SUGGEST_DRINK, provide COMPLETE recipe:\n"
+            "   - Name: The cocktail name\n"
+            "   - Description: Brief description of the drink's character\n"
+            "   - Ingredients: Each ingredient MUST have:\n"
+            "     * name: Ingredient name (e.g., 'Bourbon', 'Simple Syrup')\n"
+            "     * amount: Numeric amount (e.g., 60, 2, 0.5)\n"
+            "     * unit: Unit of measurement (e.g., 'ml', 'oz', 'dash', 'tsp')\n"
+            "     * color: Hex color code (e.g., '#D4A574' for bourbon, '#FFD700' for simple syrup)\n"
+            "   - Instructions: Array of step-by-step preparation instructions\n"
+            "   - Glass type: MUST be one of: 'zombie glass', 'cocktail glass', 'rocks glass', 'hurricane glass', 'pint glass', 'seidel glass', 'shot glass', 'highball glass', 'margarita glass', 'martini glass'\n"
+            "   - Garnish: MUST be one of: 'lemon', 'lime', 'orange', 'cherry', 'olive', 'salt_rim', 'mint', or null for no garnish\n"
+            "   - Has ice: true/false\n\n"
+            "3. Respond in character as Arthur the bartender in the 'conversation' field\n\n"
+            "4. Put your reasoning about which action_type to use in the 'reasoning' field\n\n"
+            "CRITICAL: NEVER leave action_type as null. ALWAYS choose create_drink, suggest_drink, or search_drink."
         )
     )
 
@@ -128,7 +141,7 @@ def get_summarization_prompt(_: str) -> Prompt:
             "3. Determine what details are essential vs. supplementary\n"
             "4. Consider the intended audience and purpose\n"
             "5. Synthesize the information into a concise summary\n"
-            "Show your analysis of key points, then provide a concise summary with only the most important information."
+            "Put your analysis of key points in the 'reasoning' field, then provide a concise summary in the 'conversation' field of the JSON output."
         )
     )
 
@@ -148,7 +161,7 @@ def get_chat_style_prompt(_: str) -> Prompt:
             "3. Are there any ambiguities that need clarification?\n"
             "4. What would be the most helpful response?\n"
             "5. How can I respond in a friendly and clear manner?\n"
-            "Consider the conversation flow, then provide a helpful and contextually appropriate response."
+            "Put your analysis in the 'reasoning' field, then provide a helpful and contextually appropriate response in the 'conversation' field of the JSON output."
         )
     )
 

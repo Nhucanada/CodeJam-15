@@ -13,6 +13,8 @@ export interface CocktailConfig {
   // Metadata
   name?: string
   id?: string
+  description?: string
+  instructions?: string[]
 }
 
 export interface Ingredient {
@@ -22,19 +24,25 @@ export interface Ingredient {
 }
 
 export type GlassType =
-  | 'highball'
-  | 'martini'
+  | 'zombie'
+  | 'cocktail'
   | 'rocks'
-  | 'coupe'
   | 'hurricane'
+  | 'pint'
+  | 'seidel'
+  | 'shot'
+  | 'highball'
+  | 'margarita'
+  | 'martini'
 
 export type Garnish =
   | 'lemon'
   | 'lime'
   | 'orange'
   | 'cherry'
+  | 'olive'
+  | 'salt_rim'
   | 'mint'
-  | 'umbrella'
   | 'none'
 
 export interface TabConfig {
@@ -63,23 +71,29 @@ export type RendererGarnishName =
   | 'cherry'
   | 'olive'
   | 'salt_rim'
-  | 'orange_round'
+  | 'citrus_round'
   | 'mint'
 
 // Mapping utilities to convert user-friendly types to renderer types
 export const glassTypeToRenderer: Record<GlassType, RendererGlassName> = {
-  highball: 'highball_glass_7',
-  martini: 'martini_glass_9',
+  zombie: 'zombie_glass_0',
+  cocktail: 'cocktail_glass_1',
   rocks: 'rocks_glass_2',
-  coupe: 'cocktail_glass_1',
   hurricane: 'hurricane_glass_3',
+  pint: 'pint_glass_4',
+  seidel: 'seidel_Glass_5',
+  shot: 'shot_glass_6',
+  highball: 'highball_glass_7',
+  margarita: 'margarita_glass_8',
+  martini: 'martini_glass_9',
 }
 
-export const garnishToRenderer: Record<Exclude<Garnish, 'none'>, RendererGarnishName | null> = {
-  lemon: 'orange_round', // Using orange_round as closest match
-  lime: 'orange_round', // Using orange_round as closest match
-  orange: 'orange_round',
+export const garnishToRenderer: Record<Exclude<Garnish, 'none'>, RendererGarnishName> = {
+  lemon: 'citrus_round',
+  lime: 'citrus_round',
+  orange: 'citrus_round',
   cherry: 'cherry',
+  olive: 'olive',
+  salt_rim: 'salt_rim',
   mint: 'mint',
-  umbrella: null, // Not supported by renderer
 }
