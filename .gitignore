@@ -17,7 +17,6 @@ build/
 */__pycache__/
 **/__pycache__/
 
-
 # Environment files
 .env
 .env.local
