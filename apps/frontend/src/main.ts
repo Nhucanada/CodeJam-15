@@ -448,7 +448,7 @@ function createIceCubesForGlass(glassName: GlassName, loadGarnishAfter: boolean 
           iceLoader.animateIceFalling(iceName, baseY, () => {
             // After falling completes, start bobbing with different time offset for each cube
             const timeOffset = Math.random() * Math.PI * 2 // Random phase 0 to 2π
-            iceLoader.animateIceBobbing(iceName, baseY, timeOffset)
+            iceLoader.animateIceBobbing(iceName, baseY)
 
             // If this is the last ice cube and we should load garnish, trigger garnish falling
             if (i === lastIceIndex && loadGarnishAfter) {
@@ -859,40 +859,6 @@ function updateDrinkTitle(cocktailName: string) {
 
 function showDrinkTitleLoading() {
   // Do nothing - loading indicator removed
-}
-
-function resetDrinkTitle() {
-  const drinkTitleContainer = document.querySelector('.drink-title-container');
-  if (drinkTitleContainer) {
-    drinkTitleContainer.innerHTML = `
-      <h2 class="drink-title">Select a Drink</h2>
-      <button class="drink-action-btn">
-        <svg width="24" height="24" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M46 8V4H18V8H14V60H18V56H22V52H26V48H30V44H34V48H38V52H42V56H46V60H50V8H46Z" fill="currentColor"/>
-        </svg>
-      </button>
-    `;
-  }
-}
-
-function clearAllErrorMessages() {
-  console.log('[CLEAR ERRORS] Clearing all error messages because backend is working');
-
-  // Clear shelf errors
-  const existingShelfErrors = document.querySelectorAll('.shelf-error');
-  existingShelfErrors.forEach(error => error.remove());
-
-  // Clear recipe errors
-  const existingRecipeErrors = document.querySelectorAll('.recipe-error');
-  existingRecipeErrors.forEach(error => error.remove());
-
-  // Clear chat errors
-  const existingChatErrors = document.querySelectorAll('.chat-error');
-  existingChatErrors.forEach(error => error.remove());
-
-  // Clear drink title errors but preserve current state
-  // Don't handle drink title errors - they shouldn't persist
-  console.log('[CLEAR ERRORS] Skipping drink title error handling');
 }
 
 function updateSceneForCocktail(cocktail: CocktailDetail) {
