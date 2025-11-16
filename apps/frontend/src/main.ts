@@ -316,7 +316,7 @@ function createShelfBox(cocktail: any) {
   shelfBox.style.cursor = 'pointer';
 
   shelfBox.innerHTML = `
-    <img src="/src/img/1742270047720.jpeg" alt="Cocktail" class="drink-img">
+    <img src="/src/img/ArthurIcon.png" alt="Cocktail" class="drink-img">
     <div class="drink-text">
       <div class="message drink-title">${cocktail.name}</div>
       <div class="message drink-info">${cocktail.ingredients_summary}</div>

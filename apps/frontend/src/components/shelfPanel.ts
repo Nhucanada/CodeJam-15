@@ -1,5 +1,6 @@
   import { cocktailAPI } from '../api/client';
   import type { CocktailSummary, CocktailDetail } from '../types/cocktail';
+  import { glassIconGenerators, type GlassIconName } from '../ui/GlassIcons';
 
   export class ShelfPanel {
     private cocktails: CocktailSummary[] = [];
@@ -74,8 +75,11 @@
       shelfBox.style.cursor = 'pointer';
       shelfBox.style.display = 'none'; // Start hidden, will be shown when shelf view is active
 
+      // Generate a default glass icon (you can make this dynamic based on cocktail type)
+      const glassIcon = this.generateGlassIcon('cocktail', '#CC2739');
+
       shelfBox.innerHTML = `
-        <img src="/src/img/1742270047720.jpeg" alt="Cocktail" class="drink-img">
+        <div class="drink-img">${glassIcon}</div>
         <div class="drink-text">
           <div class="message drink-title">${this.escapeHtml(cocktail.name)}</div>
           <div class="message drink-info">${this.escapeHtml(cocktail.ingredients_summary)}</div>
@@ -86,6 +90,18 @@
       shelfBox.addEventListener('click', () => this.selectCocktail(cocktail.id));
 
       return shelfBox;
+    }
+
+    /**
+     * Generates a glass icon SVG
+     */
+    private generateGlassIcon(glassType: GlassIconName = 'cocktail', liquidColor: string = '#CC2739'): string {
+      const generator = glassIconGenerators[glassType];
+      if (!generator) {
+        console.warn(`Unknown glass type: ${glassType}, using default`);
+        return glassIconGenerators.cocktail({ liquidColor, width: 64, height: 64 });
+      }
+      return generator({ liquidColor, width: 64, height: 64 });
     }
 
     private async selectCocktail(cocktailId: string): Promise<void> {
