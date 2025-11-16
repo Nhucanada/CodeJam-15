@@ -8,8 +8,8 @@ build/
 *.tsbuildinfo
 
 # Python artifacts
-__pycache__/
-*.pyc
+**/__pycache__/
+**/*.pyc
 *.pyo
 *.pyd
 *.pyw
@@ -67,3 +67,4 @@ venv/
 .env
 .env.local
 .env.*.local
+apps/backend/src/data model.txt
