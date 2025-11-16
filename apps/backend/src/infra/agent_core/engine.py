@@ -1,6 +1,8 @@
 from typing import Any, Optional, Dict, Union
 from pathlib import Path
 
+from sklearn.metrics.pairwise import config_context
+
 from src.core.config import get_settings
 from src.domain.agent_models import AgentActionSchema
 from src.infra.agent_core.prompt import Prompt
@@ -14,6 +16,8 @@ from google.genai import types
 import numpy as np
 import json
 import logging
+
+logger = logging.getLogger(__name__)
 
 class AgenticEngine:
     """
@@ -101,6 +105,8 @@ class AgenticEngine:
             for chunk in retrieved_chunks:
                 prompt.append(f"\n[RETRIEVED] FROM RAG CHUNKS \n{chunk}")
 
+        logger.info(prompt.as_string())
+
         # Send to Gemini
         completion = await self._invoke_llm(
             model=settings.gemini_model,
@@ -121,7 +127,7 @@ class AgenticEngine:
         prompt: str, 
         response_schema: Optional[BaseModel] = None, 
         **kwargs
-    ) -> Union[str, Dict[str, Any]]:
+    ) -> Union[Dict[str, Any], str]:
         """
         Adapter for Gemini API 
 
@@ -149,38 +155,39 @@ class AgenticEngine:
             Response (JSON only, no other text):
             """
 
-            # TODO: Make inference output enforces schaema output
+            # TODO: Make inference output enforces schema output
+
+            logger.info(enhanced_prompt)
             
             # Use Gemini's JSON mode or response_mime_type
-            response = await client.models.generate_content(
+            response = client.models.generate_content(
                 model=model or settings.gemini_model,
                 contents=enhanced_prompt,
-                config = types.GenerationContentConfig(
-                    system_instruction=self.personality,
-                    temperature=1.0,
-                    response_mime_type="application/json"
-                )
+                config={
+                    "temperature": 1.0,
+                    "system_instruction": self.personality,
+                    "response_mime_type": "application/json"
+                },
             )
             
             # Parse and validate
             result = json.loads(response.text)
             validated = response_schema(**result)
-            return validated.model_dump()
+            return validated.model_dump(mode='json')
 
         else:
             # Regular text completion
-            import logging
 
             logging.info(f"Prompt: {prompt}")
         
-            response = await client.models.generate_content(
+            response = client.models.generate_content(
                 model=model or settings.gemini_model,
                 contents=prompt,
-                config = types.GenerateContentConfig(
-                    system_instruction=self.personality,
-                    temperature=1.0,
-                    response_mime_type="application/json"
-                )
+                config={
+                    "temperature": 1.0,
+                    "system_instruction": self.personality,
+                    "response_mime_type": "application/json"
+                },
             )
 
         return response.text
