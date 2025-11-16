@@ -35,7 +35,7 @@ const ALLOWED_GARNISHES: Record<GlassName, GarnishName[]> = {
   hurricane_glass_3: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
   pint_glass_4: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
   seidel_Glass_5: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
-  shot_glass_6: ['salt_rim'], // Only salt rim and orange round
+  shot_glass_6: ['salt_rim', 'orange_round'], // Only salt rim and orange round
   highball_glass_7: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
   margarita_glass_8: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
   martini_glass_9: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
@@ -169,37 +169,36 @@ export class GarnishLoader {
       garnishName === 'salt_rim' ||
       garnishName === 'orange_round'
     ) {
-      return new Promise((resolve) => {
-        let garnish: THREE.Object3D
+      let garnish: THREE.Object3D
 
-        if (garnishName === 'olive') {
-          garnish = createProceduralOlive()
-        } else if (garnishName === 'cherry') {
-          garnish = createProceduralCherry()
-        } else if (garnishName === 'orange_round') {
-          garnish = createProceduralOrangeRound()
-        } else {
-          // salt_rim
-          // Get rim radius for this glass type
-          const rimRadius = glassName ? GLASS_RIM_RADIUS[glassName] : 0.5
+      if (garnishName === 'olive') {
+        garnish = createProceduralOlive()
+      } else if (garnishName === 'cherry') {
+        garnish = createProceduralCherry()
+      } else if (garnishName === 'orange_round') {
+        garnish = createProceduralOrangeRound()
+      } else {
+        // salt_rim
+        // Get rim radius for this glass type
+        const rimRadius = glassName ? GLASS_RIM_RADIUS[glassName] : 0.5
 
-          garnish = createProceduralSaltRim(rimRadius, 0)
-        }
+        garnish = createProceduralSaltRim(rimRadius, 0)
+      }
 
-        // Apply default transforms to all garnishes
-        this.applyDefaultTransforms(garnish, garnishName, glassName, startHidden)
+      // Apply default transforms to all garnishes
+      this.applyDefaultTransforms(garnish, garnishName, glassName, startHidden)
 
-        // Set renderOrder to render at same time as ice (ice is renderOrder 2)
-        this.setRenderOrder(garnish, 2)
+      // Set renderOrder to render at same time as ice (ice is renderOrder 2)
+      this.setRenderOrder(garnish, 2)
 
-        scene.add(garnish)
-        this.garnishObjects.set(garnishName, garnish)
+      scene.add(garnish)
+      this.garnishObjects.set(garnishName, garnish)
 
-        console.log(`Garnish "${garnishName}" created successfully!`)
-        resolve()
-      })
+      console.log(`Garnish "${garnishName}" created successfully!`)
+      return
     }
 
+    // Handle GLTF model garnishes
     return new Promise((resolve, reject) => {
       const modelPath = this.getModelPath(garnishName)
 
@@ -248,45 +247,31 @@ export class GarnishLoader {
    * Get the model path for a specific garnish
    */
   private getModelPath(garnishName: GarnishName): string {
-    const paths: Record<GarnishName, string> = {
-      cherry: '', // Procedural, no model needed
-      olive: '', // Procedural, no model needed
-      salt_rim: '', // Procedural, no model needed
-      orange_round: '', // Procedural, no model needed
-      mint: './src/models/mint_leaves/scene.gltf',
+    // Only mint uses a GLTF model, all others are procedural
+    if (garnishName === 'mint') {
+      return './src/models/mint_leaves/scene.gltf'
     }
-
-    return paths[garnishName]
+    return ''
   }
 
   /**
    * Apply custom material to mesh based on garnish type
    */
   private applyCustomMaterial(mesh: THREE.Mesh, garnishName: GarnishName): void {
-    switch (garnishName) {
-      case 'cherry':
-        // Cherry material is already applied in createProceduralCherry()
-        break
-      case 'olive':
-        // Olive material is already applied in createProceduralOlive()
-        break
-      case 'salt_rim':
-        // Keep default material for now
-        break
-      case 'orange_round':
-        // Keep default material for now
-        break
-      case 'mint':
-        // Modify existing material properties without replacing it
-        if (mesh.material) {
-          const material = mesh.material as THREE.Material
-          // Set clipping planes to prevent liquid clipping
-          if ('clippingPlanes' in material) {
-            ;(material as THREE.MeshStandardMaterial).clippingPlanes = []
-          }
+    // Only mint needs custom material handling
+    if (garnishName === 'mint') {
+      // Modify existing material properties without replacing it
+      if (mesh.material) {
+        const material = mesh.material as THREE.Material
+        // Set clipping planes to prevent liquid clipping
+        if ('clippingPlanes' in material) {
+          ;(material as THREE.MeshStandardMaterial).clippingPlanes = []
         }
-        break
+      }
     }
+    // For other garnishes:
+    // - cherry/olive material is already applied in createProcedural functions
+    // - salt_rim/orange_round keep default material
   }
 
   /**
@@ -298,8 +283,8 @@ export class GarnishLoader {
     glassName?: GlassName,
     startHidden: boolean = false
   ): void {
-    // If glass type is specified, use the position map
-    if (glassName && GARNISH_POSITIONS[glassName]) {
+    // Set position based on glass type
+    if (glassName) {
       const config = GARNISH_POSITIONS[glassName][garnishName]
       garnish.position.copy(config.position)
 
@@ -323,16 +308,16 @@ export class GarnishLoader {
     // Apply specific transforms based on garnish type
     switch (garnishName) {
       case 'cherry':
-        garnish.scale.set(1.4, 1.4, 1.4) // Same size as olive
+        garnish.scale.set(1.4, 1.4, 1.4)
         if (!glassName) {
-          garnish.position.y = 2.5 // Default position on glass rim
+          garnish.position.y = 2.5
           if (startHidden) {
             garnish.position.y += 8
           }
         }
         break
       case 'olive':
-        garnish.scale.set(1.4, 1.4, 1.4) // Larger cocktail size
+        garnish.scale.set(1.4, 1.4, 1.4)
         if (!glassName) {
           garnish.position.y = 2.5
           if (startHidden) {
@@ -343,15 +328,15 @@ export class GarnishLoader {
       case 'salt_rim':
         garnish.scale.set(1, 1, 1)
         if (!glassName) {
-          garnish.position.y = 2 // Position on rim
+          garnish.position.y = 2
           if (startHidden) {
             garnish.position.y += 8
           }
         }
         break
       case 'orange_round':
-        garnish.scale.set(2.5, 1, 2.5) // Make it bigger in X and Z, keep Y (thickness) the same
-        garnish.rotation.set(Math.PI / 2, 0, 0) // Rotate 90° to make it vertical
+        garnish.scale.set(2.5, 1, 2.5)
+        garnish.rotation.set(Math.PI / 2, 0, 0)
         if (!glassName) {
           garnish.position.y = 2.5
           if (startHidden) {
@@ -360,9 +345,9 @@ export class GarnishLoader {
         }
         break
       case 'mint':
-        garnish.scale.set(0.2, 0.2, 0.2) // Always scale down mint leaves
+        garnish.scale.set(0.2, 0.2, 0.2)
         if (!glassName) {
-          garnish.position.y = 3 // Position floating on top
+          garnish.position.y = 3
           if (startHidden) {
             garnish.position.y += 8
           }

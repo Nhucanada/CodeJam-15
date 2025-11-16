@@ -4,6 +4,7 @@ import { Floor } from './scene/Floor'
 import { GlassLoader } from './scene/GlassLoader'
 import { IceLoader } from './scene/IceLoader'
 import { GarnishLoader, getAllowedGarnishes } from './scene/GarnishLoader'
+import { CharacterLoader } from './scene/CharacterLoader'
 import { Lighting } from './scene/Lighting'
 import { CameraSetup } from './scene/CameraSetup'
 import { ControlsSetup } from './scene/ControlsSetup'
@@ -42,6 +43,7 @@ const GLASS_TO_LOAD = 'martini_glass_9' // Options: zombie_glass_0, cocktail_gla
 const glassLoader = new GlassLoader()
 const iceLoader = new IceLoader()
 const garnishLoader = new GarnishLoader()
+const characterLoader = new CharacterLoader()
 
 // Helper function to create multiple ice cubes for a glass
 function createIceCubesForGlass(glassName: typeof glassNames[number], loadGarnishAfter: boolean = false) {
@@ -122,6 +124,14 @@ glassLoader.loadGlass(scene, GLASS_TO_LOAD, controls, camera).then(() => {
 
   // Load all garnishes for tweaking
   loadAllGarnishes()
+
+  // Load character behind the cocktail glass
+  characterLoader.loadCharacter(
+    scene,
+    new THREE.Vector3(0, -30, -20), // Position closer behind the glass
+    24, // Scale (16 times bigger than original 1.5)
+    new THREE.Euler(0, 0, 0) // Rotation
+  ).catch(console.error)
 })
 
 // Handle window resize
