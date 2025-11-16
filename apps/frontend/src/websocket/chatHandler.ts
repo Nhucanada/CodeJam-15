@@ -44,7 +44,7 @@ constructor() {
       console.log('WebSocket disconnected', event.code, event.reason);
 
       if (event.code === 1006) {
-        this.showChatError('🔌 Backend Not Running', 'The chat server needs to be started. Run: npm run dev in the backend folder');
+        this.showChatError('🔌 Backend Not Running', 'The chat server needs to be started. Restart the backend and refresh the page.');
       } else if (event.code === 1008) {
         this.showChatError('🔐 Authentication Failed', 'Please log in again.');
       } else {

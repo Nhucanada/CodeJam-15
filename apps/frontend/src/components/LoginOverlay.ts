@@ -20,46 +20,50 @@ private createOverlay(): HTMLElement {
 
 private getOverlayHTML(): string {
     return `
-    <div class="login-modal">
-        <div class="login-content">
-        <div class="login-header">
-            <h1 class="login-title">${this.isSignupMode ? 'SIGN UP' : 'SIGN IN'}</h1>
-            <p class="login-subtitle">Access your cocktail collection</p>
-        </div>
-        
-        <div class="error-message" id="error-message" style="display: none;"></div>
-        <div class="success-message" id="success-message" style="display: none;"></div>
-        
-        <form class="login-form" id="auth-form">
-            ${this.isSignupMode ? `
-            <div class="form-group">
-                <label class="form-label">FULL NAME</label>
-                <input type="text" class="form-input" id="full-name" placeholder="Enter your full name" required>
-            </div>
-            ` : ''}
-            
-            <div class="form-group">
-            <label class="form-label">${this.isSignupMode ? 'EMAIL' : 'USERNAME/EMAIL'}</label>
-            <input type="email" class="form-input" id="email" placeholder="Enter your email" required>
+    <div class="login-overlay-content">
+        <div class="barline-title">B A R L I N E</div>
+        <div class="barline-subtitle">A Digital Bar for Real Drinks</div>
+        <div class="login-modal">
+            <div class="login-content">
+            <div class="login-header">
+                <h1 class="login-title">${this.isSignupMode ? 'SIGN UP' : 'LOG IN'}</h1>
+                <p class="login-subtitle">Access your cocktail collection</p>
             </div>
             
-            <div class="form-group">
-            <label class="form-label">PASSWORD</label>
-            <input type="password" class="form-input" id="password" placeholder="Enter your password" required>
-            </div>
+            <div class="error-message" id="error-message" style="display: none;"></div>
+            <div class="success-message" id="success-message" style="display: none;"></div>
             
-            <div class="login-buttons">
-            <button type="submit" class="login-btn" id="auth-btn">
-                ${this.isSignupMode ? 'SIGN UP' : 'SIGN IN'}
-            </button>
+            <form class="login-form" id="auth-form">
+                ${this.isSignupMode ? `
+                <div class="form-group">
+                    <label class="form-label">FULL NAME</label>
+                    <input type="text" class="form-input" id="full-name" placeholder="Enter your full name" required>
+                </div>
+                ` : ''}
+                
+                <div class="form-group">
+                <label class="form-label">${this.isSignupMode ? 'EMAIL' : 'USERNAME/EMAIL'}</label>
+                <input type="email" class="form-input" id="email" placeholder="Enter your email" required>
+                </div>
+                
+                <div class="form-group">
+                <label class="form-label">PASSWORD</label>
+                <input type="password" class="form-input" id="password" placeholder="Enter your password" required>
+                </div>
+                
+                <div class="login-buttons">
+                <button type="submit" class="login-btn" id="auth-btn">
+                    ${this.isSignupMode ? 'SIGN UP' : 'LOG IN'}
+                </button>
+                </div>
+            </form>
+            
+            <div class="toggle-mode">
+                <span class="toggle-link" id="toggle-mode">
+                ${this.isSignupMode ? 'Already have an account? Log in' : "Don't have an account? Sign up"}
+                </span>
             </div>
-        </form>
-        
-        <div class="toggle-mode">
-            <span class="toggle-link" id="toggle-mode">
-            ${this.isSignupMode ? 'Already have an account? Log in' : "Don't have an account? Sign up"}
-            </span>
-        </div>
+            </div>
         </div>
     </div>
     `;
@@ -102,7 +106,7 @@ private async handleSubmit(e: Event): Promise<void> {
     try {
     if (this.isSignupMode) {
         await authAPI.signup(email, password, fullName);
-        this.showMessage(successEl, 'Registration successful! Please sign in.');
+        this.showMessage(successEl, 'Registration successful! Please log in.');
         this.isSignupMode = false;
         this.refreshOverlay();
     } else {

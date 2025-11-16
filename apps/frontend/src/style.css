@@ -430,6 +430,9 @@ canvas {
   padding: 0;
   width: 400px;
   max-width: 90%;
+  position: relative;
+  top: 0;
+  transform: none;
 }
 
 .login-content {
@@ -643,4 +646,39 @@ canvas {
 .logout-cancel-btn:hover {
   background: rgba(102, 61, 91, 1);
   box-shadow: 4px 4px 8px rgba(255, 255, 255, 0.1);
+}
+
+.barline-title {
+  color: #fff;
+  font-size: 96px;
+  font-weight: normal;
+  letter-spacing: 6px;
+  font-family: 'Sixtyfour', monospace;
+  text-align: center;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.barline-subtitle {
+  color: #ccc;
+  font-size: 28px;
+  font-weight: normal;
+  letter-spacing: 3px;
+  font-family: 'Sixtyfour', monospace;
+  text-align: center;
+  margin-bottom: 40px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.login-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100%;
+  padding-top: calc(15vh - 50px);
 }
