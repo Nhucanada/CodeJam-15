@@ -257,7 +257,7 @@ recipeButton?.addEventListener('click', showRecipe)
 shelfButton?.addEventListener('click', showShelf)
 
 // Set default state
-showRecipe()
+showShelf()
 
 // WebSocket and Chat Integration
 let selectedCocktail: CocktailDetail | null = null;

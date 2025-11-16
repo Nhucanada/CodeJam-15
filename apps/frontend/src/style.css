@@ -66,13 +66,43 @@ canvas {
 .chat-header {
   display: flex;
   height: 15.4%;
-  margin-top: 19px;
+  margin-top: 6px;
   margin-left: 19px;
   margin-right: 19px;
   margin-bottom: 10px;
   align-items: center;
   outline: 3px solid #252525;
   background: rgba(25, 10, 24, 1);
+}
+
+.title-header {
+  display: flex;
+  height: 7.7%;
+  margin-top: 19px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 10px;
+  padding: 10px;
+  align-items: center;
+  outline: 3px solid #252525;
+  background: rgba(25, 10, 24, 1);
+  position: relative;
+}
+
+.logout-btn {
+  background: rgba(37, 37, 37, 0.4);
+  color: rgba(255, 255, 255, 1);
+  border: none;
+  padding: 20px 20px;
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: 1px;
+  z-index: 2;
+  font-family: 'Sixtyfour', monospace;
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .profile-img {
@@ -96,7 +126,7 @@ canvas {
 .chat-messages {
   flex: 1;
   padding: 20px;
-  height: 74%;
+  height: 66.3%;
   margin-top: 6px;
   margin-left: 19px;
   margin-right: 19px;
