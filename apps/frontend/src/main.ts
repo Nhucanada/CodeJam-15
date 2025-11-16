@@ -447,7 +447,6 @@ function createIceCubesForGlass(glassName: GlassName, loadGarnishAfter: boolean 
           // Animate falling
           iceLoader.animateIceFalling(iceName, baseY, () => {
             // After falling completes, start bobbing with different time offset for each cube
-            const timeOffset = Math.random() * Math.PI * 2 // Random phase 0 to 2π
             iceLoader.animateIceBobbing(iceName, baseY)
 
             // If this is the last ice cube and we should load garnish, trigger garnish falling
