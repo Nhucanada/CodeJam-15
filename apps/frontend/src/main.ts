@@ -850,6 +850,47 @@ chatInput?.addEventListener('keypress', (e) => {
 // Expose refresh function globally for WebSocket updates
 (window as any).refreshShelfPanel = loadAndDisplayShelf;
 
+chatInput?.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    sendChatMessage();
+  }
+});
+
+// Handle placeholder label visibility
+const chatInputElement = document.getElementById('chat-input') as HTMLInputElement;
+const sendMessageTitle = document.querySelector('.send-message-title') as HTMLElement;
+
+if (chatInputElement && sendMessageTitle) {
+  // Function to update label visibility
+  function updateLabelVisibility() {
+    if (chatInputElement.value.trim().length > 0) {
+      chatInputElement.classList.add('has-content');
+    } else {
+      chatInputElement.classList.remove('has-content');
+    }
+  }
+
+  // Update on input
+  chatInputElement.addEventListener('input', updateLabelVisibility);
+
+  // Update on focus/blur
+  chatInputElement.addEventListener('focus', () => {
+    sendMessageTitle.style.opacity = '0';
+  });
+
+  chatInputElement.addEventListener('blur', () => {
+    if (chatInputElement.value.trim().length === 0) {
+      sendMessageTitle.style.opacity = '1';
+    }
+  });
+
+  // Initial check
+  updateLabelVisibility();
+}
+
+// Expose refresh function globally for WebSocket updates
+(window as any).refreshShelfPanel = loadAndDisplayShelf;
+
 // Load shelf on startup
 loadAndDisplayShelf();
 

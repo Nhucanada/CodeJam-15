@@ -173,6 +173,29 @@ canvas {
   font-family: 'Sixtyfour', monospace;
 }
 
+.send-message-title {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  color: #666;
+  font-size: 14px;
+  font-weight: normal;
+  letter-spacing: 2px;
+  font-family: 'Sixtyfour', monospace;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 2;
+  opacity: 1;
+}
+
+.chat-input:focus + .send-message-title {
+  opacity: 0;
+}
+
+.chat-input.has-content + .send-message-title {
+  opacity: 0;
+}
+
 .chat-messages {
   flex: 1;
   padding: 20px;
@@ -267,6 +290,12 @@ canvas {
   gap: 10px;
 }
 
+.chat-input-wrapper {
+  position: relative;
+  flex: 1;
+  width: 100%;
+}
+
 .chat-input {
   flex: 1;
   width: 100%;
@@ -275,15 +304,20 @@ canvas {
   outline: none;
   color: #fff;
   font-size: 18px;
-  height: 60px;
+  height: 40px;
   z-index: 1;
   position: relative;
-  margin-top: -10px;
+  margin-top: -12px;
   margin-bottom: -5px;
   font-family: 'Sixtyfour', monospace;
 }
 
 .chat-input:focus {
+  border: none;
+  outline: none;
+}
+
+.chat-input.selected {
   border: none;
   outline: none;
 }
