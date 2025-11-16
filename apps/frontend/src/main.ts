@@ -136,40 +136,43 @@ function initializeAuth(): void {
       drinkPanel.style.display = 'none';
     }
 
-    loginOverlay = new LoginOverlay(() => {
-      console.log('Authentication successful!');
+  loginOverlay = new LoginOverlay(() => {
+    console.log('Authentication successful!');
 
-      // Show all panels after login
-      const chatPanel = document.querySelector('.chat-panel') as HTMLElement;
-      const recipePanel = document.querySelector('.recipe-panel') as HTMLElement;
-      const drinkPanel = document.querySelector('.drink-panel') as HTMLElement;
-      if (chatPanel) {
-        chatPanel.style.display = 'block';
-      }
-      if (recipePanel) {
-        recipePanel.style.display = 'block';
-      }
-      if (drinkPanel) {
-        drinkPanel.style.display = 'block';
-      }
+    // Show all panels after login
+    const chatPanel = document.querySelector('.chat-panel') as HTMLElement;
+    const recipePanel = document.querySelector('.recipe-panel') as HTMLElement;
+    const drinkPanel = document.querySelector('.drink-panel') as HTMLElement;
+    if (chatPanel) {
+      chatPanel.style.display = 'block';
+    }
+    if (recipePanel) {
+      recipePanel.style.display = 'block';
+    }
+    if (drinkPanel) {
+      drinkPanel.style.display = 'block';
+    }
 
-      // Clear any existing WebSocket errors
-      const chatMessages = document.querySelector('.chat-messages .message-container');
-      if (chatMessages) {
-        const existingErrors = chatMessages.querySelectorAll('.chat-error');
-        existingErrors.forEach(error => error.remove());
-      }
+    // Clear any existing WebSocket errors
+    const chatMessages = document.querySelector('.chat-messages .message-container');
+    if (chatMessages) {
+      const existingErrors = chatMessages.querySelectorAll('.chat-error');
+      existingErrors.forEach(error => error.remove());
+    }
 
-      tokenManager.start(); // Start token refresh after login
+    tokenManager.start(); // Start token refresh after login
 
-      // Reconnect WebSocket with new token
-      chatWebSocket.reconnect();
+    // Reconnect WebSocket with new token
+    chatWebSocket.reconnect();
 
-      // Reload shelf and any other authenticated content
-      if (typeof loadAndDisplayShelf === 'function') {
-        loadAndDisplayShelf();
-      }
-    });
+    // Reload shelf and any other authenticated content
+    if (typeof loadAndDisplayShelf === 'function') {
+      loadAndDisplayShelf();
+    }
+
+    // Show Arthur's greeting after login
+    setTimeout(showArthurGreeting, 2000);
+  });
     loginOverlay.show();
   } else {
     // Show all panels if already authenticated
@@ -516,7 +519,6 @@ async function loadAndDisplayShelf() {
           errorDiv.innerHTML = `
             <div style="text-align: center; padding: 40px; color: #f44336;">
               <h3>⚠️ Connection Error</h3>
-              <p>${error.message}</p>
             </div>
           `;
 
@@ -944,6 +946,50 @@ if (chatInputElement && sendMessageTitle) {
 
 // Load shelf on startup
 loadAndDisplayShelf();
+
+// Add Arthur's automatic greeting after page load
+function showArthurGreeting() {
+  if (authAPI.isAuthenticated()) {
+    const chatMessages = document.querySelector('.chat-messages .message-container');
+    if (chatMessages) {
+      // Check if there are already messages (to avoid duplicate greetings)
+      const existingMessages = chatMessages.querySelectorAll('.message.bot:not(.chat-error)');
+      if (existingMessages.length === 0) {
+        // Array of possible greetings
+        const greetings = [
+          "Hey! What can I get you?",
+          "What do you want to drink?",
+          "Good evening! What can I get you started with?",
+          "Hi! What do you want?"
+        ];
+
+        // Randomly select a greeting
+        const randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
+
+        const greetingDiv = document.createElement('div');
+        greetingDiv.className = 'message bot';
+        greetingDiv.textContent = `Arthur: ${randomGreeting}`;
+        chatMessages.appendChild(greetingDiv);
+
+        // Auto-scroll to show the greeting
+        const chatContainer = document.querySelector('.chat-messages');
+        if (chatContainer) {
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+      }
+    }
+  }
+}
+
+// Show greeting after 2 seconds, but only if authenticated
+setTimeout(showArthurGreeting, 2000);
+
+setTimeout(() => {
+  const profileImg = document.getElementById('profile-img') as HTMLImageElement;
+  if (profileImg) {
+    profileImg.src = '/src/img/image_3.png';
+  }
+}, 0);
 
 // Update login overlay to start token manager after successful login
 const originalLoginOverlay = LoginOverlay;
