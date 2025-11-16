@@ -124,7 +124,7 @@ def get_chat_style_prompt(user_input: str) -> Prompt:
         )
     )
 
-# Map: name -> prototype retrieval function
+# Map: name -> prototype retrieval function  Singleton
 PROMPT_PROTOTYPE_REGISTRY: Dict[str, Callable[[str], Prompt]] = {
     "classic_completion": get_classic_completion_prompt,
     "retrieval_augmented": get_retrieval_augmented_prompt,
