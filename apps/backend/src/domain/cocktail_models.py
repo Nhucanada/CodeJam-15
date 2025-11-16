@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 from pydantic import BaseModel, Field
+from .chat_models import MessageType
 
 class CocktailMetadata(BaseModel):
     """Metadata for cocktail creation in chat responses."""

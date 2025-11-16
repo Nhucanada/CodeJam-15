@@ -132,7 +132,10 @@ private updateChatUI(message: EnhancedChatMessage) {
     }
 
     // Auto-scroll to bottom
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    const chatContainer = document.querySelector('.chat-messages');
+    if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
 }
 
 private handleCocktailCreated(cocktail: any) {
