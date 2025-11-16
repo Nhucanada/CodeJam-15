@@ -828,7 +828,11 @@ function updateDrinkTitle(cocktailName: string) {
   if (drinkTitleContainer) {
     drinkTitleContainer.innerHTML = `
       <h2 class="drink-title">${cocktailName}</h2>
-      <button class="drink-action-btn">⚙</button>
+      <button class="drink-action-btn">
+        <svg width="24" height="24" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M46 8V4H18V8H14V60H18V56H22V52H26V48H30V44H34V48H38V52H42V56H46V60H50V8H46Z" fill="currentColor"/>
+        </svg>
+      </button>
     `;
   }
 }
@@ -847,7 +851,11 @@ function showDrinkTitleLoading() {
         font-size: 14px;
         font-style: italic;
       ">⏳ Loading drink...</div>
-      <button class="drink-action-btn">⚙</button>
+      <button class="drink-action-btn">
+        <svg width="24" height="24" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M46 8V4H18V8H14V60H18V56H22V52H26V48H30V44H34V48H38V52H42V56H46V60H50V8H46Z" fill="currentColor"/>
+        </svg>
+      </button>
     `;
   }
 }
@@ -857,7 +865,11 @@ function resetDrinkTitle() {
   if (drinkTitleContainer) {
     drinkTitleContainer.innerHTML = `
       <h2 class="drink-title">Select a Drink</h2>
-      <button class="drink-action-btn">⚙</button>
+      <button class="drink-action-btn">
+        <svg width="24" height="24" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M46 8V4H18V8H14V60H18V56H22V52H26V48H30V44H34V48H38V52H42V56H46V60H50V8H46Z" fill="currentColor"/>
+        </svg>
+      </button>
     `;
   }
 }
