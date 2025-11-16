@@ -826,35 +826,39 @@ async function selectAndDisplayCocktail(cocktail: CocktailDetail) {
 function updateDrinkTitle(cocktailName: string) {
   const drinkTitleContainer = document.querySelector('.drink-title-container');
   if (drinkTitleContainer) {
-    drinkTitleContainer.innerHTML = `<h2 class="drink-title">${cocktailName}</h2>`;
+    drinkTitleContainer.innerHTML = `
+      <h2 class="drink-title">${cocktailName}</h2>
+      <button class="drink-action-btn">⚙</button>
+    `;
   }
 }
 
 function showDrinkTitleLoading() {
   const drinkTitleContainer = document.querySelector('.drink-title-container');
   if (drinkTitleContainer) {
-    drinkTitleContainer.innerHTML = '';
-    const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'drink-title-loading';
-    loadingDiv.style.cssText = `
-      background: #e3f2fd;
-      border-left: 4px solid #2196f3;
-      color: #1976d2;
-      padding: 12px;
-      border-radius: 4px;
-      text-align: center;
-      font-size: 14px;
-      font-style: italic;
+    drinkTitleContainer.innerHTML = `
+      <div class="drink-title-loading" style="
+        background: #e3f2fd;
+        border-left: 4px solid #2196f3;
+        color: #1976d2;
+        padding: 12px;
+        border-radius: 4px;
+        text-align: center;
+        font-size: 14px;
+        font-style: italic;
+      ">⏳ Loading drink...</div>
+      <button class="drink-action-btn">⚙</button>
     `;
-    loadingDiv.textContent = '⏳ Loading drink...';
-    drinkTitleContainer.appendChild(loadingDiv);
   }
 }
 
 function resetDrinkTitle() {
   const drinkTitleContainer = document.querySelector('.drink-title-container');
   if (drinkTitleContainer) {
-    drinkTitleContainer.innerHTML = '<h2 class="drink-title">Select a Drink</h2>';
+    drinkTitleContainer.innerHTML = `
+      <h2 class="drink-title">Select a Drink</h2>
+      <button class="drink-action-btn">⚙</button>
+    `;
   }
 }
 

@@ -80,6 +80,7 @@ canvas {
   outline: 3px solid #252525;
   display: flex;
   gap: 10px;
+  position: relative;
 }
 
 .drink-title {
@@ -687,4 +688,30 @@ canvas {
   justify-content: flex-start;
   height: 100%;
   padding-top: calc(15vh - 50px);
+}
+
+.drink-action-btn {
+  background: rgba(48, 28, 46, 1);
+  color: #fff;
+  border: none;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  font-family: 'Sixtyfour', monospace;
+  transition: all 0.3s ease;
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drink-action-btn:hover {
+  background: rgba(102, 61, 91, 1);
+  box-shadow: 4px 4px 8px rgba(255, 255, 255, 0.2);
 }
