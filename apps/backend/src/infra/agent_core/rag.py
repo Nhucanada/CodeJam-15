@@ -87,7 +87,7 @@ class SupabaseVectorDatabaseSearch(RAGStrategy):
             return []
 
     def _generate_embedding(self, text: str) -> np.ndarray:
-        from services.embedding_service import get_embedding_with_task_type
+        from src.services.embedding_service import get_embedding_with_task_type
 
         # Use QUESTION_ANSWERING task type for better retrieval embeddings
         embedding_list = get_embedding_with_task_type(text, "QUESTION_ANSWERING")

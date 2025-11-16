@@ -1,5 +1,5 @@
 from typing import Callable, Dict, Any
-from infra.agent_core.prompt import Prompt
+from src.infra.agent_core.prompt import Prompt
 
 from pydantic import BaseModel, Field
 
