@@ -7,6 +7,9 @@ import { GarnishLoader } from './scene/GarnishLoader'
 import { Lighting } from './scene/Lighting'
 import { CameraSetup } from './scene/CameraSetup'
 import { ControlsSetup } from './scene/ControlsSetup'
+import { chatWebSocket } from './websocket/chatHandler'
+import { cocktailAPI } from './api/client'
+import type { CocktailDetail } from './types/cocktail'
 
 // Scene setup
 const scene = new THREE.Scene()
@@ -228,3 +231,208 @@ shelfButton?.addEventListener('click', showShelf)
 
 // Set default state
 showRecipe()
+
+// WebSocket and Chat Integration
+let selectedCocktail: CocktailDetail | null = null;
+
+// Initialize WebSocket
+chatWebSocket.onMessage((message) => {
+  console.log('Received WebSocket message:', message);
+});
+
+// Enhanced shelf functionality
+async function loadAndDisplayShelf() {
+  try {
+    const response = await cocktailAPI.getUserShelf();
+    updateShelfDisplay(response.cocktails, response.agent_greeting);
+  } catch (error) {
+    console.error('Failed to load shelf:', error);
+  }
+}
+
+function updateShelfDisplay(cocktails: any[], greeting: string) {
+  const shelfBoxes = document.querySelectorAll('.shelf-box');
+
+  // Clear existing shelf boxes
+  shelfBoxes.forEach(box => box.remove());
+
+  // Add greeting message if needed
+  console.log('Agent greeting:', greeting);
+
+  // Create new shelf boxes for each cocktail
+  const recipePanel = document.querySelector('.recipe-content');
+  if (recipePanel) {
+    cocktails.forEach((cocktail, index) => {
+      if (index < 3) { // Limit to 3 visible cocktails
+        const shelfBox = createShelfBox(cocktail);
+        recipePanel.appendChild(shelfBox);
+      }
+    });
+  }
+}
+
+function createShelfBox(cocktail: any) {
+  const shelfBox = document.createElement('div');
+  shelfBox.className = 'shelf-box';
+  shelfBox.style.cursor = 'pointer';
+
+  shelfBox.innerHTML = `
+    <img src="/src/img/1742270047720.jpeg" alt="Cocktail" class="drink-img">
+    <div class="drink-text">
+      <div class="message drink-title">${cocktail.name}</div>
+      <div class="message drink-info">${cocktail.ingredients_summary}</div>
+    </div>
+  `;
+
+  // Add click handler to select cocktail
+  shelfBox.addEventListener('click', async () => {
+    try {
+      const detail = await cocktailAPI.getCocktailDetail(cocktail.id);
+      await selectAndDisplayCocktail(detail);
+
+      // Switch to recipe view
+      const recipeButton = Array.from(document.querySelectorAll('.recipe-btn')).find(btn =>
+        btn.textContent === 'RECIPE'
+      ) as HTMLButtonElement;
+      if (recipeButton) {
+        recipeButton.click();
+      }
+    } catch (error) {
+      console.error('Failed to load cocktail details:', error);
+    }
+  });
+
+  return shelfBox;
+}
+
+async function selectAndDisplayCocktail(cocktail: CocktailDetail) {
+  selectedCocktail = cocktail;
+
+  // Update ingredients display
+  const ingredientsBox = document.querySelector('.ingredients-box .message-container');
+  if (ingredientsBox) {
+    ingredientsBox.innerHTML = '';
+    cocktail.ingredients.forEach((ing, index) => {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message bot';
+      messageDiv.textContent = `${index + 1}. ${ing.quantity} ${ing.unit} ${ing.name}`;
+      ingredientsBox.appendChild(messageDiv);
+    });
+  }
+
+  // Update recipe display
+  const recipeBox = document.querySelector('.recipe-box .message-container');
+  if (recipeBox) {
+    recipeBox.innerHTML = '';
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message bot';
+    messageDiv.textContent = cocktail.description || 'Cocktail preparation instructions.';
+    recipeBox.appendChild(messageDiv);
+  }
+
+  // Update 3D scene if needed
+  updateSceneForCocktail(cocktail);
+}
+
+function updateSceneForCocktail(cocktail: CocktailDetail) {
+  // Update liquid color based on ingredients
+  const liquidHandler = glassLoader.getLiquidHandler();
+  const liquidMesh = liquidHandler?.getLiquid();
+
+  if (liquidMesh && liquidMesh.material) {
+    // Calculate dominant color from ingredients
+    const dominantColor = calculateLiquidColor(cocktail.ingredients);
+
+    // Update the liquid material color directly
+    const material = liquidMesh.material as THREE.MeshPhysicalMaterial;
+    if (material && material.color) {
+      material.color.setHex(dominantColor);
+    }
+
+    // Also update the top surface if it exists
+    const liquidTop = liquidHandler?.getLiquidTop();
+    if (liquidTop && liquidTop.material) {
+      const topMaterial = liquidTop.material as THREE.MeshPhysicalMaterial;
+      if (topMaterial && topMaterial.color) {
+        topMaterial.color.setHex(dominantColor);
+      }
+    }
+  }
+
+  // Add garnishes if any
+  cocktail.garnishes.forEach(garnish => {
+    // This would need to be implemented based on your garnish system
+    console.log('Adding garnish:', garnish.name);
+  });
+}
+
+function calculateLiquidColor(ingredients: any[]): number {
+  // Simple color calculation based on ingredient hex codes
+  const coloredIngredients = ingredients.filter(ing => ing.hexcode);
+  if (coloredIngredients.length === 0) return 0x4169E1; // Default blue
+
+  // Use the first colored ingredient's color
+  return parseInt(coloredIngredients[0].hexcode.replace('#', ''), 16);
+}
+
+// Enhanced chat input handling
+const chatInput = document.querySelector('.chat-input') as HTMLInputElement;
+const sendButton = document.querySelector('.send-btn') as HTMLButtonElement;
+
+function sendChatMessage() {
+  const message = chatInput?.value.trim();
+  if (message) {
+    // Add user message to chat
+    const chatMessages = document.querySelector('.chat-messages .message-container');
+    if (chatMessages) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message user';
+      messageDiv.textContent = `You: ${message}`;
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Send via WebSocket
+    chatWebSocket.sendMessage(message);
+
+    // Clear input
+    if (chatInput) chatInput.value = '';
+  }
+}
+
+sendButton?.addEventListener('click', sendChatMessage);
+chatInput?.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    sendChatMessage();
+  }
+});
+
+// Expose refresh function globally for WebSocket updates
+(window as any).refreshShelfPanel = loadAndDisplayShelf;
+
+// Load shelf on startup
+loadAndDisplayShelf();
+
+// Update the existing showShelf function to load from API
+function showShelfEnhanced() {
+  // Hide recipe elements
+  if (ingredientsBox) ingredientsBox.style.display = 'none'
+  if (recipeBox) recipeBox.style.display = 'none'
+  if (ingredientsHeader) ingredientsHeader.style.display = 'none'
+  if (recipeHeader) recipeHeader.style.display = 'none'
+
+  // Show shelf elements
+  const shelfBoxes = document.querySelectorAll('.shelf-box') as NodeListOf<HTMLElement>;
+  shelfBoxes.forEach(box => box.style.display = 'flex')
+
+  // Update button states
+  shelfButton?.classList.add('selected')
+  recipeButton?.classList.remove('selected')
+
+  // Reload shelf data
+  loadAndDisplayShelf();
+}
+
+// Replace the existing shelf button listener
+shelfButton?.removeEventListener('click', showShelf);
+shelfButton?.addEventListener('click', showShelfEnhanced);
