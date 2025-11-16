@@ -21,6 +21,9 @@ from src.domain.cocktail_models import CreateCocktailRequest
 from src.infra.cocktail_repo import CocktailRepository
 from src.services.auth_service import verify_access_token
 
+from typing import Any, AsyncGenerator, Dict, List, Optional
+from uuid import UUID
+
 logger = logging.getLogger(__name__)
 
 
@@ -492,8 +495,6 @@ async def process_user_message(
             }
         )
 
-        # Convert dict to OutgoingMessage
-        yield OutgoingMessage(**enhanced_message_dict)
 
     except Exception as e:
         logger.error(f"Error processing message: {str(e)}", exc_info=True)
