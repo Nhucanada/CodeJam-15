@@ -99,6 +99,8 @@ async def chat_websocket(websocket: WebSocket, token: Optional[str] = None):
             try:
                 # Receive message from client
                 data = await websocket.receive_json()
+
+                print(data)
                 
                 # Handle the message
                 should_continue = await handle_message(
