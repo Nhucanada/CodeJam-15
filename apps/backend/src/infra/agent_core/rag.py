@@ -50,27 +50,37 @@ class SupabaseVectorDatabaseSearch(RAGStrategy):
             if not response.data:
                 return []
 
-            # Transform results to RAGRetrievalResult objects
-            results = []
-            for item in response.data:
-                # Calculate cosine similarity score
-                doc_embedding = np.array(item.get("embedding", []))
-                if len(doc_embedding) > 0 and len(query_embedding) > 0:
-                    similarity_score = cosine_similarity(
-                        query_embedding.reshape(1, -1),
-                        doc_embedding.reshape(1, -1)
-                    )[0][0]
-                else:
-                    similarity_score = 0.0
+            # Multi-table vector search
+            table_list: list[str] = self.table if isinstance(self.table, list) else [self.table]
+            all_results: list[RAGRetrievalResult] = []
 
-                result = RAGRetrievalResult(
-                    content=item.get("content", ""),
-                    metadata=item.get("metadata", {}),
-                    score=float(similarity_score)
-                )
-                results.append(result)
+            for tbl in table_list:
+                query_builder = self.supabase.table(tbl).select(
+                    "content, metadata, embedding"
+                ).order("embedding <-> %s" % query_embedding, desc=False).limit(top_k)
+                if user_id:
+                    query_builder = query_builder.eq("user_id", user_id)
+                response = query_builder.execute()
+                if not response.data:
+                    continue
+                for item in response.data:
+                    # Compute cosine similarity score
+                    doc_embedding = np.array(item.get("embedding", []))
+                    similarity_score = (
+                        float(cosine_similarity(query_embedding.reshape(1, -1), doc_embedding.reshape(1, -1))[0][0])
+                        if doc_embedding.size > 0 and query_embedding.size > 0 else 0.0
+                    )
+                    all_results.append(
+                        RAGRetrievalResult(
+                            content=item.get("content", ""),
+                            metadata=item.get("metadata", {}),
+                            score=similarity_score
+                        )
+                    )
 
-            return results
+            # Sort all results by score descending, take top_k overall
+            all_results.sort(key=lambda x: x.score if x.score is not None else 0.0, reverse=True)
+            return all_results[:top_k]
 
         except Exception as e:
             print(f"Error in RAG retrieval: {e}")
