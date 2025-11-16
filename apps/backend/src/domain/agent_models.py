@@ -1,7 +1,8 @@
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 class ActionType(str, Enum):
     CREATE_DRINK = "create_drink"
@@ -12,7 +13,7 @@ class ActionType(str, Enum):
 
 class DrinkIngredient(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
-    amount: float = Field(..., gt=0, description="Ingredient amount (e.g., 100) in the unit of measurement")
+    amount: float = Field(..., ge=0.01, description="Ingredient amount (e.g., 100) in the unit of measurement")
     color: str = Field(..., pattern="^#(?:[0-9a-fA-F]{3}){1,2}$", description="Ingredient color as hex code (e.g., #ffcc00)")
     unit: str = Field(..., min_length=1, max_length=20, description="Ingredient unit of measurement (e.g., ml, g, tsp)")
 
@@ -41,6 +42,26 @@ class AgentActionSchema(BaseModel):
 
     drink_recipe: DrinkRecipeSchema | None = None
     suggest_drink: DrinkRecipeSchema | None = None
+
+    @field_validator('reasoning', mode='before')
+    @classmethod
+    def flatten_reasoning(cls, v: Any) -> str:
+        """
+        Flatten reasoning if it comes as a nested object from the LLM.
+        Gemini sometimes returns reasoning as {"step1": "...", "step2": "..."} instead of a string.
+        """
+        if isinstance(v, dict):
+            # Concatenate all values in the dict to create a single reasoning string
+            reasoning_parts = []
+            for key in sorted(v.keys()):
+                value = v[key]
+                if isinstance(value, str):
+                    reasoning_parts.append(value)
+                elif isinstance(value, dict):
+                    # Handle nested dicts
+                    reasoning_parts.append(str(value))
+            return " ".join(reasoning_parts)
+        return str(v)
 
 class AgentResponseSchema(BaseModel):
     action: AgentActionSchema | None = None

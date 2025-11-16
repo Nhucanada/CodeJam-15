@@ -441,30 +441,32 @@ async def process_user_message(
         
         # Generate unique message ID
         message_id = session.generate_message_id()
-        
-        # Add user message to history
-        if message.content:
-            session.add_to_history("user", message.content)
-        
-        # Get conversation context
-        context = session.get_context_string(max_messages=10)
-        
-        # Prepare enhanced input with context
+
+        # Frontend now sends full conversation history in content field
+        # No need to process separate history array or build context
         user_input = message.content or ""
-        if context:
-            enhanced_input = f"[CONVERSATION CONTEXT]\n{context}\n\n[CURRENT MESSAGE]\n{user_input}"
-        else:
-            enhanced_input = user_input
-        
+
+        logger.info(f"[DEBUG] ========== MESSAGE PROCESSING ==========")
+        logger.info(f"[DEBUG] Full content with history from frontend:\n{user_input}")
+        logger.info(f"[DEBUG] ==========================================")
+
+        # TEMP: Disable RAG to test if it's causing confusion
+        # Let's see if the model works correctly without RAG
+        test_rag_disabled = False  # Set to True to test without RAG
+        actual_rag_enabled = False if test_rag_disabled else True
+
+        logger.info(f"[DEBUG] RAG testing mode: {'DISABLED' if test_rag_disabled else 'ENABLED'}")
+
         # Get the singleton AgenticEngine
         engine = get_agentic_engine()
-        
-        # Run the agent with RAG
+
+        # Run the agent with the full content (which includes history)
+        logger.info(f"Running agent with params - user_id: {session.user.id}, top_k: 5, rag_enabled: {actual_rag_enabled}")
         result = await engine.run(
-            user_input=enhanced_input,
+            user_input=user_input,
             user_id=session.user.id,
             top_k=5,
-            rag_enabled=True
+            rag_enabled=actual_rag_enabled
         )
 
         # Extract the completion as dict/JSON object
@@ -585,7 +587,9 @@ async def handle_message(
     """
     try:
         # Parse incoming message
+        logger.info(f"Received WebSocket message: {message_data}")
         message = IncomingMessage(**message_data)
+        logger.info(f"Parsed message - Type: {message.type}, Content: {message.content}")
 
         # Re-authenticate if token is provided in message
         if message.token:

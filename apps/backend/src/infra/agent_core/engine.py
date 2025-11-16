@@ -21,6 +21,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class AgenticEngine:
     """
     Lightweight agent engine using dynamic prompt templates and RAG strategies.
@@ -33,7 +34,21 @@ class AgenticEngine:
         self,
         rag_strategy: RAGStrategy,
         fast_template_selector: Optional[Any] = None,
-        personality: str = "You are Arthur, the Three.js PS1 throwback Agentic Bartender, who can help the user make classy cocktails."
+        personality: str = """You are Arthur, the Three.js PS1 throwback Agentic Bartender, who can help the user make classy cocktails.
+
+Your capabilities:
+- CREATE_DRINK (action_type: "create_drink"): When the user requests a specific cocktail by name (e.g., "make me an Old Fashioned", "I want a Mojito", "fix me a Margarita"). You should provide the complete recipe with ingredients, measurements, instructions, glass type, and garnish.
+
+- SUGGEST_DRINK (action_type: "suggest_drink"): When the user describes preferences or asks for recommendations without naming a specific drink (e.g., "something fruity", "I want something strong", "surprise me", "what's good?"). Analyze their preferences and suggest an appropriate cocktail.
+
+- SEARCH_DRINK (action_type: "search_drink"): When the user asks about drinks containing certain ingredients or wants to explore options (e.g., "what can I make with whiskey and honey?", "drinks with gin", "show me bourbon cocktails").
+
+IMPORTANT: ALWAYS set the action_type field to one of these three values. When creating or suggesting drinks, ALWAYS provide complete recipe details including:
+- All ingredients with exact measurements and hex color codes
+- Step-by-step instructions
+- Glass type (MUST be one of: zombie glass, cocktail glass, rocks glass, hurricane glass, pint glass, seidel glass, shot glass, highball glass, margarita glass, martini glass)
+- Garnish (MUST be one of: lemon, lime, orange, cherry, olive, salt_rim, mint, or null)
+- Ice preference (true/false)""",
     ) -> None:
         """
         Args:
@@ -44,10 +59,10 @@ class AgenticEngine:
         self.fast_template_selector = fast_template_selector or self._default_selector
         self.personality = personality
         self.logger = logging.getLogger(__name__)
-        
+
         # Get the examples directory path
         self.examples_dir = Path(__file__).parent / "examples"
-        
+
         # Cache examples per template
         self._example_cache = {}
 
@@ -55,22 +70,40 @@ class AgenticEngine:
         """
         Simple rule-based fallback for selecting a prompt template.
         """
+        # Detect drink requests (highest priority)
+        drink_keywords = [
+            "make me",
+            "create",
+            "prepare",
+            "mix",
+            "mix me",
+            "build",
+            "suggest",
+            "recommend",
+            "i want",
+            "i'd like",
+        ]
+        if any(keyword in user_input.lower() for keyword in drink_keywords):
+            return "action_generation"
+
         if "summarize" in user_input.lower():
             return "summarization"
         if "action" in user_input.lower() or "do this" in user_input.lower():
             return "action_generation"
-        if any(x in user_input.lower() for x in ("context", "docs", "document", "retrieve", "reference")):
+        if any(
+            x in user_input.lower()
+            for x in ("context", "docs", "document", "retrieve", "reference")
+        ):
             return "retrieval_augmented"
         if any(x in user_input.lower() for x in ("how", "why", "what", "who", "where")):
             return "question_answering"
         if user_input.endswith("?"):
             return "question_answering"
         return "classic_completion"
-        
+
     async def _llm_selector(self, user_input: str) -> str:
         # TODO: Use LLM to select the best prompt template based on the user input
         ...
-        
 
     async def run(
         self,
@@ -78,7 +111,7 @@ class AgenticEngine:
         user_id: Optional[str] = None,
         top_k: int = 5,
         rag_enabled: bool = True,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """
         Core agent entrypoint. Selects prompt template, applies RAG, returns structured completion.
@@ -112,24 +145,25 @@ class AgenticEngine:
             model=settings.gemini_model,
             prompt=prompt.as_string(),
             response_schema=AgentActionSchema,
-            **kwargs
+            **kwargs,
         )
 
         return {
             "template_name": template_name,
             "prompt": prompt.as_string(),
             "completion": completion,
-            "retrieved_chunks": retrieved_chunks
+            "retrieved_chunks": retrieved_chunks,
         }
 
-    async def _invoke_llm(self, 
-        model: str, 
-        prompt: str, 
-        response_schema: Optional[BaseModel] = None, 
-        **kwargs
+    async def _invoke_llm(
+        self,
+        model: str,
+        prompt: str,
+        response_schema: Optional[BaseModel] = None,
+        **kwargs,
     ) -> Union[Dict[str, Any], str]:
         """
-        Adapter for Gemini API 
+        Adapter for Gemini API
 
         Args:
             model: Gemini model to use
@@ -142,7 +176,7 @@ class AgenticEngine:
         """
         settings = get_settings()
         client = get_gemini_client()
-    
+
         # If schema provided, request JSON mode
         if response_schema:
             # Add JSON formatting instructions to prompt
@@ -153,22 +187,29 @@ class AgenticEngine:
             # TODO: Make inference output enforces schema output
 
             logger.info(enhanced_prompt)
-            
+
             # Use Gemini's JSON mode or response_mime_type
+            config = {
+                "temperature": 0.3,  # Lower temperature for more accurate, less creative responses
+                "system_instruction": self.personality,
+                "response_mime_type": "application/json",
+                "response_schema": schema_json,
+            }
+            logger.info(f"Gemini API Request Config: {config}")
+            logger.info(f"Gemini Model: {model or settings.gemini_model}")
+
             response = client.models.generate_content(
                 model=model or settings.gemini_model,
                 contents=enhanced_prompt,
-                config={
-                    "temperature": 1.0,
-                    "system_instruction": self.personality,
-                    "response_mime_type": "application/json"
-                },
+                config=config,
             )
-            
+
             # Parse and validate
+            logger.info(f"Gemini API Raw Response: {response.text}")
             result = json.loads(response.text)
             validated = response_schema(**result)
-            return validated.model_dump(mode='json')
+            logger.info(f"Validated Response: {validated.model_dump(mode='json')}")
+            return validated.model_dump(mode="json")
 
         else:
             # Regular text completion
@@ -177,12 +218,10 @@ class AgenticEngine:
             response = client.models.generate_content(
                 model=model or settings.gemini_model,
                 contents=prompt,
-                config={
-                    "temperature": 1.0,
-                    "system_instruction": self.personality,
-                    "response_mime_type": "application/json"
-                },
+                config=config,
             )
+
+            logger.info(f"Gemini API Raw Response (text mode): {response.text}")
 
         return response.text
 
@@ -190,41 +229,40 @@ class AgenticEngine:
         """
         Provide few-shot examples to guide structured outputs per template.
         Reads examples from .txt files in the examples/ directory.
-        
+
         Args:
             template_name: The name of the prompt template (e.g., "action_generation")
-            
+
         Returns:
             List of example strings showing conversation history -> action schema mappings
         """
         # Check cache first
         if template_name in self._example_cache:
             return self._example_cache[template_name]
-        
+
         # Map template names to example files
         template_to_examples = {
             "action_generation": [
+                "create_martini_example.txt",
+                "create_old_fashioned_example.txt",
                 "create_drink_example.txt",
                 "search_drink_example.txt",
                 "suggest_drink_example.txt",
-                "create_drink_custom_example.txt"
+                "create_drink_custom_example.txt",
             ],
             "retrieval_augmented": [
+                "create_martini_example.txt",
+                "create_old_fashioned_example.txt",
                 "create_drink_example.txt",
-                "search_drink_example.txt"
+                "search_drink_example.txt",
             ],
-            "chat_style": [
-                "create_drink_example.txt",
-                "suggest_drink_example.txt"
-            ],
-            "classic_completion": [
-                "create_drink_example.txt"
-            ]
+            "chat_style": ["create_drink_example.txt", "suggest_drink_example.txt"],
+            "classic_completion": ["create_drink_example.txt"],
         }
-        
+
         examples = []
         example_files = template_to_examples.get(template_name, [])
-        
+
         for example_file in example_files:
             example_path = self.examples_dir / example_file
             try:
@@ -241,7 +279,7 @@ class AgenticEngine:
                     self.logger.warning(f"Example file not found: {example_path}")
             except Exception as e:
                 self.logger.error(f"Error reading example file {example_file}: {e}")
-        
+
         # Cache examples for this template
         self._example_cache[template_name] = examples
         return examples
