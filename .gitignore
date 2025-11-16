@@ -67,3 +67,4 @@ venv/
 .env
 .env.local
 .env.*.local
+apps/backend/src/data model.txt
