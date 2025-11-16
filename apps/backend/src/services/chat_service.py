@@ -492,9 +492,6 @@ async def process_user_message(
             }
         )
 
-        # Convert dict to OutgoingMessage
-        yield OutgoingMessage(**enhanced_message_dict)
-
     except Exception as e:
         logger.error(f"Error processing message: {str(e)}", exc_info=True)
         
