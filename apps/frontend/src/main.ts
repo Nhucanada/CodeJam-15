@@ -549,7 +549,6 @@ const recipeBox = document.querySelector('.recipe-box') as HTMLElement
 const allPanelHeaders = document.querySelectorAll('.message.panel-header') as NodeListOf<HTMLElement>
 const ingredientsHeader = allPanelHeaders[0] // First header is "Ingredients:"
 const recipeHeader = allPanelHeaders[1] // Second header is "Recipe:"
-const shelfBoxes = document.querySelectorAll('.shelf-box') as NodeListOf<HTMLElement>
 
 function showRecipe() {
   // Show recipe elements
@@ -558,7 +557,8 @@ function showRecipe() {
   if (ingredientsHeader) ingredientsHeader.style.display = 'block'
   if (recipeHeader) recipeHeader.style.display = 'block'
 
-  // Hide shelf elements
+  // Hide shelf elements (re-query each time to catch dynamically added boxes)
+  const shelfBoxes = document.querySelectorAll('.shelf-box') as NodeListOf<HTMLElement>
   shelfBoxes.forEach(box => box.style.display = 'none')
 
   // Update button states
@@ -573,7 +573,8 @@ function showShelf() {
   if (ingredientsHeader) ingredientsHeader.style.display = 'none'
   if (recipeHeader) recipeHeader.style.display = 'none'
 
-  // Show shelf elements (with images and text)
+  // Show shelf elements (re-query each time to catch dynamically added boxes)
+  const shelfBoxes = document.querySelectorAll('.shelf-box') as NodeListOf<HTMLElement>
   shelfBoxes.forEach(box => box.style.display = 'flex')
 
   // Update button states
@@ -589,8 +590,6 @@ shelfButton?.addEventListener('click', showShelf)
 showShelf()
 
 // WebSocket and Chat Integration
-let selectedCocktail: CocktailDetail | null = null;
-
 // Initialize WebSocket
 chatWebSocket.onMessage((message) => {
   console.log('Received WebSocket message:', message);
@@ -603,6 +602,24 @@ function cocktailConfigToSummary(config: CocktailConfig): CocktailSummary {
     name: config.name || '',
     ingredients_summary: config.ingredients.map(i => i.name).join(', '),
     created_at: new Date().toISOString()
+  };
+}
+
+// Helper function to convert CocktailConfig to DrinkRecipeSchema for 3D rendering
+function cocktailConfigToRecipeSchema(config: CocktailConfig): DrinkRecipeSchema {
+  return {
+    name: config.name || 'Unnamed Cocktail',
+    description: config.description || `A delicious ${config.glassType} cocktail`,
+    ingredients: config.ingredients.map(ing => ({
+      name: ing.name,
+      amount: ing.amount,
+      color: ing.color,
+      unit: 'ml'
+    })),
+    instructions: config.instructions || ['Mix ingredients', 'Pour into glass', 'Enjoy!'],
+    glass_type: config.glassType,
+    garnish: config.garnish || null,
+    has_ice: config.hasIce
   };
 }
 
@@ -682,15 +699,20 @@ function updateShelfDisplay(cocktails: any[], greeting: string) {
   // Add greeting message if needed
   console.log('Agent greeting:', greeting);
 
-  // Create new shelf boxes for each cocktail
-  const recipePanel = document.querySelector('.recipe-content');
-  if (recipePanel) {
-    cocktails.forEach((cocktail, index) => {
-      if (index < 3) { // Limit to 3 visible cocktails
-        const shelfBox = createShelfBox(cocktail);
-        recipePanel.appendChild(shelfBox);
-      }
-    });
+  // Check if we're currently in shelf tab before rendering
+  const isShelfTabActive = shelfButton?.classList.contains('selected');
+
+  // Only create shelf boxes if we're in the shelf tab
+  if (isShelfTabActive) {
+    const recipePanel = document.querySelector('.recipe-content');
+    if (recipePanel) {
+      cocktails.forEach((cocktail, index) => {
+        if (index < 3) { // Limit to 3 visible cocktails
+          const shelfBox = createShelfBox(cocktail);
+          recipePanel.appendChild(shelfBox);
+        }
+      });
+    }
   }
 }
 
@@ -724,15 +746,68 @@ function createShelfBox(cocktail: any) {
       // Show loading state
       showRecipeLoading();
 
-      const detail = await cocktailAPI.getCocktailDetail(cocktail.id);
-      await selectAndDisplayCocktail(detail);
+      // TEMPORARY: Use local example data instead of API call
+      const exampleCocktail = exampleCocktails.find(c => c.id === cocktail.id);
 
-      // Switch to recipe view
-      const recipeButton = Array.from(document.querySelectorAll('.recipe-btn')).find(btn =>
-        btn.textContent === 'RECIPE'
-      ) as HTMLButtonElement;
-      if (recipeButton) {
-        recipeButton.click();
+      if (exampleCocktail) {
+        // Convert to recipe schema and render in 3D
+        const recipeSchema = cocktailConfigToRecipeSchema(exampleCocktail);
+        renderDrinkFromBackend(recipeSchema);
+
+        // Update drink title
+        updateDrinkTitle(exampleCocktail.name || 'Unnamed Cocktail');
+
+        // Update ingredients display
+        const ingredientsBox = document.querySelector('.ingredients-box .message-container');
+        if (ingredientsBox) {
+          ingredientsBox.innerHTML = '';
+          exampleCocktail.ingredients.forEach((ing, index) => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot';
+            messageDiv.textContent = `${index + 1}. ${ing.amount} ml ${ing.name}`;
+            ingredientsBox.appendChild(messageDiv);
+          });
+        }
+
+        // Update recipe display
+        const recipeBox = document.querySelector('.recipe-box .message-container');
+        if (recipeBox) {
+          recipeBox.innerHTML = '';
+
+          // Add description
+          const descDiv = document.createElement('div');
+          descDiv.className = 'message bot';
+          descDiv.textContent = recipeSchema.description;
+          recipeBox.appendChild(descDiv);
+
+          // Add instructions
+          recipeSchema.instructions.forEach((instruction, index) => {
+            const instructionDiv = document.createElement('div');
+            instructionDiv.className = 'message bot';
+            instructionDiv.textContent = `${index + 1}. ${instruction}`;
+            recipeBox.appendChild(instructionDiv);
+          });
+        }
+
+        // Switch to recipe view
+        const recipeButton = Array.from(document.querySelectorAll('.recipe-btn')).find(btn =>
+          btn.textContent === 'RECIPE'
+        ) as HTMLButtonElement;
+        if (recipeButton) {
+          recipeButton.click();
+        }
+      } else {
+        // Fall back to API if local data not found
+        const detail = await cocktailAPI.getCocktailDetail(cocktail.id);
+        await selectAndDisplayCocktail(detail);
+
+        // Switch to recipe view
+        const recipeButton = Array.from(document.querySelectorAll('.recipe-btn')).find(btn =>
+          btn.textContent === 'RECIPE'
+        ) as HTMLButtonElement;
+        if (recipeButton) {
+          recipeButton.click();
+        }
       }
     } catch (error) {
       console.error('Failed to load cocktail details:', error);
@@ -794,8 +869,6 @@ function showRecipeLoading() {
 }
 
 async function selectAndDisplayCocktail(cocktail: CocktailDetail) {
-  selectedCocktail = cocktail;
-
   try {
     // Update drink title
     updateDrinkTitle(cocktail.name);
@@ -860,24 +933,7 @@ function showDrinkTitleError(message: string) {
 }
 
 function showDrinkTitleLoading() {
-  const drinkTitleContainer = document.querySelector('.drink-title-container');
-  if (drinkTitleContainer) {
-    drinkTitleContainer.innerHTML = '';
-    const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'drink-title-loading';
-    loadingDiv.style.cssText = `
-      background: #e3f2fd;
-      border-left: 4px solid #2196f3;
-      color: #1976d2;
-      padding: 12px;
-      border-radius: 4px;
-      text-align: center;
-      font-size: 14px;
-      font-style: italic;
-    `;
-    loadingDiv.textContent = '⏳ Loading drink...';
-    drinkTitleContainer.appendChild(loadingDiv);
-  }
+  // Do nothing - loading indicator removed
 }
 
 function resetDrinkTitle() {
@@ -1135,9 +1191,6 @@ setTimeout(() => {
     profileImg.src = '/src/img/image_3.png';
   }
 }, 0);
-
-// Update login overlay to start token manager after successful login
-const originalLoginOverlay = LoginOverlay;
 
 // Enhanced logout functionality with custom dialog
 function logoutWithConfirmation() {

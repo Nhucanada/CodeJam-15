@@ -131,6 +131,11 @@
         // Update the main display
         this.updateRecipeDisplay(detail);
 
+        // Render the drink in 3D scene if recipe data is available
+        if (detail.recipe && (window as any).renderDrinkFromBackend) {
+          (window as any).renderDrinkFromBackend(detail.recipe);
+        }
+
         // Switch to recipe view
         this.switchToRecipeView();
 

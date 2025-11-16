@@ -13,6 +13,8 @@ export interface CocktailConfig {
   // Metadata
   name?: string
   id?: string
+  description?: string
+  instructions?: string[]
 }
 
 export interface Ingredient {
