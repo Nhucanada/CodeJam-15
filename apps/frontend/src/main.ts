@@ -1,19 +1,40 @@
 import './style.css'
 import * as THREE from 'three'
-import { Floor } from './scene/Floor'
 import { GlassLoader } from './scene/GlassLoader'
 import { IceLoader } from './scene/IceLoader'
 import { GarnishLoader, type GlassName } from './scene/GarnishLoader'
 import { CharacterLoader } from './scene/CharacterLoader'
+import { BarLoader } from './scene/BarLoader'
 import { Lighting } from './scene/Lighting'
 import { CameraSetup } from './scene/CameraSetup'
 import { ControlsSetup } from './scene/ControlsSetup'
 import { exampleCocktails } from './data/cocktails'
 import { glassTypeToRenderer, garnishToRenderer } from './types'
 
+// Audio setup
+const pourSound = new Audio('/src/assets/SFX/PourSFX.mp3')
+const iceSound = new Audio('/src/assets/SFX/IceSFX.mp3')
+
+// Helper function to play audio with optional start time trimming and duration
+function playSound(audio: HTMLAudioElement, startTime: number = 0, duration?: number) {
+  audio.currentTime = startTime
+  audio.play().catch(err => console.error('Audio playback error:', err))
+
+  // If duration is specified, stop playback after that duration
+  if (duration) {
+    setTimeout(() => {
+      audio.pause()
+    }, duration * 1000) // Convert to milliseconds
+  }
+}
+
 // Scene setup
 const scene = new THREE.Scene()
 scene.background = new THREE.Color(0x0a0a0f) // Darker background for bar atmosphere
+
+// Add fog for atmospheric depth - objects fade into darkness with distance
+// Fog(color, near distance, far distance)
+scene.fog = new THREE.Fog(0x0a0a0f, 30, 140)
 
 // Renderer setup
 const renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -35,14 +56,15 @@ const controls = controlsSetup.getControls()
 new Lighting(scene)
 
 
-// Create floor
-new Floor(scene)
+// // Create floor
+// new Floor(scene)
 
 // Initialize loaders
 const glassLoader = new GlassLoader()
 const iceLoader = new IceLoader()
 const garnishLoader = new GarnishLoader()
 const characterLoader = new CharacterLoader()
+const barLoader = new BarLoader()
 
 // Cocktail state
 let currentCocktailIndex = 0
@@ -65,6 +87,10 @@ function renderCocktail(index: number) {
     if (liquidHandler) {
       const color = new THREE.Color(cocktail.liquidColor)
       liquidHandler.setLiquidColor(color)
+
+      // Play pour sound when liquid starts filling
+      // Trim start by 1.0 second and play for 1 second to match fill duration
+      playSound(pourSound, 1.5, 2.0)
     }
 
     // Add ice if needed
@@ -132,6 +158,10 @@ function createIceCubesForGlass(glassName: GlassName, loadGarnishAfter: boolean 
 
   // Set callback to trigger ice falling when water fill completes
   liquidHandler.setOnFillComplete(() => {
+    // Play ice sound when ice starts falling
+    // Trim start by 0.5 seconds
+    playSound(iceSound, 1)
+
     // Animate each ice cube with staggered timing for natural effect
     const lastIceIndex = iceConfig.count - 1
     for (let i = 0; i < iceConfig.count; i++) {
@@ -192,6 +222,14 @@ glassLoader.loadGlass(scene, firstGlass, controls, camera).then(() => {
     new THREE.Vector3(0, -30, -20),
     24,
     new THREE.Euler(0, 0, 0)
+  ).catch(console.error)
+
+  // Load sci-fi bar in the background
+  barLoader.loadBar(
+    scene,
+    new THREE.Vector3(-7, -21.85, 40),
+    200,
+    new THREE.Euler(0, Math.PI/2, 0)
   ).catch(console.error)
 })
 

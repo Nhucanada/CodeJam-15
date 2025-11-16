@@ -160,8 +160,8 @@ export class LiquidHandler {
     const liquidMaterial = new THREE.MeshPhysicalMaterial({
       color: 0xffffff, // Clear/white - will be set to actual color later
       transparent: true,
-      opacity: 1,
-      transmission: 0.6,
+      opacity: 0.8,
+      transmission: 0.3,
       roughness: 0.05,
       thickness: 0.3,
       ior: 1.1, // Reduced refraction index for less distortion
@@ -217,8 +217,8 @@ export class LiquidHandler {
     const topMaterial = new THREE.MeshPhysicalMaterial({
       color: 0xffffff, // Clear/white - will be set to actual color later
       transparent: true,
-      opacity: 1,
-      transmission: 0.9,
+      opacity: 0.8,
+      transmission: 0.3,
       roughness: 0.05,
       thickness: 0.3,
       ior: 1.1, // Reduced refraction index for less distortion

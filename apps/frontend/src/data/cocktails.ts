@@ -21,7 +21,7 @@ export const exampleCocktails: CocktailConfig[] = [
     glassType: 'martini',
     liquidColor: '#fffbd9ff',
     garnish: 'olive',
-    hasIce: false,
+    hasIce: true,
     ingredients: [
       { name: 'Gin', amount: 60, color: '#F0E68C' },
       { name: 'Dry Vermouth', amount: 10, color: '#F5DEB3' },
@@ -46,7 +46,7 @@ export const exampleCocktails: CocktailConfig[] = [
     glassType: 'margarita',
     liquidColor: '#FFDAB9',
     garnish: 'salt_rim',
-    hasIce: false,
+    hasIce: true,
     ingredients: [
       { name: 'Tequila', amount: 50, color: '#F5DEB3' },
       { name: 'Lime Juice', amount: 25, color: '#9ACD32' },
@@ -56,10 +56,10 @@ export const exampleCocktails: CocktailConfig[] = [
   {
     name: 'Manhattan',
     id: 'manhattan',
-    glassType: 'martini',
+    glassType: 'cocktail',
     liquidColor: '#8B4513',
     garnish: 'cherry',
-    hasIce: false,
+    hasIce: true,
     ingredients: [
       { name: 'Rye Whiskey', amount: 60, color: '#8B4513' },
       { name: 'Sweet Vermouth', amount: 30, color: '#A0522D' },
@@ -77,6 +77,54 @@ export const exampleCocktails: CocktailConfig[] = [
       { name: 'White Rum', amount: 50, color: '#ffffff' },
       { name: 'Coconut Cream', amount: 30, color: '#FFFACD' },
       { name: 'Pineapple Juice', amount: 90, color: '#FFD700' },
+    ],
+  },
+  {
+    name: 'Zombie',
+    id: 'zombie',
+    glassType: 'zombie',
+    liquidColor: '#FF6347',
+    garnish: 'cherry',
+    hasIce: true,
+    ingredients: [
+      { name: 'White Rum', amount: 45, color: '#ffffff' },
+      { name: 'Dark Rum', amount: 45, color: '#8B4513' },
+      { name: 'Apricot Brandy', amount: 30, color: '#FF8C00' },
+      { name: 'Lime Juice', amount: 20, color: '#9ACD32' },
+      { name: 'Pineapple Juice', amount: 40, color: '#FFD700' },
+    ],
+  },
+  {
+    name: 'Irish Beer',
+    id: 'irish-beer',
+    glassType: 'pint',
+    liquidColor: '#D2691E',
+    garnish: 'none',
+    hasIce: true,
+    ingredients: [
+      { name: 'Stout Beer', amount: 473, color: '#2F1B14' },
+    ],
+  },
+  {
+    name: 'German Lager',
+    id: 'german-lager',
+    glassType: 'seidel',
+    liquidColor: '#FFD700',
+    garnish: 'none',
+    hasIce: true,
+    ingredients: [
+      { name: 'Lager Beer', amount: 500, color: '#F4A460' },
+    ],
+  },
+  {
+    name: 'Tequila Shot',
+    id: 'tequila-shot',
+    glassType: 'shot',
+    liquidColor: '#F5DEB3',
+    garnish: 'lime',
+    hasIce: true,
+    ingredients: [
+      { name: 'Tequila', amount: 44, color: '#F5DEB3' },
     ],
   },
 ]
