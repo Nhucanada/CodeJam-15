@@ -69,26 +69,25 @@ class SupabaseVectorDatabaseSearch(RAGStrategy):
             table_list: list[str] = self.tables
             all_results: list[RAGRetrievalResult] = []
 
-            logger.debug("PERFORMING RAG SEARCH FOR TABLES")
+            logger.info("PERFORMING RAG SEARCH FOR TABLES")
 
             for tbl in table_list:
-                logger.debug(f"Searching table: {tbl}")
+                logger.info(f"Searching table: {tbl}")
 
                 query_builder = (
                     self.supabase
                     .table(tbl)
-                    .select("content, metadata, embedding")
+                    .select("id, content, embedding")
                     .limit(max_candidates_per_table)
                 )
 
-                if user_id:
-                    query_builder = query_builder.eq("user_id", user_id)
-
                 response = query_builder.execute()
+
+                logger.info(response)
                 rows = getattr(response, "data", None) or []
 
                 if not rows:
-                    logger.debug(f"No rows returned from table {tbl}")
+                    logger.info(f"No rows returned from table {tbl}")
                     continue
 
                 for item in rows:

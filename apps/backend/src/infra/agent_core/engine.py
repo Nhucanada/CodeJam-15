@@ -107,6 +107,8 @@ class AgenticEngine:
             for chunk in retrieved_chunks:
                 prompt.append(f"\n[RETRIEVED]\n{chunk}")
 
+        prompt.append(f"\n[CONVERSATION]\n{user_input}")
+
         # Send to Gemini
         completion = await self._invoke_llm(
             model=settings.gemini_model,
