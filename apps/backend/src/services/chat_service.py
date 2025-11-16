@@ -452,7 +452,7 @@ async def process_user_message(
         # Prepare enhanced input with context
         user_input = message.content or ""
         if context:
-            enhanced_input = f"[CONVERSATION CONTEXT]\n{context}\n\n[CURRENT MESSAGE]\n{user_input}"
+            enhanced_input = f"\n{context}\n"
         else:
             enhanced_input = user_input
         

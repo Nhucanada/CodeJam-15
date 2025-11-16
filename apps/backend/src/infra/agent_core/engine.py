@@ -155,6 +155,8 @@ class AgenticEngine:
             # TODO: Make inference output enforces schema output
             
             # Use Gemini's JSON mode or response_mime_type
+
+            logger.info(f"Prompt: {enhanced_prompt}")
             response = client.models.generate_content(
                 model=model or settings.gemini_model,
                 contents=enhanced_prompt,

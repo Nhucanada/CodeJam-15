@@ -72,7 +72,7 @@ class SupabaseVectorDatabaseSearch(RAGStrategy):
             logger.info("PERFORMING RAG SEARCH FOR TABLES")
 
             for tbl in table_list:
-                logger.info(f"Searching table: {tbl}")
+                logger.info(f"Searching table: {tbl}, max: {max_candidates_per_table}")
 
                 query_builder = (
                     self.supabase
@@ -82,9 +82,9 @@ class SupabaseVectorDatabaseSearch(RAGStrategy):
                 )
 
                 response = query_builder.execute()
+                logger.info(response.data)
 
-                logger.info(response)
-                rows = getattr(response, "data", None) or []
+                rows = response.data
 
                 if not rows:
                     logger.info(f"No rows returned from table {tbl}")
