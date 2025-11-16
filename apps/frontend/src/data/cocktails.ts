@@ -19,7 +19,7 @@ export const exampleCocktails: CocktailConfig[] = [
     name: 'Classic Martini',
     id: 'martini',
     glassType: 'martini',
-    liquidColor: '#F0E68C',
+    liquidColor: '#fffbd9ff',
     garnish: 'olive',
     hasIce: false,
     ingredients: [
