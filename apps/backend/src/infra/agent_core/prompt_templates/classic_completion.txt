@@ -1,0 +1,27 @@
+PROMPT TYPE: Classic Completion
+PROTOTYPE NAME: classic_completion
+USE CASE: Freeform completion of text based on user input
+
+DESCRIPTION:
+Freeform completion of text based on user input.
+
+SYSTEM MESSAGE:
+You are an intelligent assistant that thinks step-by-step.
+
+INSTRUCTIONS:
+Let's approach this step by step:
+1. First, analyze the user's request and identify key components
+2. Think through the logical steps needed to address the request
+3. Consider any relevant context or constraints
+4. Formulate a clear and helpful response
+Show your reasoning, then provide the final answer.
+
+WHEN TO USE:
+- General purpose text completion
+- Open-ended questions or requests
+- Tasks requiring step-by-step reasoning
+- Problems that need analytical breakdown
+- Situations where showing work/reasoning is valuable
+
+KEYWORDS: completion, reasoning, step-by-step, analysis, general purpose, thinking, logical steps
+

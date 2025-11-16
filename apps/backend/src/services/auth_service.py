@@ -2,7 +2,8 @@
 
 from typing import Optional, Union
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, WebSocket, status
+from fastapi.exceptions import HTTPException, WebSocketException
 from supabase import Client
 
 from src.domain.auth_models import (
@@ -283,3 +284,35 @@ def verify_access_token(
     except Exception:
         return None
 
+# WebSocket Authentication
+async def authenticate_websocket(
+    websocket: WebSocket,
+    supabase: Client
+) -> UserResponse:
+    """
+    Authenticate WebSocket connection.
+    
+    Args:
+        websocket: WebSocket connection
+        supabase: Supabase client instance
+        
+    Returns:
+        UserResponse with current user info
+        
+    Raises:
+        WebSocketException: If authentication fails
+    """
+    try:
+        token = websocket.query_params.get("token")
+        if not token:
+            raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason="Missing authentication token")
+        
+        decoded = verify_access_token(token, supabase)  
+
+    except Exception as e:
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason=f"Authentication failed: {str(e)}")
+    
+    if not decoded:
+        raise WebSocketException(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid or expired token")
+    
+    return _format_user_response(decoded)
