@@ -47,7 +47,7 @@ class Settings(BaseSettings):
         description="Google Gemini API key"
     )
     gemini_model: str = Field(
-        default="gemini-2.5-flash",
+        default="gemini-2.0-flash",
         description="Default Gemini model to use"
     )
     gemini_rate_limit_per_minute: int = Field(
