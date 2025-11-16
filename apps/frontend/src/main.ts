@@ -1,19 +1,16 @@
 import './style.css'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { Floor } from './scene/Floor'
 import { GlassLoader } from './scene/GlassLoader'
 import { IceLoader } from './scene/IceLoader'
+import { GarnishLoader } from './scene/GarnishLoader'
 import { Lighting } from './scene/Lighting'
+import { CameraSetup } from './scene/CameraSetup'
+import { ControlsSetup } from './scene/ControlsSetup'
 
 // Scene setup
 const scene = new THREE.Scene()
 scene.background = new THREE.Color(0x0a0a0f) // Darker background for bar atmosphere
-
-// Camera setup
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000)
-camera.position.set(0, 2, 8)
-camera.lookAt(0, 0, 0)
 
 // Renderer setup
 const renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -23,73 +20,106 @@ renderer.shadowMap.enabled = true
 renderer.localClippingEnabled = true // Enable clipping planes for liquid masking
 document.body.appendChild(renderer.domElement)
 
-// OrbitControls
-const controls = new OrbitControls(camera, renderer.domElement)
-controls.enableDamping = true
-controls.dampingFactor = 0.05
-controls.minDistance = 1
-controls.maxDistance = 10
-controls.maxPolarAngle = Math.PI / 2 // Prevent camera from going below horizontal
-controls.target.set(0, 0, 0)
+// Camera setup
+const cameraSetup = new CameraSetup()
+const camera = cameraSetup.getCamera()
 
-// Lighting - Using Lighting class (for testing)
+// Controls setup
+const controlsSetup = new ControlsSetup(camera, renderer)
+const controls = controlsSetup.getControls()
+
+// Lighting
 new Lighting(scene)
 
-// Lighting - ambient bar atmosphere (commented out for testing)
-// const directionalLight = new THREE.DirectionalLight(0xffcc88, 0.4) // Warm, dim key light
-// directionalLight.position.set(5, 8, 5)
-// directionalLight.castShadow = true
-// scene.add(directionalLight)
-
-// const ambientLight = new THREE.AmbientLight(0xff9955, 0.15) // Very dim warm ambient
-// scene.add(ambientLight)
-
-// const fillLight = new THREE.DirectionalLight(0xff6633, 0.2) // Subtle warm accent
-// fillLight.position.set(-3, 2, -3)
-// scene.add(fillLight)
-
-// Spotlight on the glass for bar effect
-// const spotLight = new THREE.SpotLight(0xffffff, 1.5)
-// spotLight.position.set(0, 5, 0)
-// spotLight.angle = Math.PI / 6
-// spotLight.penumbra = 0.3
-// spotLight.decay = 2
-// spotLight.distance = 10
-// spotLight.castShadow = true
-// scene.add(spotLight)
 
 // Create floor
 new Floor(scene)
 
 // Load glass model
-const GLASS_TO_LOAD = 'hurricane_glass_3' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
-                                          // hurricane_glass_3, pint_glass_4, seidel_Glass_5,
-                                          // shot_glass_6, highball_glass_7, margarita_glass_8, martini_glass_9
+const GLASS_TO_LOAD = 'margarita_glass_8' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
+                                            // hurricane_glass_3, pint_glass_4, seidel_Glass_5,
+                                            // shot_glass_6, highball_glass_7, margarita_glass_8, martini_glass_9
 const glassLoader = new GlassLoader()
-glassLoader.loadGlass(scene, GLASS_TO_LOAD, controls, camera).then(() => {
-  // After glass is loaded, load and position ice cube at the water surface
-  const iceLoader = new IceLoader()
-  iceLoader.loadIce(scene, 'cube_ice').then(() => {
-    const ice = iceLoader.getIce('cube_ice')
-    const liquid = glassLoader.getLiquid()
+const iceLoader = new IceLoader()
+const garnishLoader = new GarnishLoader()
 
-    if (ice && liquid) {
-      // Position ice at the same Y position as the liquid surface (top of the liquid mesh)
-      const liquidBox = new THREE.Box3().setFromObject(liquid)
-      ice.position.y = liquidBox.max.y
-      ice.position.x = 0
-      ice.position.z = 0
+// Helper function to create multiple ice cubes for a glass
+function createIceCubesForGlass(glassName: typeof glassNames[number]) {
+  const liquid = glassLoader.getLiquid()
+  const liquidHandler = glassLoader.getLiquidHandler()
 
-      // Scale ice to fit nicely in the glass
-      ice.scale.set(0.5, 0.5, 0.5)
+  if (!liquid || !liquidHandler) return
+
+  // Get ice configuration for this glass type
+  const iceConfig = GlassLoader.getIceConfig(glassName)
+
+  // Calculate base Y position from liquid surface
+  const liquidBox = new THREE.Box3().setFromObject(liquid)
+  const baseY = liquidBox.max.y + iceConfig.yOffset
+
+  // Initialize ice loader with scene
+  iceLoader.setScene(scene)
+
+  // Create all ice cubes for this glass
+  for (let i = 0; i < iceConfig.count; i++) {
+    const iceName = `cube_ice_${i}`
+    const pos = iceConfig.positions[i]
+
+    // Create ice cube at hidden position initially
+    const rotation = pos.rotation ? new THREE.Euler(pos.rotation.x, pos.rotation.y, pos.rotation.z) : undefined
+    iceLoader.createIceCube(
+      iceName,
+      new THREE.Vector3(pos.x, -10, pos.z), // Start below scene
+      iceConfig.scale,
+      rotation
+    )
+  }
+
+  // Set callback to trigger ice falling when water fill completes
+  liquidHandler.setOnFillComplete(() => {
+    console.log('Water fill complete, starting ice animations')
+
+    // Animate each ice cube with staggered timing for natural effect
+    for (let i = 0; i < iceConfig.count; i++) {
+      const iceName = `cube_ice_${i}`
+      const pos = iceConfig.positions[i]
+      const delay = i * 150 // 150ms delay between each cube
+
+      setTimeout(() => {
+        const ice = iceLoader.getIce(iceName)
+        if (ice) {
+          // Set X/Z position before falling
+          ice.position.x = pos.x
+          ice.position.z = pos.z
+
+          // Animate falling
+          iceLoader.animateIceFalling(iceName, baseY, () => {
+            // After falling completes, start bobbing with different time offset for each cube
+            const timeOffset = Math.random() * Math.PI * 2 // Random phase 0 to 2π
+            iceLoader.animateIceBobbing(iceName, baseY, timeOffset)
+          })
+        }
+      }, delay)
     }
-  }).catch(console.error)
+  })
+}
+
+glassLoader.loadGlass(scene, GLASS_TO_LOAD, controls, camera).then(() => {
+  createIceCubesForGlass(GLASS_TO_LOAD)
+
+  // Load mint garnish for testing
+  garnishLoader.loadGarnish(scene, 'mint', GLASS_TO_LOAD).then(() => {
+    console.log('Mint garnish loaded!')
+    // Scale it down a lot
+    garnishLoader.setGarnishScale('mint', 0.2)
+    garnishLoader.setGarnishPosition('mint', new THREE.Vector3(0.1, 3.2,-1 )) // Adjust position above liquid
+  }).catch((error) => {
+    console.error('Failed to load mint:', error)
+  })
 })
 
 // Handle window resize
 window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight
-  camera.updateProjectionMatrix()
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
@@ -107,25 +137,44 @@ const glassNames = [
   'martini_glass_9',
 ] as const
 
-let currentGlassIndex = 7 // Start with highball_glass_7
+let currentGlassIndex = 8 // Start with margarita_glass_8
 
 window.addEventListener('keydown', (event) => {
   if (event.code === 'Space') {
     event.preventDefault() // Prevent page scroll
+
+    // Remove all existing ice cubes before switching
+    iceLoader.removeAllIce()
+
     currentGlassIndex = (currentGlassIndex + 1) % glassNames.length
-    console.log(`Switching to ${glassNames[currentGlassIndex]}`)
-    glassLoader.switchGlass(glassNames[currentGlassIndex]).catch(console.error)
+    const newGlassName = glassNames[currentGlassIndex]
+    console.log(`Switching to ${newGlassName}`)
+
+    glassLoader.switchGlass(newGlassName).then(() => {
+      // Create ice cubes for the new glass
+      createIceCubesForGlass(newGlassName)
+    }).catch(console.error)
   }
 })
 
-// Animation loop
+// Animation loop with delta time tracking
+let lastTime = performance.now()
+
 function animate() {
   requestAnimationFrame(animate)
+
+  // Calculate delta time in seconds
+  const currentTime = performance.now()
+  const deltaTime = (currentTime - lastTime) / 1000
+  lastTime = currentTime
 
   // Update liquid fill animation
   glassLoader.update()
 
-  controls.update()
+  // Update ice animations with delta time
+  iceLoader.update(deltaTime)
+
+  controlsSetup.update()
   renderer.render(scene, camera)
 }
 

@@ -15,6 +15,7 @@ export class LiquidHandler {
   private liquidStartPercent: number = 0.06
   private liquidEndPercent: number = 0.90
   private waveTime: number = 0
+  private onFillComplete?: () => void
 
   constructor(scene: THREE.Scene) {
     this.scene = scene
@@ -306,6 +307,15 @@ export class LiquidHandler {
     const previousFillLevel = this.currentFillLevel
     this.currentFillLevel += (this.targetFillLevel - this.currentFillLevel) * lerpSpeed
 
+    // Check if fill is complete
+    if (Math.abs(this.currentFillLevel - this.targetFillLevel) < 0.01) {
+      if (this.onFillComplete) {
+        const callback = this.onFillComplete
+        this.onFillComplete = undefined // Clear callback so it only fires once
+        callback()
+      }
+    }
+
     // Only update clipping plane if fill level changed significantly (optimization)
     if (Math.abs(this.currentFillLevel - previousFillLevel) < 0.001) return
 
@@ -391,5 +401,26 @@ export class LiquidHandler {
    */
   public getLiquidTop(): THREE.Mesh | null {
     return this.liquidTopMesh
+  }
+
+  /**
+   * Set callback to be called when fill animation completes
+   */
+  public setOnFillComplete(callback: () => void): void {
+    this.onFillComplete = callback
+  }
+
+  /**
+   * Get current fill level (0 to 1)
+   */
+  public getCurrentFillLevel(): number {
+    return this.currentFillLevel
+  }
+
+  /**
+   * Get target fill level (0 to 1)
+   */
+  public getTargetFillLevel(): number {
+    return this.targetFillLevel
   }
 }

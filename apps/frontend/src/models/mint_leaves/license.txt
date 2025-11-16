@@ -1,0 +1,11 @@
+Model Information:
+* title:	Mint Leaves
+* source:	https://sketchfab.com/3d-models/mint-leaves-25837c82537c46e3ade674e0b8e99864
+* author:	Zinaida.Kovrova (https://sketchfab.com/Zinaida.Kovrova)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Mint Leaves" (https://sketchfab.com/3d-models/mint-leaves-25837c82537c46e3ade674e0b8e99864) by Zinaida.Kovrova (https://sketchfab.com/Zinaida.Kovrova) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

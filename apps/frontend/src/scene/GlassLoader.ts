@@ -57,7 +57,126 @@ const LIQUID_END_PERCENT: Record<GlassName, number> = {
   shot_glass_6: 0.95, // Shot glass - filled to the brim
   highball_glass_7: 0.85, // Highball - mixed drinks with ice, standard fill
   margarita_glass_8: 0.95, // Margarita glass - filled to bowl, not stem
-  martini_glass_9: 0.97, 
+  martini_glass_9: 0.97,
+}
+
+// Ice cube configuration for each glass type
+export interface IceCubeConfig {
+  count: number // Number of ice cubes
+  positions: Array<{ x: number; z: number; rotation?: { x: number; y: number; z: number } }> // Relative X/Z positions from glass center, optional rotation in radians
+  scale: number // Scale of ice cubes (default ~0.4-0.5)
+  yOffset: number // Y offset from liquid surface (negative = below surface)
+}
+
+const ICE_CUBE_CONFIGS: Record<GlassName, IceCubeConfig> = {
+  zombie_glass_0: {
+    count: 3,
+    positions: [
+      { x: 0.25, z: 0.25, rotation: { x: -0.05, y: 0.5, z: 0.08 } },
+      { x: -0.25, z: 0.25, rotation: { x: 0.08, y: -0.2, z: -0.05 } },
+      { x: 0, z: -0.3, rotation: { x: -0.08, y: 0.4, z: 0.05 } },
+    ],
+    scale: 0.55,
+    yOffset: -0.2,
+  },
+  cocktail_glass_1: {
+    count: 1,
+    positions: [{ x: 0, z: 0, rotation: { x: 0.1, y: 0.2, z: 0.15 } }],
+    scale: 0.35,
+    yOffset: -0.15,
+  },
+  rocks_glass_2: {
+    count: 3,
+    positions: [
+      { x: 0, z: 0, rotation: { x: 0.25, y: 0.15, z: 0.1 } },
+      { x: 0.2, z: 0.15, rotation: { x: -0.15, y: 0.4, z: 0.25 } },
+      { x: -0.15, z: -0.15, rotation: { x: 0.3, y: -0.3, z: -0.2 } },
+    ],
+    scale: 0.45,
+    yOffset: -0.2,
+  },
+  hurricane_glass_3: {
+    count: 3,
+    positions: [
+      { x: 0.15, z: 0.15, rotation: { x: -0.2, y: 0.35, z: 0.2 } },
+      { x: -0.15, z: 0.15, rotation: { x: 0.25, y: -0.15, z: -0.1 } },
+      { x: -0.15, z: -0.15, rotation: { x: 0.2, y: -0.25, z: -0.2 } },
+    ],
+    scale: 0.35,
+    yOffset: -0.2,
+  },
+  pint_glass_4: {
+    count: 8,
+    positions: [
+      { x: 0, z: 0, rotation: { x: 0.05, y: 0.3, z: 0.05 } },
+      { x: 0.45, z: 0.45, rotation: { x: -0.05, y: 0.5, z: 0.08 } },
+      { x: -0.45, z: 0.45, rotation: { x: 0.08, y: -0.2, z: -0.05 } },
+      { x: 0.45, z: -0.45, rotation: { x: -0.08, y: 0.35, z: 0.05 } },
+      { x: -0.45, z: -0.45, rotation: { x: 0.05, y: 0.3, z: 0.05 } },
+      { x: 0.65, z: 0, rotation: { x: -0.05, y: 0.5, z: 0.08 } },
+      { x: -0.65, z: 0, rotation: { x: 0.08, y: -0.2, z: -0.05 } },
+      { x: 0, z: 0.65, rotation: { x: -0.08, y: 0.35, z: 0.05 } },
+    ],
+    scale: 0.55,
+    yOffset: -0.25,
+  },
+  seidel_Glass_5: {
+    count: 4,
+    positions: [
+      { x: 0, z: 0, rotation: { x: 0.2, y: 0.3, z: 0.1 } },
+      { x: 0.2, z: 0.2, rotation: { x: -0.15, y: 0.5, z: 0.25 } },
+      { x: -0.2, z: 0.2, rotation: { x: 0.3, y: -0.2, z: -0.15 } },
+      { x: 0, z: -0.25, rotation: { x: -0.25, y: 0.35, z: 0.2 } },
+    ],
+    scale: 0.42,
+    yOffset: -0.25,
+  },
+  shot_glass_6: {
+    count: 1,
+    positions: [{ x: 0, z: 0, rotation: { x: 0.1, y: 0.15, z: 0.1 } }],
+    scale: 0.25,
+    yOffset: -0.1,
+  },
+  highball_glass_7: {
+    count: 8,
+    positions: [
+      { x: 0, z: 0, rotation: { x: 0.05, y: 0.3, z: 0.05 } },
+      { x: 0.45, z: 0.45, rotation: { x: -0.05, y: 0.5, z: 0.08 } },
+      { x: -0.45, z: 0.45, rotation: { x: 0.08, y: -0.2, z: -0.05 } },
+      { x: 0.45, z: -0.45, rotation: { x: -0.08, y: 0.35, z: 0.05 } },
+      { x: -0.45, z: -0.45, rotation: { x: 0.05, y: 0.3, z: 0.05 } },
+      { x: 0.6, z: 0, rotation: { x: -0.05, y: 0.5, z: 0.08 } },
+      { x: -0.6, z: 0, rotation: { x: 0.08, y: -0.2, z: -0.05 } },
+      { x: 0, z: 0.6, rotation: { x: -0.08, y: 0.35, z: 0.05 } },
+    ],
+    scale: 0.55,
+    yOffset: -0.22,
+  },
+  margarita_glass_8: {
+    count: 2,
+    positions: [
+      { x: 0.1, z: 0, rotation: { x: 0.15, y: 0.3, z: 0.1 } },
+      { x: -0.1, z: 0, rotation: { x: -0.2, y: -0.25, z: -0.15 } },
+    ],
+    scale: 0.35,
+    yOffset: -0.15,
+  },
+  martini_glass_9: {
+    count: 9,
+    positions: [
+      { x: 0, z: 0, rotation: { x: 0.05, y: 0.3, z: 0.05 } },
+      { x: 0.55, z: 0.55, rotation: { x: -0.05, y: 0.5, z: 0.08 } },
+      { x: -0.55, z: 0.55, rotation: { x: 0.08, y: -0.2, z: -0.05 } },
+      { x: 0.55, z: -0.55, rotation: { x: -0.08, y: 0.35, z: 0.05 } },
+      { x: -0.55, z: -0.55, rotation: { x: 0.05, y: 0.3, z: 0.05 } },
+      { x: 0.75, z: 0, rotation: { x: -0.05, y: 0.5, z: 0.08 } },
+      { x: -0.75, z: 0, rotation: { x: 0.08, y: -0.2, z: -0.05 } },
+      { x: 0, z: 0.75, rotation: { x: -0.08, y: 0.35, z: 0.05 } },
+      { x: 0, z: -0.75, rotation: { x: 0.05, y: -0.3, z: 0.08 } },
+    ],
+    scale: 0.45,
+    yOffset: -0.12,
+  },
 }
 
 export class GlassLoader {
@@ -327,5 +446,19 @@ export class GlassLoader {
    */
   public getLiquid(): THREE.Mesh | null {
     return this.liquidHandler?.getLiquid() ?? null
+  }
+
+  /**
+   * Get the liquid handler for direct access
+   */
+  public getLiquidHandler(): LiquidHandler | null {
+    return this.liquidHandler
+  }
+
+  /**
+   * Get the ice cube configuration for a specific glass type
+   */
+  public static getIceConfig(glassName: GlassName): IceCubeConfig {
+    return ICE_CUBE_CONFIGS[glassName]
   }
 }

@@ -1,26 +1,21 @@
 import * as THREE from 'three'
+import * as TWEEN from '@tweenjs/tween.js'
 
-export type IceName =
-  | 'cup_ice'
-  | 'mound_ice'
-  | 'cube_ice'
-  | 'round_ice'
-  | 'bump_ice'
-  | 'rectangle_ice'
+export type IceName = string // Changed to string to support dynamic names like 'cube_ice_1', 'cube_ice_2', etc.
 
-// Y position offsets for each ice type to align them properly
-const ICE_Y_POSITIONS: Record<IceName, number> = {
-  cup_ice: 0.5,
-  mound_ice: 0.5,
-  cube_ice: 0.5,
-  round_ice: 0.5,
-  bump_ice: 0.5,
-  rectangle_ice: 0.5,
+interface BobbingParams {
+  centerY: number
+  amplitude: number
+  speed: number
+  timeOffset: number // Add time offset for varied bobbing phases
 }
 
 export class IceLoader {
   private iceObjects: Map<IceName, THREE.Object3D> = new Map()
   private scene: THREE.Scene | null = null
+  private tweenGroup: TWEEN.Group = new TWEEN.Group()
+  private bobbingParams: Map<IceName, BobbingParams> = new Map()
+  private bobbingTime: number = 0
 
   /**
    * Create a procedural ice cube with randomized bumps and rounded corners
@@ -96,7 +91,7 @@ export class IceLoader {
       // Create procedural ice cube instead of loading from model
       const iceCube = this.createProceduralIceCube()
 
-      iceCube.position.y = ICE_Y_POSITIONS[iceName]
+      iceCube.position.y = -10 // Start well below the glass so it's not visible initially
       iceCube.scale.set(0.4, 0.4, 0.4)
 
       scene.add(iceCube)
@@ -112,14 +107,7 @@ export class IceLoader {
    */
   public async loadAllIce(scene: THREE.Scene): Promise<void> {
     this.scene = scene
-    const iceTypes: IceName[] = [
-      'cup_ice',
-      'mound_ice',
-      'cube_ice',
-      'round_ice',
-      'bump_ice',
-      'rectangle_ice',
-    ]
+    const iceTypes: IceName[] = ['cube_ice']
 
     // Load sequentially to avoid issues
     for (let index = 0; index < iceTypes.length; index++) {
@@ -193,5 +181,127 @@ export class IceLoader {
     if (ice) {
       ice.rotation.copy(rotation)
     }
+  }
+
+  /**
+   * Animate ice cube falling from above with elastic water dip effect
+   */
+  public animateIceFalling(
+    iceName: IceName,
+    targetY: number,
+    onComplete?: () => void
+  ): void {
+    const ice = this.iceObjects.get(iceName)
+    if (!ice) return
+
+    // Start position: 5 units above target
+    const startY = targetY + 5
+    ice.position.y = startY
+
+    // Falling animation with elastic effect - goes below target then bounces back
+    const dipDepth = 0.15 // How far below target the ice dips into the water
+
+    new TWEEN.Tween({ y: startY }, this.tweenGroup)
+      .to({ y: targetY - dipDepth }, 800)
+      .easing(TWEEN.Easing.Cubic.In) // Accelerate as it falls
+      .onUpdate((obj) => {
+        ice.position.y = obj.y
+      })
+      .onComplete(() => {
+        // After dipping, elastically rise back to final position
+        new TWEEN.Tween({ y: targetY - dipDepth }, this.tweenGroup)
+          .to({ y: targetY }, 600)
+          .easing(TWEEN.Easing.Elastic.Out)
+          .onUpdate((obj) => {
+            ice.position.y = obj.y
+          })
+          .onComplete(() => {
+            if (onComplete) {
+              onComplete()
+            }
+          })
+          .start()
+      })
+      .start()
+  }
+
+  /**
+   * Animate ice cube bobbing up and down continuously using smooth sine wave
+   */
+  public animateIceBobbing(iceName: IceName, centerY: number, timeOffset: number = 0): void {
+    const ice = this.iceObjects.get(iceName)
+    if (!ice) return
+
+    // Store bobbing parameters instead of creating a tween
+    // Speed is in radians per second, calculated to match the original 1500ms period (3000ms full cycle)
+    // Angular frequency = 2π / period = 2π / 3 ≈ 2.094
+    this.bobbingParams.set(iceName, {
+      centerY: centerY,
+      amplitude: 0.05,
+      speed: Math.PI * 2 / 3, // Full cycle in 3 seconds
+      timeOffset: timeOffset, // Each ice cube can have different phase
+    })
+  }
+
+  /**
+   * Stop bobbing animation for a specific ice cube
+   */
+  public stopBobbing(iceName: IceName): void {
+    this.bobbingParams.delete(iceName)
+  }
+
+  /**
+   * Update all ice animations
+   * @param deltaTime - Time elapsed since last frame in seconds
+   */
+  public update(deltaTime: number = 0.016): void {
+    // Update bobbing time
+    this.bobbingTime += deltaTime
+
+    // Update bobbing animations using sine wave
+    this.bobbingParams.forEach((params, iceName) => {
+      const ice = this.iceObjects.get(iceName)
+      if (ice) {
+        ice.position.y = params.centerY + Math.sin((this.bobbingTime + params.timeOffset) * params.speed) * params.amplitude
+      }
+    })
+
+    // Update tweens for other animations (like falling)
+    this.tweenGroup.update()
+  }
+
+  /**
+   * Create a new ice cube instance with a unique name
+   */
+  public createIceCube(
+    iceName: IceName,
+    position: THREE.Vector3,
+    scale: number = 0.4,
+    rotation?: THREE.Euler
+  ): void {
+    if (!this.scene) {
+      console.error('Scene not initialized')
+      return
+    }
+
+    // Create procedural ice cube
+    const iceCube = this.createProceduralIceCube()
+
+    iceCube.position.copy(position)
+    iceCube.scale.set(scale, scale, scale)
+
+    if (rotation) {
+      iceCube.rotation.copy(rotation)
+    }
+
+    this.scene.add(iceCube)
+    this.iceObjects.set(iceName, iceCube)
+  }
+
+  /**
+   * Initialize the scene for the ice loader
+   */
+  public setScene(scene: THREE.Scene): void {
+    this.scene = scene
   }
 }
