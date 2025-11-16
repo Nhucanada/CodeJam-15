@@ -44,7 +44,7 @@ const iceLoader = new IceLoader()
 const garnishLoader = new GarnishLoader()
 
 // Helper function to create multiple ice cubes for a glass
-function createIceCubesForGlass(glassName: typeof glassNames[number]) {
+function createIceCubesForGlass(glassName: typeof glassNames[number], loadGarnishAfter: boolean = false) {
   const liquid = glassLoader.getLiquid()
   const liquidHandler = glassLoader.getLiquidHandler()
 
@@ -77,9 +77,8 @@ function createIceCubesForGlass(glassName: typeof glassNames[number]) {
 
   // Set callback to trigger ice falling when water fill completes
   liquidHandler.setOnFillComplete(() => {
-    console.log('Water fill complete, starting ice animations')
-
     // Animate each ice cube with staggered timing for natural effect
+    let lastIceIndex = iceConfig.count - 1
     for (let i = 0; i < iceConfig.count; i++) {
       const iceName = `cube_ice_${i}`
       const pos = iceConfig.positions[i]
@@ -97,6 +96,20 @@ function createIceCubesForGlass(glassName: typeof glassNames[number]) {
             // After falling completes, start bobbing with different time offset for each cube
             const timeOffset = Math.random() * Math.PI * 2 // Random phase 0 to 2π
             iceLoader.animateIceBobbing(iceName, baseY, timeOffset)
+
+            // If this is the last ice cube and we should load garnish, trigger garnish falling
+            if (i === lastIceIndex && loadGarnishAfter) {
+              // Get the garnish's target Y position (it was loaded with startHidden, so subtract 8)
+              const garnish = garnishLoader.getGarnish('mint')
+              if (garnish) {
+                const targetY = garnish.position.y - 8 // Currently at hidden position, target is 8 below
+
+                console.log('[GARNISH] Triggering garnish falling animation')
+                garnishLoader.animateGarnishFalling('mint', targetY, () => {
+                  console.log('[GARNISH] Garnish falling complete')
+                })
+              }
+            }
           })
         }
       }, delay)
@@ -143,16 +156,23 @@ window.addEventListener('keydown', (event) => {
   if (event.code === 'Space') {
     event.preventDefault() // Prevent page scroll
 
-    // Remove all existing ice cubes before switching
-    iceLoader.removeAllIce()
-
     currentGlassIndex = (currentGlassIndex + 1) % glassNames.length
     const newGlassName = glassNames[currentGlassIndex]
     console.log(`Switching to ${newGlassName}`)
 
-    glassLoader.switchGlass(newGlassName).then(() => {
+    glassLoader.switchGlass(newGlassName, iceLoader, garnishLoader).then(() => {
       // Create ice cubes for the new glass
-      createIceCubesForGlass(newGlassName)
+      createIceCubesForGlass(newGlassName, true)
+
+      // Load garnish for new glass (positioned above scene, ready to fall)
+      garnishLoader.loadGarnish(scene, 'mint', newGlassName, true).then(() => {
+        console.log('[GARNISH] Mint garnish loaded (hidden above scene)')
+        garnishLoader.setGarnishScale('mint', 0.2)
+        // Garnish is positioned 8 units above final position
+        // The falling animation will be triggered after ice completes
+      }).catch((error) => {
+        console.error('Failed to load mint:', error)
+      })
     }).catch(console.error)
   }
 })
@@ -173,6 +193,9 @@ function animate() {
 
   // Update ice animations with delta time
   iceLoader.update(deltaTime)
+
+  // Update garnish animations
+  garnishLoader.update()
 
   controlsSetup.update()
   renderer.render(scene, camera)

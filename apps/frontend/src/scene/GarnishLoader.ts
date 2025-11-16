@@ -1,5 +1,6 @@
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import * as TWEEN from '@tweenjs/tween.js'
 import {
   createProceduralOlive,
   createProceduralCherry,
@@ -118,6 +119,7 @@ export class GarnishLoader {
   private garnishObjects: Map<GarnishName, THREE.Object3D> = new Map()
   private scene: THREE.Scene | null = null
   private loader: GLTFLoader = new GLTFLoader()
+  private tweenGroup: TWEEN.Group = new TWEEN.Group()
 
   /**
    * Load a specific garnish type and add it to the scene
@@ -125,7 +127,8 @@ export class GarnishLoader {
   public async loadGarnish(
     scene: THREE.Scene,
     garnishName: GarnishName,
-    glassName?: GlassName
+    glassName?: GlassName,
+    startHidden: boolean = false
   ): Promise<void> {
     this.scene = scene
 
@@ -158,7 +161,7 @@ export class GarnishLoader {
 
         // Apply default transforms (only for non-salt garnishes, salt uses absolute positioning)
         if (garnishName !== 'salt_rim') {
-          this.applyDefaultTransforms(garnish, garnishName, glassName)
+          this.applyDefaultTransforms(garnish, garnishName, glassName, startHidden)
         }
 
         scene.add(garnish)
@@ -178,7 +181,7 @@ export class GarnishLoader {
           const garnish = gltf.scene
 
           // Apply default transforms
-          this.applyDefaultTransforms(garnish, garnishName, glassName)
+          this.applyDefaultTransforms(garnish, garnishName, glassName, startHidden)
 
           // Apply custom materials and enable shadows
           garnish.traverse((child) => {
@@ -254,15 +257,24 @@ export class GarnishLoader {
   private applyDefaultTransforms(
     garnish: THREE.Object3D,
     garnishName: GarnishName,
-    glassName?: GlassName
+    glassName?: GlassName,
+    startHidden: boolean = false
   ): void {
     // If glass type is specified, use the position map
     if (glassName && GARNISH_POSITIONS[glassName]) {
       const position = GARNISH_POSITIONS[glassName][garnishName]
       garnish.position.copy(position)
+
+      // If startHidden, position garnish 8 units above final position
+      if (startHidden) {
+        garnish.position.y += 8
+      }
     } else {
       // Default position above the glass
       garnish.position.set(0, 3, 0)
+      if (startHidden) {
+        garnish.position.y += 8
+      }
     }
 
     // Apply specific transforms based on garnish type
@@ -271,30 +283,45 @@ export class GarnishLoader {
         garnish.scale.set(1.4, 1.4, 1.4) // Same size as olive
         if (!glassName) {
           garnish.position.y = 2.5 // Default position on glass rim
+          if (startHidden) {
+            garnish.position.y += 8
+          }
         }
         break
       case 'olive':
         garnish.scale.set(1.4, 1.4, 1.4) // Larger cocktail size
         if (!glassName) {
           garnish.position.y = 2.5
+          if (startHidden) {
+            garnish.position.y += 8
+          }
         }
         break
       case 'salt_rim':
         garnish.scale.set(1, 1, 1)
         if (!glassName) {
           garnish.position.y = 2 // Position on rim
+          if (startHidden) {
+            garnish.position.y += 8
+          }
         }
         break
       case 'orange_round':
         garnish.scale.set(1, 1, 1)
         if (!glassName) {
           garnish.position.y = 2.5
+          if (startHidden) {
+            garnish.position.y += 8
+          }
         }
         break
       case 'mint':
         garnish.scale.set(1, 1, 1)
         if (!glassName) {
           garnish.position.y = 3 // Position floating on top
+          if (startHidden) {
+            garnish.position.y += 8
+          }
         }
         break
     }
@@ -365,5 +392,56 @@ export class GarnishLoader {
    */
   public setScene(scene: THREE.Scene): void {
     this.scene = scene
+  }
+
+  /**
+   * Move all visible garnishes by an X offset (for glass switching animation)
+   */
+  public moveVisibleGarnishesByOffset(deltaX: number): void {
+    this.garnishObjects.forEach((garnish) => {
+      garnish.position.x += deltaX
+    })
+  }
+
+  /**
+   * Animate a garnish falling from above with a smooth drop animation
+   */
+  public animateGarnishFalling(
+    garnishName: GarnishName,
+    targetY: number,
+    onComplete?: () => void
+  ): void {
+    const garnish = this.garnishObjects.get(garnishName)
+    if (!garnish) {
+      console.warn(`Garnish "${garnishName}" not found for falling animation`)
+      return
+    }
+
+    // Current Y position (should already be 8 units above target if startHidden was used)
+    const startY = garnish.position.y
+
+    console.log(`[GARNISH] Animating ${garnishName} falling from Y=${startY} to Y=${targetY}`)
+
+    // Animate falling with smooth cubic easing
+    new TWEEN.Tween({ y: startY }, this.tweenGroup)
+      .to({ y: targetY }, 1000) // 1 second duration
+      .easing(TWEEN.Easing.Cubic.Out) // Smooth deceleration
+      .onUpdate((obj) => {
+        garnish.position.y = obj.y
+      })
+      .onComplete(() => {
+        console.log(`[GARNISH] ${garnishName} falling complete at Y=${garnish.position.y}`)
+        if (onComplete) {
+          onComplete()
+        }
+      })
+      .start()
+  }
+
+  /**
+   * Update the tween group (should be called in the animation loop)
+   */
+  public update(): void {
+    this.tweenGroup.update()
   }
 }
