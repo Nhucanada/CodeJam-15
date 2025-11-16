@@ -73,10 +73,9 @@ class SupabaseVectorDatabaseSearch(RAGStrategy):
             table_list: list[str] = self.tables
             all_results: list[RAGRetrievalResult] = []
 
-            logger.info("PERFORMING RAG SEARCH FOR TABLES")
 
             for tbl in table_list:
-                logger.info(f"Searching table: {tbl}, max: {max_candidates_per_table}")
+                logger.debug(f"Searching table: {tbl}, max: {max_candidates_per_table}")
 
                 query_builder = (
                     self.supabase
@@ -90,7 +89,7 @@ class SupabaseVectorDatabaseSearch(RAGStrategy):
                 rows = response.data or []
 
                 if not rows:
-                    logger.info(f"No rows returned from table {tbl}")
+                    logger.debug(f"No rows returned from table {tbl}")
                     continue
 
                 for item in rows:
@@ -127,7 +126,7 @@ class SupabaseVectorDatabaseSearch(RAGStrategy):
                     )
 
             if not all_results:
-                logger.info("RAG search returned no candidates across all tables.")
+                logger.debug("RAG search returned no candidates across all tables.")
                 return []
 
             # Sort all results by score descending, take top_k overall

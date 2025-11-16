@@ -64,7 +64,6 @@ class AgenticEngine:
             "mix",
             "mix me",
             "build",
-            "suggest",
             "recommend",
             "i want",
             "i'd like",
@@ -117,16 +116,16 @@ class AgenticEngine:
 
         # Optionally augment via RAG
         prompt.append("\n\n[CONTEXT FETCHED FROM ONLINE RAG DATABASE]")
-        prompt.append(f"""\nYour capabilities:
-Can create new drinks based on context of example drinks (e.g. SAQ Product)
+#         prompt.append(f"""\nYour capabilities:
+# Can create new drinks based on context of example drinks (e.g. SAQ Product)
 
-- CREATE_DRINK (action_type: "create_drink"): When the user requests a specific cocktail by name (e.g., "make me an Old Fashioned", "I want a Mojito", "fix me a Margarita"). You should provide the complete recipe with ingredients, measurements, instructions, glass type, and garnish.
-- SUGGEST_DRINK (action_type: "suggest_drink"): When the user describes preferences or asks for recommendations without naming a specific drink (e.g., "something fruity", "I want something strong", "surprise me", "what's good?"). Analyze their preferences and suggest an appropriate cocktail.
-- SEARCH_DRINK (action_type: "search_drink"): When the user asks about drinks containing certain ingredients or wants to explore options (e.g., "what can I make with whiskey and honey?", "drinks with gin", "show me bourbon cocktails").
+# - CREATE_DRINK (action_type: "create_drink"): When the user requests a specific cocktail by name (e.g., "make me an Old Fashioned", "I want a Mojito", "fix me a Margarita"). You should provide the complete recipe with ingredients, measurements, instructions, glass type, and garnish.
+# - SUGGEST_DRINK (action_type: "suggest_drink"): When the user describes preferences or asks for recommendations without naming a specific drink (e.g., "something fruity", "I want something strong", "surprise me", "what's good?"). Analyze their preferences and suggest an appropriate cocktail.
+# - SEARCH_DRINK (action_type: "search_drink"): When the user asks about drinks containing certain ingredients or wants to explore options (e.g., "what can I make with whiskey and honey?", "drinks with gin", "show me bourbon cocktails").
 
-- Glass type (MUST be one of: zombie glass, cocktail glass, rocks glass, hurricane glass, pint glass, seidel glass, shot glass, highball glass, margarita glass, martini glass)
-- Garnish (MUST be one of: lemon, lime, orange, cherry, olive, salt_rim, mint, or null)
-- Ice preference (true/false)\n""")
+# - Glass type (MUST be one of: zombie glass, cocktail glass, rocks glass, hurricane glass, pint glass, seidel glass, shot glass, highball glass, margarita glass, martini glass)
+# - Garnish (MUST be one of: lemon, lime, orange, cherry, olive, salt_rim, mint, or null)
+# - Ice preference (true/false)\n""")
         retrieved_chunks = []
         if rag_enabled:
             retrieval_results = self.rag_strategy(user_input, user_id=user_id, top_k=top_k)
@@ -184,13 +183,13 @@ Can create new drinks based on context of example drinks (e.g. SAQ Product)
             
             # Use Gemini's JSON mode or response_mime_type
             config = {
-                "temperature": 0.3,  # Lower temperature for more accurate, less creative responses
+                "temperature": 0.8,  # Lower temperature for more accurate, less creative responses
                 "system_instruction": self.personality,
                 "response_mime_type": "application/json",
                 "response_schema": schema_json,
             }
-            logger.info(f"Gemini API Request Config: {config}")
-            logger.info(f"Gemini Model: {model or settings.gemini_model}")
+
+            logger.info(f"Enhanced prompt: {enhanced_prompt}")
 
             response = client.models.generate_content(
                 model=model or settings.gemini_model,
@@ -199,10 +198,8 @@ Can create new drinks based on context of example drinks (e.g. SAQ Product)
             )
 
             # Parse and validate
-            logger.info(f"Gemini API Raw Response: {response.text}")
             result = json.loads(response.text)
             validated = response_schema(**result)
-            logger.info(f"Validated Response: {validated.model_dump(mode='json')}")
             return validated.model_dump(mode="json")
 
         else:
@@ -214,8 +211,6 @@ Can create new drinks based on context of example drinks (e.g. SAQ Product)
                 contents=prompt,
                 config=config,
             )
-
-            logger.info(f"Gemini API Raw Response (text mode): {response.text}")
 
         return response.text
 
