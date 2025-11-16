@@ -90,28 +90,22 @@ class AgenticEngine:
 
         # Append few-shot examples for structured outputs
         few_shot_examples = self._get_few_shot_examples(template_name)
+
         if few_shot_examples:
             prompt.append("\n\n--- FEW-SHOT EXAMPLES ---")
             for idx, example in enumerate(few_shot_examples, 1):
                 prompt.append(f"\n\nExample {idx}:\n{example}")
-            prompt.append("\n\n--- END EXAMPLES ---\n")
+            prompt.append("\n--- END EXAMPLES ---\n")
 
         # Optionally augment via RAG
         retrieved_chunks = []
-        if rag_enabled and template_name in (
-            "classic_completion",
-            "retrieval_augmented",
-            "question_answering",
-            "action_generation",
-            "summarization",
-            "chat_style"
-        ):
+        if rag_enabled:
             retrieval_results = self.rag_strategy(user_input, user_id=user_id, top_k=top_k)
             retrieved_chunks = [doc.content for doc in retrieval_results if hasattr(doc, "content")]
             for chunk in retrieved_chunks:
-                prompt.append(f"\n[RETRIEVED] FROM RAG CHUNKS \n{chunk}")
+                prompt.append(f"\n[RETRIEVED]\n{chunk}")
 
-        # logger.info(prompt.as_string())
+        logger.info(prompt.as_string())
 
         # Send to Gemini
         completion = await self._invoke_llm(
@@ -163,7 +157,7 @@ class AgenticEngine:
 
             # TODO: Make inference output enforces schema output
 
-            logger.info(enhanced_prompt)
+            # logger.info(enhanced_prompt)
             
             # Use Gemini's JSON mode or response_mime_type
             response = client.models.generate_content(
@@ -183,8 +177,7 @@ class AgenticEngine:
 
         else:
             # Regular text completion
-
-            logging.info(f"Prompt: {prompt}")
+            # logging.info(f"Prompt: {prompt}")
         
             response = client.models.generate_content(
                 model=model or settings.gemini_model,
@@ -241,10 +234,14 @@ class AgenticEngine:
             example_path = self.examples_dir / example_file
             try:
                 if example_path.exists():
+                    curr_example_str = ""
                     with open(example_path, 'r', encoding='utf-8') as f:
                         content = f.read()
-                        examples.append(content)
-                        self.logger.debug(f"Loaded example from {example_file}")
+                        curr_example_str += content
+                        self.logger.info(f"Content: {curr_example_str}")
+                        
+                    self.logger.debug(f"Loaded example from {example_file}")
+                    examples.append(content)
                 else:
                     self.logger.warning(f"Example file not found: {example_path}")
             except Exception as e:
