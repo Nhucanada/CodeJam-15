@@ -8,8 +8,197 @@ import { BarLoader } from './scene/BarLoader'
 import { Lighting } from './scene/Lighting'
 import { CameraSetup } from './scene/CameraSetup'
 import { ControlsSetup } from './scene/ControlsSetup'
+import { chatWebSocket } from './websocket/chatHandler'
+import { cocktailAPI } from './api/client'
+import type { CocktailDetail } from './types/cocktail'
+import { LoginOverlay } from './components/LoginOverlay'
+import { authAPI } from './api/client'
 import { exampleCocktails } from './data/cocktails'
 import { glassTypeToRenderer, garnishToRenderer } from './types'
+
+// Token refresh management
+class TokenManager {
+    private refreshInterval: number | null = null;
+    private readonly REFRESH_INTERVAL = 4 * 60 * 1000; // 4 minutes (refresh before 5min expiry)
+
+    start() {
+        this.stop(); // Clear any existing interval
+
+        if (authAPI.isAuthenticated()) {
+            console.log('Starting token refresh manager');
+            this.scheduleNextRefresh();
+        }
+    }
+
+    stop() {
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+            console.log('Token refresh manager stopped');
+        }
+    }
+
+    private scheduleNextRefresh() {
+        this.refreshInterval = window.setInterval(async () => {
+            await this.refreshTokenIfNeeded();
+        }, this.REFRESH_INTERVAL);
+    }
+
+    private async refreshTokenIfNeeded() {
+    try {
+        if (!authAPI.isAuthenticated()) {
+            console.log('User not authenticated, stopping token refresh');
+            this.stop();
+            return;
+        }
+
+        console.log('Refreshing access token...');
+        console.log('Current tokens:', {
+            access_token: localStorage.getItem('access_token')?.substring(0, 20) + '...',
+            refresh_token: localStorage.getItem('refresh_token')?.substring(0, 20) + '...'
+        });
+
+        await authAPI.refreshToken();
+        console.log('Token refreshed successfully');
+
+    } catch (error) {
+        console.error('Token refresh failed:', error);
+
+        // If refresh fails, user needs to log in again
+        this.stop();
+        authAPI.logout();
+
+        // Show login overlay
+        const loginOverlay = document.querySelector('.login-overlay');
+        if (loginOverlay) {
+            (loginOverlay as HTMLElement).style.display = 'flex';
+        } else {
+            initializeAuth();
+        }
+
+        // Show notification to user
+        this.showTokenExpiredNotification();
+    }
+}
+
+    private showTokenExpiredNotification() {
+        const notification = document.createElement('div');
+        notification.className = 'notification error';
+        notification.textContent = 'Your session has expired. Please log in again.';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #f44336;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 4px;
+            z-index: 10000;
+            font-family: 'Sixtyfour', monospace;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        `;
+
+        document.body.appendChild(notification);
+
+        // Remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 5000);
+    }
+}
+
+// Create and start token manager
+const tokenManager = new TokenManager();
+
+// Start token refresh when authenticated
+if (authAPI.isAuthenticated()) {
+    tokenManager.start();
+}
+
+// Authentication check and login overlay
+let loginOverlay: LoginOverlay;
+
+// Update the initializeAuth function to include token manager
+function initializeAuth(): void {
+  if (!authAPI.isAuthenticated()) {
+    // Hide all panels during login
+    const chatPanel = document.querySelector('.chat-panel') as HTMLElement;
+    const recipePanel = document.querySelector('.recipe-panel') as HTMLElement;
+    const drinkPanel = document.querySelector('.drink-panel') as HTMLElement;
+    if (chatPanel) {
+      chatPanel.style.display = 'none';
+    }
+    if (recipePanel) {
+      recipePanel.style.display = 'none';
+    }
+    if (drinkPanel) {
+      drinkPanel.style.display = 'none';
+    }
+
+    loginOverlay = new LoginOverlay(() => {
+      console.log('Authentication successful!');
+
+      // Show all panels after login
+      const chatPanel = document.querySelector('.chat-panel') as HTMLElement;
+      const recipePanel = document.querySelector('.recipe-panel') as HTMLElement;
+      const drinkPanel = document.querySelector('.drink-panel') as HTMLElement;
+      if (chatPanel) {
+        chatPanel.style.display = 'block';
+      }
+      if (recipePanel) {
+        recipePanel.style.display = 'block';
+      }
+      if (drinkPanel) {
+        drinkPanel.style.display = 'block';
+      }
+
+      // Clear any existing WebSocket errors
+      const chatMessages = document.querySelector('.chat-messages .message-container');
+      if (chatMessages) {
+        const existingErrors = chatMessages.querySelectorAll('.chat-error');
+        existingErrors.forEach(error => error.remove());
+      }
+
+      tokenManager.start(); // Start token refresh after login
+
+      // Reconnect WebSocket with new token
+      chatWebSocket.reconnect();
+
+      // Reload shelf and any other authenticated content
+      if (typeof loadAndDisplayShelf === 'function') {
+        loadAndDisplayShelf();
+      }
+    });
+    loginOverlay.show();
+  } else {
+    // Show all panels if already authenticated
+    const chatPanel = document.querySelector('.chat-panel') as HTMLElement;
+    const recipePanel = document.querySelector('.recipe-panel') as HTMLElement;
+    const drinkPanel = document.querySelector('.drink-panel') as HTMLElement;
+    if (chatPanel) {
+      chatPanel.style.display = 'block';
+    }
+    if (recipePanel) {
+      recipePanel.style.display = 'block';
+    }
+    if (drinkPanel) {
+      drinkPanel.style.display = 'block';
+    }
+    tokenManager.start(); // Start token refresh if already authenticated
+  }
+}
+
+// Initialize authentication on page load
+initializeAuth();
+
+// Add logout functionality (optional - you can add a logout button later)
+(window as any).logout = () => {
+  authAPI.logout();
+  initializeAuth();
+};
 
 // Audio setup
 const pourSound = new Audio('/src/assets/SFX/PourSFX.mp3')
@@ -323,4 +512,559 @@ recipeButton?.addEventListener('click', showRecipe)
 shelfButton?.addEventListener('click', showShelf)
 
 // Set default state
-showRecipe()
+showShelf()
+
+// WebSocket and Chat Integration
+let selectedCocktail: CocktailDetail | null = null;
+
+// Initialize WebSocket
+chatWebSocket.onMessage((message) => {
+  console.log('Received WebSocket message:', message);
+});
+
+async function loadAndDisplayShelf() {
+  try {
+    const response = await cocktailAPI.getUserShelf();
+    updateShelfDisplay(response.cocktails, response.agent_greeting);
+
+    // Reset drink title to default when shelf loads successfully
+    resetDrinkTitle();
+
+  } catch (error) {
+    console.error('Failed to load shelf:', error);
+
+    // Show user-friendly error message in shelf
+    const recipeContent = document.querySelector('.recipe-content');
+    if (recipeContent) {
+      // Clear any existing content first
+      const existingShelfBoxes = document.querySelectorAll('.shelf-box, .shelf-empty, .shelf-error');
+      existingShelfBoxes.forEach(box => box.remove());
+
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'shelf-error';
+
+      // Check error type for better messaging
+      if (error instanceof Error) {
+        if (error.message.includes('Backend server not running')) {
+          errorDiv.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #f44336;">
+              <h3>🔌 Backend Not Running</h3>
+              <p>The backend server needs to be started to load cocktails.</p>
+              <p style="font-size: 0.9em; opacity: 0.7;">Run: <code>npm run dev</code> in the backend folder</p>
+            </div>
+          `;
+
+          // Show same error in drink title
+          showDrinkTitleError('Backend server not running');
+
+        } else {
+          errorDiv.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #f44336;">
+              <h3>⚠️ Connection Error</h3>
+              <p>${error.message}</p>
+            </div>
+          `;
+
+          // Show same error in drink title
+          showDrinkTitleError('⚠️ Connection Error');
+        }
+      } else {
+        errorDiv.innerHTML = `
+          <div style="text-align: center; padding: 40px; color: #f44336;">
+            <h3>❌ Unknown Error</h3>
+            <p>Could not load cocktails.</p>
+          </div>
+        `;
+
+        // Show same error in drink title
+        showDrinkTitleError('Unknown Error');
+      }
+
+      recipeContent.appendChild(errorDiv);
+    }
+  }
+}
+
+function updateShelfDisplay(cocktails: any[], greeting: string) {
+  const shelfBoxes = document.querySelectorAll('.shelf-box');
+
+  // Clear existing shelf boxes
+  shelfBoxes.forEach(box => box.remove());
+
+  // Add greeting message if needed
+  console.log('Agent greeting:', greeting);
+
+  // Create new shelf boxes for each cocktail
+  const recipePanel = document.querySelector('.recipe-content');
+  if (recipePanel) {
+    cocktails.forEach((cocktail, index) => {
+      if (index < 3) { // Limit to 3 visible cocktails
+        const shelfBox = createShelfBox(cocktail);
+        recipePanel.appendChild(shelfBox);
+      }
+    });
+  }
+}
+
+function createShelfBox(cocktail: any) {
+  const shelfBox = document.createElement('div');
+  shelfBox.className = 'shelf-box';
+  shelfBox.style.cursor = 'pointer';
+
+  shelfBox.innerHTML = `
+    <img src="/src/img/1742270047720.jpeg" alt="Cocktail" class="drink-img">
+    <div class="drink-text">
+      <div class="message drink-title">${cocktail.name}</div>
+      <div class="message drink-info">${cocktail.ingredients_summary}</div>
+    </div>
+  `;
+
+  // Add click handler to select cocktail with error handling
+  shelfBox.addEventListener('click', async () => {
+    try {
+      // Show loading state
+      showRecipeLoading();
+
+      const detail = await cocktailAPI.getCocktailDetail(cocktail.id);
+      await selectAndDisplayCocktail(detail);
+
+      // Switch to recipe view
+      const recipeButton = Array.from(document.querySelectorAll('.recipe-btn')).find(btn =>
+        btn.textContent === 'RECIPE'
+      ) as HTMLButtonElement;
+      if (recipeButton) {
+        recipeButton.click();
+      }
+    } catch (error) {
+      console.error('Failed to load cocktail details:', error);
+
+      if (error instanceof Error) {
+        if (error.message.includes('Backend server not running')) {
+          showRecipeError('Backend server not running. Please start the backend.');
+        } else {
+          showRecipeError(`Failed to load cocktail: ${error.message}`);
+        }
+      } else {
+        showRecipeError('Failed to load cocktail details');
+      }
+    }
+  });
+
+  return shelfBox;
+}
+
+function showRecipeLoading() {
+  // Show loading in drink title
+  showDrinkTitleLoading();
+
+  // Show loading in ingredients box
+  const ingredientsBox = document.querySelector('.ingredients-box .message-container');
+  if (ingredientsBox) {
+    ingredientsBox.innerHTML = '';
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'message bot recipe-loading';
+    loadingDiv.style.cssText = `
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      color: #1976d2;
+      padding: 8px;
+      border-radius: 4px;
+      font-style: italic;
+    `;
+    loadingDiv.textContent = '⏳ Loading ingredients...';
+    ingredientsBox.appendChild(loadingDiv);
+  }
+
+  // Show loading in recipe box
+  const recipeBox = document.querySelector('.recipe-box .message-container');
+  if (recipeBox) {
+    recipeBox.innerHTML = '';
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'message bot recipe-loading';
+    loadingDiv.style.cssText = `
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      color: #1976d2;
+      padding: 8px;
+      border-radius: 4px;
+      font-style: italic;
+    `;
+    loadingDiv.textContent = '⏳ Loading recipe...';
+    recipeBox.appendChild(loadingDiv);
+  }
+}
+
+async function selectAndDisplayCocktail(cocktail: CocktailDetail) {
+  selectedCocktail = cocktail;
+
+  try {
+    // Update drink title
+    updateDrinkTitle(cocktail.name);
+
+    // Update ingredients display
+    const ingredientsBox = document.querySelector('.ingredients-box .message-container');
+    if (ingredientsBox) {
+      // Clear previous content and errors
+      ingredientsBox.innerHTML = '';
+
+      cocktail.ingredients.forEach((ing, index) => {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message bot';
+        messageDiv.textContent = `${index + 1}. ${ing.quantity} ${ing.unit} ${ing.name}`;
+        ingredientsBox.appendChild(messageDiv);
+      });
+    }
+
+    // Update recipe display
+    const recipeBox = document.querySelector('.recipe-box .message-container');
+    if (recipeBox) {
+      // Clear previous content and errors
+      recipeBox.innerHTML = '';
+
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message bot';
+      messageDiv.textContent = cocktail.description || 'Cocktail preparation instructions.';
+      recipeBox.appendChild(messageDiv);
+    }
+
+    // Update 3D scene if needed
+    updateSceneForCocktail(cocktail);
+
+  } catch (error) {
+    console.error('Error displaying cocktail:', error);
+    showRecipeError('Failed to display cocktail details');
+    showDrinkTitleError('Failed to load drink details');
+  }
+}
+
+function updateDrinkTitle(cocktailName: string) {
+  const drinkTitleElement = document.querySelector('.drink-title');
+  if (drinkTitleElement) {
+    drinkTitleElement.textContent = cocktailName;
+  }
+}
+
+function showDrinkTitleError(message: string) {
+  const drinkTitleContainer = document.querySelector('.drink-title-container');
+  if (drinkTitleContainer) {
+    drinkTitleContainer.innerHTML = '';
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'drink-title-error';
+    errorDiv.style.cssText = `
+      color: #c62828;
+      text-align: center;
+      font-size: 18px;
+    `;
+    errorDiv.textContent = `${message}`;
+    drinkTitleContainer.appendChild(errorDiv);
+  }
+}
+
+function showDrinkTitleLoading() {
+  const drinkTitleContainer = document.querySelector('.drink-title-container');
+  if (drinkTitleContainer) {
+    drinkTitleContainer.innerHTML = '';
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'drink-title-loading';
+    loadingDiv.style.cssText = `
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      color: #1976d2;
+      padding: 12px;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 14px;
+      font-style: italic;
+    `;
+    loadingDiv.textContent = '⏳ Loading drink...';
+    drinkTitleContainer.appendChild(loadingDiv);
+  }
+}
+
+function resetDrinkTitle() {
+  const drinkTitleContainer = document.querySelector('.drink-title-container');
+  if (drinkTitleContainer) {
+    drinkTitleContainer.innerHTML = '<h2 class="drink-title">Select a Drink</h2>';
+  }
+}
+
+function showRecipeError(message: string) {
+  // Show error in ingredients box
+  const ingredientsBox = document.querySelector('.ingredients-box .message-container');
+  if (ingredientsBox) {
+    ingredientsBox.innerHTML = '';
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'message bot recipe-error';
+    errorDiv.style.cssText = `
+      background: #ffebee;
+      border-left: 4px solid #f44336;
+      color: #c62828;
+      padding: 8px;
+      border-radius: 4px;
+    `;
+    errorDiv.textContent = `❌ ${message}`;
+    ingredientsBox.appendChild(errorDiv);
+  }
+
+  // Show error in recipe box
+  const recipeBox = document.querySelector('.recipe-box .message-container');
+  if (recipeBox) {
+    recipeBox.innerHTML = '';
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'message bot recipe-error';
+    errorDiv.style.cssText = `
+      background: #ffebee;
+      border-left: 4px solid #f44336;
+      color: #c62828;
+      padding: 8px;
+      border-radius: 4px;
+    `;
+    errorDiv.textContent = `❌ ${message}`;
+    recipeBox.appendChild(errorDiv);
+  }
+}
+
+function updateSceneForCocktail(cocktail: CocktailDetail) {
+  // Update liquid color based on ingredients
+  const liquidHandler = glassLoader.getLiquidHandler();
+  const liquidMesh = liquidHandler?.getLiquid();
+
+  if (liquidMesh && liquidMesh.material) {
+    // Calculate dominant color from ingredients
+    const dominantColor = calculateLiquidColor(cocktail.ingredients);
+
+    // Update the liquid material color directly
+    const material = liquidMesh.material as THREE.MeshPhysicalMaterial;
+    if (material && material.color) {
+      material.color.setHex(dominantColor);
+    }
+
+    // Also update the top surface if it exists
+    const liquidTop = liquidHandler?.getLiquidTop();
+    if (liquidTop && liquidTop.material) {
+      const topMaterial = liquidTop.material as THREE.MeshPhysicalMaterial;
+      if (topMaterial && topMaterial.color) {
+        topMaterial.color.setHex(dominantColor);
+      }
+    }
+  }
+
+  // Add garnishes if any
+  cocktail.garnishes.forEach(garnish => {
+    // This would need to be implemented based on your garnish system
+    console.log('Adding garnish:', garnish.name);
+  });
+}
+
+function calculateLiquidColor(ingredients: any[]): number {
+  // Simple color calculation based on ingredient hex codes
+  const coloredIngredients = ingredients.filter(ing => ing.hexcode);
+  if (coloredIngredients.length === 0) return 0x4169E1; // Default blue
+
+  // Use the first colored ingredient's color
+  return parseInt(coloredIngredients[0].hexcode.replace('#', ''), 16);
+}
+
+// Enhanced chat input handling
+const chatInput = document.querySelector('.chat-input') as HTMLInputElement;
+const sendButton = document.querySelector('.send-btn') as HTMLButtonElement;
+
+// Enhanced chat input handling with error handling
+function sendChatMessage() {
+  const message = chatInput?.value.trim();
+  if (message) {
+    try {
+      // Add user message to chat
+      const chatMessages = document.querySelector('.chat-messages .message-container');
+      if (chatMessages) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message user';
+        messageDiv.textContent = `You: ${message}`;
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      // Send via WebSocket
+      if (chatWebSocket) {
+        chatWebSocket.sendMessage(message);
+      } else {
+        throw new Error('Chat service not available');
+      }
+
+      // Clear input
+      if (chatInput) chatInput.value = '';
+
+    } catch (error) {
+      console.error('Failed to send message:', error);
+
+      // Show error in chat
+      const chatMessages = document.querySelector('.chat-messages .message-container');
+      if (chatMessages) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'message bot chat-error';
+        errorDiv.style.cssText = `
+          background: #ffebee;
+          border-left: 4px solid #f44336;
+          color: #c62828;
+          padding: 8px;
+          border-radius: 4px;
+        `;
+        errorDiv.textContent = `❌ Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        chatMessages.appendChild(errorDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+    }
+  }
+}
+
+// Debug functions for testing token refresh
+(window as any).testTokenRefresh = async () => {
+    console.log('Testing token refresh manually...');
+    try {
+        await authAPI.refreshToken();
+        console.log('Manual token refresh successful');
+    } catch (error) {
+        console.error('Manual token refresh failed:', error);
+    }
+};
+
+(window as any).checkTokens = () => {
+    console.log('Current tokens:', {
+        access_token: localStorage.getItem('access_token'),
+        refresh_token: localStorage.getItem('refresh_token'),
+        isAuthenticated: authAPI.isAuthenticated()
+    });
+};
+
+sendButton?.addEventListener('click', sendChatMessage);
+chatInput?.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    sendChatMessage();
+  }
+});
+
+// Expose refresh function globally for WebSocket updates
+(window as any).refreshShelfPanel = loadAndDisplayShelf;
+
+// Load shelf on startup
+loadAndDisplayShelf();
+
+// Update login overlay to start token manager after successful login
+const originalLoginOverlay = LoginOverlay;
+
+// Enhanced logout functionality with custom dialog
+function logoutWithConfirmation() {
+  showLogoutDialog();
+}
+
+function showLogoutDialog() {
+  // Create logout overlay if it doesn't exist
+  let logoutOverlay = document.querySelector('.logout-overlay') as HTMLElement;
+
+  if (!logoutOverlay) {
+    logoutOverlay = document.createElement('div');
+    logoutOverlay.className = 'logout-overlay';
+    logoutOverlay.innerHTML = `
+      <div class="logout-modal">
+        <div class="logout-content">
+          <h2 class="logout-title">Confirm Logout</h2>
+          <p class="logout-message">Are you sure you want to log out?<br>You'll need to sign in again to continue.</p>
+          <div class="logout-buttons">
+            <button class="logout-cancel-btn">Cancel</button>
+            <button class="logout-confirm-btn">Log Out</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(logoutOverlay);
+
+    // Add event listeners
+    const cancelBtn = logoutOverlay.querySelector('.logout-cancel-btn');
+    const confirmBtn = logoutOverlay.querySelector('.logout-confirm-btn');
+
+    cancelBtn?.addEventListener('click', hideLogoutDialog);
+    confirmBtn?.addEventListener('click', () => {
+      hideLogoutDialog();
+      performLogout();
+    });
+
+    // Close on overlay click
+    logoutOverlay.addEventListener('click', (e) => {
+      if (e.target === logoutOverlay) {
+        hideLogoutDialog();
+      }
+    });
+  }
+
+  logoutOverlay.style.display = 'flex';
+}
+
+function hideLogoutDialog() {
+  const logoutOverlay = document.querySelector('.logout-overlay') as HTMLElement;
+  if (logoutOverlay) {
+    logoutOverlay.style.display = 'none';
+  }
+}
+
+async function performLogout() {
+  tokenManager.stop(); // Stop token refresh before logout
+
+  try {
+    // Call backend logout endpoint
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      const response = await fetch('http://localhost:8000/api/v1/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      // Log response for debugging but continue even if it fails
+      if (!response.ok) {
+        console.warn('Backend logout failed, but continuing with local logout');
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to contact logout endpoint, but continuing with local logout:', error);
+  }
+
+  // Always clear local storage and show login
+  authAPI.logout();
+  initializeAuth();
+}
+
+// Add logout button event listener
+const logoutBtn = document.querySelector('.logout-btn');
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', logoutWithConfirmation);
+}
+
+// Update the global logout function to use the new confirmation
+(window as any).logout = logoutWithConfirmation;
+
+function showShelfEnhanced() {
+  // Hide recipe elements
+  if (ingredientsBox) ingredientsBox.style.display = 'none'
+  if (recipeBox) recipeBox.style.display = 'none'
+  if (ingredientsHeader) ingredientsHeader.style.display = 'none'
+  if (recipeHeader) recipeHeader.style.display = 'none'
+
+  // Show shelf elements
+  const shelfBoxes = document.querySelectorAll('.shelf-box') as NodeListOf<HTMLElement>;
+  shelfBoxes.forEach(box => box.style.display = 'flex')
+
+  // Update button states
+  shelfButton?.classList.add('selected')
+  recipeButton?.classList.remove('selected')
+
+  // Reload shelf data with error handling - this will handle drink title state
+  loadAndDisplayShelf().catch(error => {
+    console.error('Error loading shelf in enhanced view:', error);
+  });
+}
+
+// Replace the existing shelf button listener
+shelfButton?.removeEventListener('click', showShelf);
+shelfButton?.addEventListener('click', showShelfEnhanced);
