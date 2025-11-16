@@ -3,5 +3,8 @@
   "private": true,
   "dependencies": {
     "three": "^0.181.1"
+  },
+  "devDependencies": {
+    "supabase": "^2.58.5"
   }
 }

@@ -1,0 +1,50 @@
+CONVERSATION:
+User: I'm in the mood for something fruity and tropical tonight.
+Arthur: Based on your preferences, I have the perfect recommendation for you!
+
+EXPECTED_OUTPUT:
+{
+  "id": "example-003",
+  "name": "Suggest Tropical Fruity Cocktail",
+  "created_at": "2025-11-16T12:00:00Z",
+  "updated_at": "2025-11-16T12:00:00Z",
+  "action_type": "suggest_drink",
+  "confidence": 0.92,
+  "reasoning": "User expressed a preference for fruity and tropical flavors but didn't request a specific drink. This is a perfect opportunity to suggest a cocktail that matches their taste profile.",
+  "conversation": "I have the perfect tropical drink for you! How about a Piña Colada? It's creamy, fruity, and will transport you straight to the beach.",
+  "drink_recipe": null,
+  "suggest_drink": {
+    "name": "Piña Colada",
+    "description": "A creamy tropical cocktail with rum, coconut cream, and pineapple juice",
+    "ingredients": [
+      {
+        "name": "White Rum",
+        "amount": 60,
+        "color": "#ffffff",
+        "unit": "ml"
+      },
+      {
+        "name": "Coconut Cream",
+        "amount": 45,
+        "color": "#fffaf0",
+        "unit": "ml"
+      },
+      {
+        "name": "Fresh Pineapple Juice",
+        "amount": 90,
+        "color": "#ffdb58",
+        "unit": "ml"
+      }
+    ],
+    "instructions": [
+      "Add all ingredients to a blender with 1 cup of ice",
+      "Blend until smooth and creamy",
+      "Pour into a chilled hurricane glass",
+      "Garnish with pineapple wedge and maraschino cherry"
+    ],
+    "glass_type": "hurricane glass",
+    "garnish": "cherry",
+    "has_ice": true
+  }
+}
+

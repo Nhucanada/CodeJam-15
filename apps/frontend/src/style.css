@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Sixtyfour:wght@400;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -6,9 +8,710 @@
 
 body {
   overflow: hidden;
-  font-family: Arial, sans-serif;
+  font-family: 'Sixtyfour', monospace;
 }
 
 canvas {
   display: block;
+}
+
+.chat-panel {
+  position: fixed;
+  top: 1%;
+  left: 0.5%;
+  width: 29%;
+  height: 98%;
+  background: rgba(37, 37, 37, 1);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  z-index: 1000;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.recipe-panel {
+  position: fixed;
+  top: 1%;
+  right: 0.5%;
+  width: 29%;
+  height: 98%;
+  background: rgba(37, 37, 37, 1);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  z-index: 1000;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.drink-panel {
+  position: fixed;
+  bottom: 1%;
+  right: 33%;
+  width: 34%;
+  height: 15%;
+  background: rgba(37, 37, 37, 1);
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  z-index: 1000;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.drink-content {
+  width: calc(100% - 32px);
+  height: calc(100% - 32px);
+  background: rgba(25, 10, 24, 1);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+}
+
+.drink-title-container {
+  padding: 15px;
+  background: rgba(25, 10, 24, 1);
+  margin-top: 19px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 19px;
+  align-items: center;
+  justify-content: center;
+  height: calc(100% - 32px);
+  flex-direction: column;
+  outline: 3px solid #252525;
+  display: flex;
+  gap: 10px;
+  position: relative;
+}
+
+.drink-title {
+  color: #fff;
+  font-size: 24px;
+  margin: 0;
+  font-weight: normal;
+  letter-spacing: 2px;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.chat-content {
+  width: calc(100% - 32px);
+  height: calc(100% - 32px);
+  background: rgba(25, 10, 24, 1);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+}
+
+.recipe-content {
+  width: calc(100% - 32px);
+  height: calc(100% - 32px);
+  background: rgba(25, 10, 24, 1);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.chat-header {
+  display: flex;
+  height: 15.4%;
+  margin-top: 6px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 10px;
+  align-items: center;
+  outline: 3px solid #252525;
+  background: rgba(25, 10, 24, 1);
+}
+
+.title-header {
+  display: flex;
+  height: 7.7%;
+  margin-top: 19px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 10px;
+  padding: 10px;
+  align-items: center;
+  outline: 3px solid #252525;
+  background: rgba(25, 10, 24, 1);
+  position: relative;
+}
+
+.logout-btn {
+  background: rgba(37, 37, 37, 0.4);
+  color: rgba(255, 255, 255, 1);
+  border: none;
+  padding: 15px 15px;
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: 1px;
+  z-index: 2;
+  font-family: 'Sixtyfour', monospace;
+  position: absolute;
+  right: 7px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-image: url('./img/exit.png');
+  background-size: 32px 32px;
+  background-repeat: no-repeat;
+  background-position: calc(50% - 2px);
+  width: 40px;
+  height: 40px;
+}
+
+.profile-img {
+  height: calc(100% - 14px);
+  margin-top: 7px;
+  margin-left: 7px;
+  margin-right: 25px;
+  margin-bottom: 7px;
+  object-fit: contain;
+}
+
+.bartender-title {
+  color: #fff;
+  font-size: 20px;
+  margin: 0;
+  font-weight: normal;
+  letter-spacing: 2px;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.send-message-title {
+  position: absolute;
+  top: 5px;
+  left: 0;
+  color: #666;
+  font-size: 14px;
+  font-weight: normal;
+  letter-spacing: 2px;
+  font-family: 'Sixtyfour', monospace;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 2;
+  opacity: 1;
+}
+
+.chat-input:focus + .send-message-title {
+  opacity: 0;
+}
+
+.chat-input.has-content + .send-message-title {
+  opacity: 0;
+}
+
+.chat-messages {
+  flex: 1;
+  padding: 20px;
+  height: 66.3%;
+  margin-top: 6px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 10px;
+  align-items: center;
+  outline: 3px solid #252525;
+  overflow-y: auto;
+  background: rgba(25, 10, 24, 1);
+}
+
+.ingredients-box {
+  flex: 1;
+  padding: 20px;
+  height: 25%;
+  margin-top: 6px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 10px;
+  align-items: center;
+  outline: 3px solid #252525;
+  overflow-y: auto;
+  background: rgba(25, 10, 24, 1);
+}
+
+.recipe-box {
+  flex: 1;
+  padding: 20px;
+  height: 50%;
+  margin-top: 6px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 10px;
+  align-items: center;
+  outline: 3px solid #252525;
+  overflow-y: auto;
+  background: rgba(25, 10, 24, 1);
+}
+
+.message-container {
+  margin-left: -8px;
+  margin-right: -8px;
+}
+
+.message {
+  margin-bottom: 10px;
+  color: #fff;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.message.user {
+  color: #ccc;
+}
+
+.message.bot {
+  color: #fff;
+}
+
+.message.drink-title {
+  color: #fff;
+  margin-bottom: 5px;
+}
+
+.message.drink-info {
+  color: #ccc;
+  font-size: 12px;
+}
+
+.message.panel-header {
+  align-items: center;
+  text-align: center;
+  color: #fff;
+  font-size: 20px;
+}
+
+.chat-input-container {
+  padding: 15px;
+  background: rgba(25, 10, 24, 1);
+  margin-top: 6px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 19px;
+  align-items: flex-start;
+  flex-direction: column;
+  outline: 3px solid #252525;
+  height: 10.4%;
+  display: flex;
+  gap: 10px;
+}
+
+.chat-input-wrapper {
+  position: relative;
+  flex: 1;
+  width: 100%;
+}
+
+.chat-input {
+  flex: 1;
+  width: 100%;
+  background: rgba(25, 10, 24, 1);
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 18px;
+  height: 40px;
+  z-index: 1;
+  position: relative;
+  margin-top: -12px;
+  margin-bottom: -5px;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.chat-input:focus {
+  border: none;
+  outline: none;
+}
+
+.chat-input.selected {
+  border: none;
+  outline: none;
+}
+
+.send-btn {
+  background: rgba(37, 37, 37, 0.4);
+  color: rgba(255, 255, 255, 1);
+  border: none;
+  padding: 12px 20px;
+  margin-right: -10px;
+  margin-bottom: -10px;
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: 1px;
+  z-index: 2;
+  align-self: flex-end;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.recipe-btn {
+  background: rgba(48, 28, 46, 1);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  height: 40px;
+  width: 184px;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  font-family: 'Sixtyfour', monospace;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.recipe-button-container{
+  flex: 1;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 20px;
+  padding-bottom: 10px;
+  margin-top: 6px;
+  margin-left: 19px;
+  margin-right: 19px;
+  align-items: center;
+  overflow-y: auto;
+  background: rgba(25, 10, 24, 1);
+}
+
+.recipe-btn:hover {
+  background: rgba(102, 61, 91, 1);
+  box-shadow: 8px 6px 8px rgba(255, 255, 255, 0.2);
+}
+
+.recipe-btn.selected {
+  background: rgba(102, 61, 91, 1);
+  box-shadow: 8px 6px 8px rgba(255, 255, 255, 0.2);
+}
+
+.drink-img {
+  height: 100%;
+  object-fit: contain;
+  border-right: 3px solid #252525;
+}
+
+
+.shelf-box {
+  flex: 1;
+  height: 100px;
+  margin-top: 6px;
+  margin-left: 19px;
+  margin-right: 19px;
+  margin-bottom: 16px;
+  outline: 3px solid #252525;
+  overflow: hidden;
+  background: rgba(25, 10, 24, 1);
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+}
+
+.drink-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  margin-left: 10px;
+  margin-top: 10px;
+}
+
+.login-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.login-modal {
+  background: rgba(37, 37, 37, 1);
+  border: 3px solid #252525;
+  border-radius: 0;
+  padding: 0;
+  width: 400px;
+  max-width: 90%;
+  position: relative;
+  top: 0;
+  transform: none;
+}
+
+.login-content {
+  background: rgba(25, 10, 24, 1);
+  margin: 16px;
+  padding: 30px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.login-title {
+  color: #fff;
+  font-size: 24px;
+  margin-bottom: 10px;
+  letter-spacing: 2px;
+  font-weight: normal;
+}
+
+.login-subtitle {
+  color: #ccc;
+  font-size: 14px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  color: #fff;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.form-input {
+  background: rgba(37, 37, 37, 0.8);
+  border: 2px solid #252525;
+  color: #fff;
+  padding: 12px 15px;
+  font-size: 12px;
+  font-family: 'Sixtyfour', monospace;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.form-input:focus {
+  border-color: #48284e;
+}
+
+.form-input::placeholder {
+  color: #666;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.login-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.login-btn {
+  flex: 1;
+  background: rgba(48, 28, 46, 1);
+  color: #fff;
+  border: none;
+  padding: 15px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  letter-spacing: 2px;
+  font-family: 'Sixtyfour', monospace;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.login-btn:hover {
+  background: rgba(102, 61, 91, 1);
+  box-shadow: 4px 4px 8px rgba(255, 255, 255, 0.1);
+}
+
+.login-btn:disabled {
+  background: rgba(48, 28, 46, 0.5);
+  cursor: not-allowed;
+}
+
+.toggle-mode {
+  text-align: center;
+  margin-top: 20px;
+}
+
+.toggle-link {
+  color: #ccc;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.toggle-link:hover {
+  color: #fff;
+}
+
+.error-message {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid #f44336;
+  color: #f44336;
+  padding: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+.success-message {
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid #4caf50;
+  color: #4caf50;
+  padding: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.logout-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  z-index: 9999;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Sixtyfour', monospace;
+}
+
+.logout-modal {
+  background: rgba(37, 37, 37, 1);
+  border: 3px solid #252525;
+  border-radius: 0;
+  padding: 0;
+  width: 500px;
+  max-width: 90%;
+}
+
+.logout-content {
+  background: rgba(25, 10, 24, 1);
+  margin: 16px;
+  padding: 30px;
+  text-align: center;
+}
+
+.logout-title {
+  color: #fff;
+  font-size: 24px;
+  margin-bottom: 20px;
+  letter-spacing: 2px;
+  font-weight: normal;
+}
+
+.logout-message {
+  color: #ccc;
+  font-size: 16px;
+  margin-bottom: 30px;
+  line-height: 1.4;
+}
+
+.logout-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.logout-confirm-btn, .logout-cancel-btn {
+  flex: 1;
+  background: rgba(48, 28, 46, 1);
+  color: #fff;
+  border: none;
+  padding: 15px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  letter-spacing: 2px;
+  font-family: 'Sixtyfour', monospace;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.logout-confirm-btn {
+  background: rgba(244, 67, 54, 0.8);
+}
+
+.logout-confirm-btn:hover {
+  background: rgba(244, 67, 54, 1);
+  box-shadow: 4px 4px 8px rgba(255, 255, 255, 0.1);
+}
+
+.logout-cancel-btn:hover {
+  background: rgba(102, 61, 91, 1);
+  box-shadow: 4px 4px 8px rgba(255, 255, 255, 0.1);
+}
+
+.barline-title {
+  color: #fff;
+  font-size: 96px;
+  font-weight: normal;
+  letter-spacing: 6px;
+  font-family: 'Sixtyfour', monospace;
+  text-align: center;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.barline-subtitle {
+  color: #ccc;
+  font-size: 28px;
+  font-weight: normal;
+  letter-spacing: 3px;
+  font-family: 'Sixtyfour', monospace;
+  text-align: center;
+  margin-bottom: 40px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 1;
+}
+
+.login-overlay-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100%;
+  padding-top: calc(15vh - 50px);
+}
+
+.drink-action-btn {
+  background: rgba(48, 28, 46, 1);
+  color: #fff;
+  border: none;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  font-family: 'Sixtyfour', monospace;
+  transition: all 0.3s ease;
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drink-action-btn:hover {
+  background: rgba(102, 61, 91, 1);
+  box-shadow: 4px 4px 8px rgba(255, 255, 255, 0.2);
 }

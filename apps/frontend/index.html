@@ -1,13 +1,76 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Three.js + Python Backend</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cocktail 3D</title>
+</head>
+
+<body>
+  <div id="chat-panel" class="chat-panel">
+    <div class="chat-content">
+      <div class="title-header">
+        <h2 class="bartender-title">B A R L I N E</h2>
+        <button class="logout-btn"></button>
+      </div>
+      <div class="chat-header">
+        <img src="" alt="Bartender" class="profile-img" id="profile-img">
+        <h2 class="bartender-title">Arthur<br>Bartender</h2>
+      </div>
+      <div class="chat-messages">
+        <div class="message-container">
+        </div>
+      </div>
+      <div class="chat-input-container">
+        <div class="chat-input-wrapper">
+        <input type="text" class="chat-input" id="chat-input">
+        <label for="chat-input" class="send-message-title">Send Message...</label>
+        </div>
+        <button class="send-btn">SEND</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="drink-panel" class="drink-panel">
+    <div class="drink-content">
+        <div class="drink-title-container">
+          <h2 class="drink-title"></h2>
+          <button class="drink-action-btn">
+            <svg width="24" height="24" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M46 8V4H18V8H14V60H18V56H22V52H26V48H30V44H34V48H38V52H42V56H46V60H50V8H46Z" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+    </div>
+  </div>
+
+  <div id="recipe-panel" class="recipe-panel">
+    <div class="recipe-content">
+      <div class="recipe-button-container">
+        <button class="recipe-btn">SHELF</button>
+        <button class="recipe-btn">RECIPE</button>
+      </div>
+      <div class="message panel-header">Ingredients:</div>
+      <div class="ingredients-box">
+        <div class="message-container">
+        </div>
+      </div>
+      <div class="message panel-header">Recipe:</div>
+      <div class="recipe-box">
+        <div class="message-container">
+        </div>
+      </div>
+      <div class="shelf-box">
+        <div class="drink-text">
+          <div class="message drink-title">Loading</div>
+          <div class="message drink-info">Please Wait...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>

@@ -7,6 +7,17 @@ dist/
 build/
 *.tsbuildinfo
 
+# Python artifacts
+**/__pycache__/
+**/*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+*/__pycache__/
+**/__pycache__/
+
+
 # Environment files
 .env
 .env.local
@@ -47,3 +58,16 @@ pids
 # Temporary files
 *.tmp
 *.temp
+
+# Agentic development files
+.cursor/
+.cursorrules
+.cursorrules.local
+
+# Virtual environment
+le_venv/
+venv/
+.env
+.env.local
+.env.*.local
+apps/backend/src/data model.txt

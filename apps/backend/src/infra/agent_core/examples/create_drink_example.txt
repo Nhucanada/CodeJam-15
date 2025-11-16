@@ -1,0 +1,63 @@
+CONVERSATION:
+User: Hey Arthur, can you make me a classic Mojito?
+Arthur: Absolutely! A Mojito is a refreshing choice. Let me prepare that for you.
+
+EXPECTED_OUTPUT:
+{
+  "id": "example-001",
+  "name": "Create Classic Mojito",
+  "created_at": "2025-11-16T12:00:00Z",
+  "updated_at": "2025-11-16T12:00:00Z",
+  "action_type": "create_drink",
+  "confidence": 0.95,
+  "reasoning": "User explicitly requested a classic Mojito, which is a well-known cocktail. I have the recipe and ingredients information.",
+  "conversation": "Excellent choice! I'm preparing a refreshing Mojito for you. This classic Cuban cocktail combines rum with fresh mint and lime.",
+  "drink_recipe": {
+    "name": "Classic Mojito",
+    "description": "A refreshing Cuban cocktail with white rum, mint, lime, sugar, and soda water",
+    "ingredients": [
+      {
+        "name": "White Rum",
+        "amount": 50,
+        "color": "#F5F5DC",
+        "unit": "ml"
+      },
+      {
+        "name": "Fresh Lime Juice",
+        "amount": 25,
+        "color": "#BFFF00",
+        "unit": "ml"
+      },
+      {
+        "name": "Simple Syrup",
+        "amount": 20,
+        "color": "#FFFACD",
+        "unit": "ml"
+      },
+      {
+        "name": "Fresh Mint Leaves",
+        "amount": 10,
+        "color": "#3EB489",
+        "unit": "leaves"
+      },
+      {
+        "name": "Soda Water",
+        "amount": 100,
+        "color": "#E0F7FA",
+        "unit": "ml"
+      }
+    ],
+    "instructions": [
+      "Muddle mint leaves gently with lime juice and simple syrup in a glass",
+      "Fill glass with ice cubes",
+      "Add white rum",
+      "Top with soda water",
+      "Stir gently to combine"
+    ],
+    "glass_type": "highball glass",
+    "garnish": "mint",
+    "has_ice": true
+  },
+  "suggest_drink": null
+}
+
