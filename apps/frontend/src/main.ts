@@ -245,8 +245,8 @@ initializeAuth();
 };
 
 // Audio setup
-const pourSound = new Audio('/src/assets/SFX/PourSFX.mp3')
-const iceSound = new Audio('/src/assets/SFX/IceSFX.mp3')
+const pourSound = new Audio('/assets/SFX/PourSFX.mp3')
+const iceSound = new Audio('/assets/SFX/IceSFX.mp3')
 
 // Helper function to play audio with optional start time trimming and duration
 function playSound(audio: HTMLAudioElement, startTime: number = 0, duration?: number) {
@@ -1166,7 +1166,7 @@ setTimeout(showArthurGreeting, 2000);
 setTimeout(() => {
   const profileImg = document.getElementById('profile-img') as HTMLImageElement;
   if (profileImg) {
-    profileImg.src = '/src/img/image_3.png';
+    profileImg.src = '/img/image_3.png';
   }
 }, 0);
 

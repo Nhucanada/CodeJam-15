@@ -259,7 +259,7 @@ export class GarnishLoader {
   private getModelPath(garnishName: GarnishName): string {
     // Only mint uses a GLTF model, all others are procedural
     if (garnishName === 'mint') {
-      return './src/models/mint_leaves/scene.gltf'
+      return '/models/mint_leaves/scene.gltf'
     }
     return ''
   }
