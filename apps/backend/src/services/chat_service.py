@@ -495,7 +495,6 @@ async def process_user_message(
             }
         )
 
-
     except Exception as e:
         logger.error(f"Error processing message: {str(e)}", exc_info=True)
         
