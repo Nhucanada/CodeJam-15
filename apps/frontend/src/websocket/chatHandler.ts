@@ -490,30 +490,42 @@ private updateRecipePanel(cocktail: any) {
     }
 }
 
-private showNotification(message: string, type: 'success' | 'error' = 'success') {
+private showNotification(message: string, type: 'success' | 'error' | 'info' = 'success') {
     // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
-    notification.textContent = message;
+
+    // Set color based on type
+    let backgroundColor = '#301C2E'; // info blue
+    if (type === 'success') backgroundColor = '#98B172'; // green
+    if (type === 'error') backgroundColor = '#f44336'; // red
+
     notification.style.cssText = `
     position: fixed;
     top: 20px;
     right: 20px;
-    background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+    background: ${backgroundColor};
     color: white;
-    padding: 10px 20px;
+    padding: 15px 25px;
     border-radius: 4px;
-    z-index: 1000;
-    font-family: Arial, sans-serif;
+    z-index: 10000;
+    font-family: 'Sixtyfour', monospace;
+    font-size: 14px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: slideIn 0.3s ease-out;
     `;
 
+    notification.textContent = message;
     document.body.appendChild(notification);
 
-    // Remove after 3 seconds
+    // Remove after 3 seconds with fade out
     setTimeout(() => {
-    if (notification.parentNode) {
+    notification.style.animation = 'slideOut 0.3s ease-in';
+    setTimeout(() => {
+        if (notification.parentNode) {
         notification.parentNode.removeChild(notification);
-    }
+        }
+    }, 300);
     }, 3000);
 }
 
