@@ -1,0 +1,11 @@
+Model Information:
+* title:	Sci-fi bar
+* source:	https://sketchfab.com/3d-models/sci-fi-bar-ab88353d0e7148eba5fc0f94853100d0
+* author:	onerockett (https://sketchfab.com/onerockett)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Sci-fi bar" (https://sketchfab.com/3d-models/sci-fi-bar-ab88353d0e7148eba5fc0f94853100d0) by onerockett (https://sketchfab.com/onerockett) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

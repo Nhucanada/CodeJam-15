@@ -5,14 +5,14 @@ import {
   createProceduralOlive,
   createProceduralCherry,
   createProceduralSaltRim,
-  createProceduralOrangeRound,
+  createProceduralCitrusRound,
 } from './ProceduralGarnishes'
 
 export type GarnishName =
   | 'cherry'
   | 'olive'
   | 'salt_rim'
-  | 'orange_round'
+  | 'citrus_round'
   | 'mint'
 
 export type GlassName =
@@ -29,16 +29,16 @@ export type GlassName =
 
 // Allowed garnishes for each glass type
 const ALLOWED_GARNISHES: Record<GlassName, GarnishName[]> = {
-  zombie_glass_0: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
-  cocktail_glass_1: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
-  rocks_glass_2: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
-  hurricane_glass_3: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
-  pint_glass_4: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
-  seidel_Glass_5: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
-  shot_glass_6: ['salt_rim', 'orange_round'], // Only salt rim and orange round
-  highball_glass_7: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
-  margarita_glass_8: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
-  martini_glass_9: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
+  zombie_glass_0: ['cherry', 'olive', 'salt_rim', 'citrus_round', 'mint'],
+  cocktail_glass_1: ['cherry', 'olive', 'salt_rim', 'citrus_round', 'mint'],
+  rocks_glass_2: ['cherry', 'olive', 'salt_rim', 'citrus_round', 'mint'],
+  hurricane_glass_3: ['cherry', 'olive', 'salt_rim', 'citrus_round', 'mint'],
+  pint_glass_4: ['cherry', 'olive', 'salt_rim', 'citrus_round', 'mint'],
+  seidel_Glass_5: ['cherry', 'olive', 'salt_rim', 'citrus_round', 'mint'],
+  shot_glass_6: ['salt_rim', 'citrus_round'], // Only salt rim and citrus round
+  highball_glass_7: ['cherry', 'olive', 'salt_rim', 'citrus_round', 'mint'],
+  margarita_glass_8: ['cherry', 'olive', 'salt_rim', 'citrus_round', 'mint'],
+  martini_glass_9: ['cherry', 'olive', 'salt_rim', 'citrus_round', 'mint'],
 }
 
 /**
@@ -73,63 +73,63 @@ const GARNISH_POSITIONS: Record<GlassName, Record<GarnishName, GarnishConfig>> =
     cherry: { position: new THREE.Vector3(0, 4.35, 0.4) },
     olive: { position: new THREE.Vector3(0, 4.35, 0.4) },
     salt_rim: { position: new THREE.Vector3(0, 4.35, 0) },
-    orange_round: { position: new THREE.Vector3(0.8, 4.35, 0), rotation: new THREE.Euler(0,0, Math.PI/ 6) },
+    citrus_round: { position: new THREE.Vector3(0.8, 4.35, 0), rotation: new THREE.Euler(0,0, Math.PI/ 6) },
     mint: { position: new THREE.Vector3(0, 4.35, -1) },
   },
   cocktail_glass_1: {
     cherry: { position: new THREE.Vector3(0, 2.70, 0.5) },
     olive: { position: new THREE.Vector3(0, 2.70, 0.5) },
     salt_rim: { position: new THREE.Vector3(0, 2.70, 0) },
-    orange_round: { position: new THREE.Vector3(0.85, 2.70, 0) },
+    citrus_round: { position: new THREE.Vector3(0.85, 2.70, 0) },
     mint: { position: new THREE.Vector3(0, 2.70, -0.8) },
   },
   rocks_glass_2: {
     cherry: { position: new THREE.Vector3(0, 2.3, 0.4) },
     olive: { position: new THREE.Vector3(0, 2.3, 0.4) },
     salt_rim: { position: new THREE.Vector3(0, 2.3, 0) },
-    orange_round: { position: new THREE.Vector3(0.85, 2.3, 0) },
+    citrus_round: { position: new THREE.Vector3(0.85, 2.3, 0) },
     mint: { position: new THREE.Vector3(0, 2.3, -0.7) },
   },
   hurricane_glass_3: {
     cherry: { position: new THREE.Vector3(0, 4, 0.2) },
     olive: {position: new THREE.Vector3(0, 4, 0.2) },
     salt_rim: { position: new THREE.Vector3(0, 4, 0) },
-    orange_round: { position: new THREE.Vector3(0.6, 4, 0) },
+    citrus_round: { position: new THREE.Vector3(0.6, 4, 0) },
     mint: { position: new THREE.Vector3(0, 4, -0.5) },
   },
   pint_glass_4: {
     cherry: { position: new THREE.Vector3(0, 4.05, 0.7) },
     olive: { position: new THREE.Vector3(0, 4.05, 0.7)  },
     salt_rim: { position: new THREE.Vector3(0, 4.05, 0) },
-    orange_round: { position: new THREE.Vector3(1.1, 4.05, 0) },
+    citrus_round: { position: new THREE.Vector3(1.1, 4.05, 0) },
     mint: { position: new THREE.Vector3(0, 4.05, -1) },
   },
   seidel_Glass_5: {
     cherry: { position: new THREE.Vector3(0, 4.3, 1.5) },
     olive: { position: new THREE.Vector3(0, 4.3, 1.5) },
     salt_rim: { position: new THREE.Vector3(0, 4.3,0.45 ) },
-    orange_round: { position: new THREE.Vector3(1.2, 4.3, 0.6) },
+    citrus_round: { position: new THREE.Vector3(1.2, 4.3, 0.6) },
     mint: { position: new THREE.Vector3(0, 4.3, -0.8) },
   },
   shot_glass_6: {
     cherry: { position: new THREE.Vector3(0, 1.5, 0) },
     olive: { position: new THREE.Vector3(0, 1.5, 0) },
     salt_rim: { position: new THREE.Vector3(0, 1.5, 0) },
-    orange_round: { position: new THREE.Vector3(0, 1.5, 0) },
+    citrus_round: { position: new THREE.Vector3(0, 1.5, 0) },
     mint: { position: new THREE.Vector3(0, 1.7, 0) },
   },
   highball_glass_7: {
     cherry: { position: new THREE.Vector3(0, 4.3, 0.8) },
     olive: { position: new THREE.Vector3(0, 4.3, 0.8) },
     salt_rim: { position: new THREE.Vector3(0, 4.3, 0) },
-    orange_round: { position: new THREE.Vector3(1.1, 4.3, 0) },
+    citrus_round: { position: new THREE.Vector3(1.1, 4.3, 0) },
     mint: { position: new THREE.Vector3(0, 4.3, -1.1) },
   },
   margarita_glass_8: {
     cherry: { position: new THREE.Vector3(0, 3.3, 1) },
     olive: { position: new THREE.Vector3(0, 3.3, 1) },
     salt_rim: { position: new THREE.Vector3(0, 3.3, 0) },
-    orange_round: { position: new THREE.Vector3(-1.3, 3.3, 0) },
+    citrus_round: { position: new THREE.Vector3(-1.3, 3.3, 0) },
     mint: {
       position: new THREE.Vector3(0, 3.3, -1.4),
     },
@@ -138,7 +138,7 @@ const GARNISH_POSITIONS: Record<GlassName, Record<GarnishName, GarnishConfig>> =
     cherry: { position: new THREE.Vector3(0, 3.3, 1) },
     olive: { position: new THREE.Vector3(0, 3.3, 1) },
     salt_rim: { position: new THREE.Vector3(0, 3.25, 0) },
-    orange_round: { position: new THREE.Vector3(-1.3, 3.3, 0) },
+    citrus_round: { position: new THREE.Vector3(-1.3, 3.3, 0) },
     mint: {
       position: new THREE.Vector3(0, 3.3, -1.4),
     },
@@ -158,7 +158,8 @@ export class GarnishLoader {
     scene: THREE.Scene,
     garnishName: GarnishName,
     glassName?: GlassName,
-    startHidden: boolean = false
+    startHidden: boolean = false,
+    originalGarnishName?: 'lemon' | 'lime' | 'orange' | 'cherry' | 'mint' | 'olive' | 'salt_rim'
   ): Promise<void> {
     this.scene = scene
 
@@ -167,7 +168,7 @@ export class GarnishLoader {
       garnishName === 'olive' ||
       garnishName === 'cherry' ||
       garnishName === 'salt_rim' ||
-      garnishName === 'orange_round'
+      garnishName === 'citrus_round'
     ) {
       let garnish: THREE.Object3D
 
@@ -175,14 +176,23 @@ export class GarnishLoader {
         garnish = createProceduralOlive()
       } else if (garnishName === 'cherry') {
         garnish = createProceduralCherry()
-      } else if (garnishName === 'orange_round') {
-        garnish = createProceduralOrangeRound()
+      } else if (garnishName === 'citrus_round') {
+        // Determine citrus type from original garnish name
+        let citrusType: 'orange' | 'lime' | 'lemon' = 'orange'
+        if (originalGarnishName === 'lemon') {
+          citrusType = 'lemon'
+        } else if (originalGarnishName === 'lime') {
+          citrusType = 'lime'
+        } else if (originalGarnishName === 'orange') {
+          citrusType = 'orange'
+        }
+        garnish = createProceduralCitrusRound(citrusType)
       } else {
         // salt_rim
         // Get rim radius for this glass type
         const rimRadius = glassName ? GLASS_RIM_RADIUS[glassName] : 0.5
 
-        garnish = createProceduralSaltRim(rimRadius, 0)
+        garnish = createProceduralSaltRim(rimRadius)
       }
 
       // Apply default transforms to all garnishes
@@ -334,7 +344,7 @@ export class GarnishLoader {
           }
         }
         break
-      case 'orange_round':
+      case 'citrus_round':
         garnish.scale.set(2.5, 1, 2.5)
         garnish.rotation.set(Math.PI / 2, 0, 0)
         if (!glassName) {
