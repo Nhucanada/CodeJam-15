@@ -47,7 +47,7 @@ class Settings(BaseSettings):
         description="Google Gemini API key"
     )
     gemini_model: str = Field(
-        default="gemini-2.0-flash",
+        default="gemini-2.5-flash",
         description="Default Gemini model to use"
     )
     gemini_rate_limit_per_minute: int = Field(
@@ -57,10 +57,6 @@ class Settings(BaseSettings):
     gemini_concurrent_requests: int = Field(
         default=10,
         description="Number of concurrent Gemini API requests allowed"
-    )
-    gemini_general_model: str = Field(
-        default="gemini-2.5-flash",
-        description="Default Gemini general model"
     )
     gemini_embedding_model: str = Field(
         default="embedding-001",

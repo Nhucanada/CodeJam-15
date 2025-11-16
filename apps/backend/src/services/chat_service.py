@@ -469,14 +469,8 @@ async def process_user_message(
             rag_enabled=actual_rag_enabled
         )
 
-        # print(result)
-        logger.info(result)
-        
         # Extract the completion as dict/JSON object
         completion = result.get("completion", {})
-        
-        # print(completion)
-        logger.info(completion)
         
         # Add assistant response to history (use conversation field for text history)
         conversation_text = completion.get("conversation", "") if isinstance(completion, dict) else str(completion)

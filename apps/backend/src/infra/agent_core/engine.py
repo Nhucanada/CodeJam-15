@@ -123,32 +123,22 @@ IMPORTANT: ALWAYS set the action_type field to one of these three values. When c
 
         # Append few-shot examples for structured outputs
         few_shot_examples = self._get_few_shot_examples(template_name)
+
         if few_shot_examples:
             prompt.append("\n\n--- FEW-SHOT EXAMPLES ---")
             for idx, example in enumerate(few_shot_examples, 1):
                 prompt.append(f"\n\nExample {idx}:\n{example}")
-            prompt.append("\n\n--- END EXAMPLES ---\n")
+            prompt.append("\n--- END EXAMPLES ---\n")
 
         # Optionally augment via RAG
         retrieved_chunks = []
-        if rag_enabled and template_name in (
-            "classic_completion",
-            "retrieval_augmented",
-            "question_answering",
-            "action_generation",
-            "summarization",
-            "chat_style",
-        ):
-            retrieval_results = self.rag_strategy(
-                user_input, user_id=user_id, top_k=top_k
-            )
-            retrieved_chunks = [
-                doc.content for doc in retrieval_results if hasattr(doc, "content")
-            ]
+        if rag_enabled:
+            retrieval_results = self.rag_strategy(user_input, user_id=user_id, top_k=top_k)
+            retrieved_chunks = [doc.content for doc in retrieval_results if hasattr(doc, "content")]
             for chunk in retrieved_chunks:
-                prompt.append(f"\n[RETRIEVED] FROM RAG CHUNKS \n{chunk}")
+                prompt.append(f"\n[RETRIEVED]\n{chunk}")
 
-        # logger.info(prompt.as_string())
+        logger.info(prompt.as_string())
 
         # Send to Gemini
         completion = await self._invoke_llm(
@@ -192,12 +182,7 @@ IMPORTANT: ALWAYS set the action_type field to one of these three values. When c
             # Add JSON formatting instructions to prompt
             schema_json = response_schema.model_json_schema()
             schema_str = json.dumps(schema_json, indent=2)
-            enhanced_prompt = f"""{prompt}\n
-            [OUTPUT SCHEMA]\n
-            You MUST respond with valid JSON matching the output schema.\n
-            {schema_str}\n
-            Response (JSON only, no other text):\n
-            """
+            enhanced_prompt = f"""{prompt}\n[OUTPUT SCHEMA]\nYou MUST respond with valid JSON matching the output schema.\n{schema_str}\nResponse (JSON only, no other text):\n"""
 
             # TODO: Make inference output enforces schema output
 
@@ -228,16 +213,8 @@ IMPORTANT: ALWAYS set the action_type field to one of these three values. When c
 
         else:
             # Regular text completion
-
-            logging.info(f"Prompt: {prompt}")
-            config = {
-                "temperature": 0.3,  # Lower temperature for more accurate, less creative responses
-                "system_instruction": self.personality,
-                "response_mime_type": "application/json",
-            }
-            logger.info(f"Gemini API Request Config (text mode): {config}")
-            logger.info(f"Gemini Model: {model or settings.gemini_model}")
-
+            # logging.info(f"Prompt: {prompt}")
+        
             response = client.models.generate_content(
                 model=model or settings.gemini_model,
                 contents=prompt,
@@ -290,10 +267,14 @@ IMPORTANT: ALWAYS set the action_type field to one of these three values. When c
             example_path = self.examples_dir / example_file
             try:
                 if example_path.exists():
-                    with open(example_path, "r", encoding="utf-8") as f:
+                    curr_example_str = ""
+                    with open(example_path, 'r', encoding='utf-8') as f:
                         content = f.read()
-                        examples.append(content)
-                        self.logger.debug(f"Loaded example from {example_file}")
+                        curr_example_str += content
+                        # self.logger.info(f"Content: {curr_example_str}")
+                        
+                    self.logger.debug(f"Loaded example from {example_file}")
+                    examples.append(content)
                 else:
                     self.logger.warning(f"Example file not found: {example_path}")
             except Exception as e:
