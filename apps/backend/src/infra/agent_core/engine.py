@@ -153,11 +153,12 @@ class AgenticEngine:
         if response_schema:
             # Add JSON formatting instructions to prompt
             schema_json = response_schema.model_json_schema()
-            enhanced_prompt = f"""{prompt}
-
-            You MUST respond with valid JSON matching the output schema.
-
-            Response (JSON only, no other text):
+            schema_str = json.dumps(schema_json, indent=2)
+            enhanced_prompt = f"""{prompt}\n
+            [OUTPUT SCHEMA]\n
+            You MUST respond with valid JSON matching the output schema.\n
+            {schema_str}\n
+            Response (JSON only, no other text):\n
             """
 
             # TODO: Make inference output enforces schema output
