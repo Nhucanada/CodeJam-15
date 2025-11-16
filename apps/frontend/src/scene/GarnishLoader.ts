@@ -27,91 +27,121 @@ export type GlassName =
   | 'margarita_glass_8'
   | 'martini_glass_9'
 
-// Rim radius for each glass type (for salt rim particles)
-const GLASS_RIM_RADIUS: Record<GlassName, number> = {
-  zombie_glass_0: 0.5,
-  cocktail_glass_1: 0.6,
-  rocks_glass_2: 0.45,
-  hurricane_glass_3: 0.55,
-  pint_glass_4: 0.5,
-  seidel_Glass_5: 0.55,
-  shot_glass_6: 0.3,
-  highball_glass_7: 0.4,
-  margarita_glass_8: 1.5,
-  martini_glass_9: 0.6,
+// Allowed garnishes for each glass type
+const ALLOWED_GARNISHES: Record<GlassName, GarnishName[]> = {
+  zombie_glass_0: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
+  cocktail_glass_1: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
+  rocks_glass_2: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
+  hurricane_glass_3: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
+  pint_glass_4: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
+  seidel_Glass_5: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
+  shot_glass_6: ['salt_rim'], // Only salt rim and orange round
+  highball_glass_7: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
+  margarita_glass_8: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
+  martini_glass_9: ['cherry', 'olive', 'salt_rim', 'orange_round', 'mint'],
 }
 
-// Garnish positions for each glass type (Y position is height on glass rim)
-const GARNISH_POSITIONS: Record<GlassName, Record<GarnishName, THREE.Vector3>> = {
+/**
+ * Get the list of allowed garnishes for a specific glass type
+ */
+export function getAllowedGarnishes(glassName: GlassName): GarnishName[] {
+  return ALLOWED_GARNISHES[glassName]
+}
+
+// Rim radius for each glass type (for salt rim particles)
+const GLASS_RIM_RADIUS: Record<GlassName, number> = {
+  zombie_glass_0: 0.8,
+  cocktail_glass_1: 0.9,
+  rocks_glass_2: 0.9,
+  hurricane_glass_3: 0.65,
+  pint_glass_4: 1.1,
+  seidel_Glass_5: 1.3,  
+  shot_glass_6: 0.4,
+  highball_glass_7: 1.2,
+  margarita_glass_8: 1.5,
+  martini_glass_9: 1.5,
+}
+
+// Garnish configuration for each glass type (position and optional rotation)
+interface GarnishConfig {
+  position: THREE.Vector3
+  rotation?: THREE.Euler
+}
+
+const GARNISH_POSITIONS: Record<GlassName, Record<GarnishName, GarnishConfig>> = {
   zombie_glass_0: {
-    cherry: new THREE.Vector3(0, 2.8, 0),
-    olive: new THREE.Vector3(0, 2.8, 0),
-    salt_rim: new THREE.Vector3(0, 2.5, 0),
-    orange_round: new THREE.Vector3(0, 2.8, 0),
-    mint: new THREE.Vector3(0, 3.0, 0),
+    cherry: { position: new THREE.Vector3(0, 4.35, 0.4) },
+    olive: { position: new THREE.Vector3(0, 4.35, 0.4) },
+    salt_rim: { position: new THREE.Vector3(0, 4.35, 0) },
+    orange_round: { position: new THREE.Vector3(0.8, 4.35, 0), rotation: new THREE.Euler(0,0, Math.PI/ 6) },
+    mint: { position: new THREE.Vector3(0, 4.35, -1) },
   },
   cocktail_glass_1: {
-    cherry: new THREE.Vector3(0, 2.0, 0),
-    olive: new THREE.Vector3(0, 2.0, 0),
-    salt_rim: new THREE.Vector3(0, 1.8, 0),
-    orange_round: new THREE.Vector3(0, 2.0, 0),
-    mint: new THREE.Vector3(0, 2.2, 0),
+    cherry: { position: new THREE.Vector3(0, 2.70, 0.5) },
+    olive: { position: new THREE.Vector3(0, 2.70, 0.5) },
+    salt_rim: { position: new THREE.Vector3(0, 2.70, 0) },
+    orange_round: { position: new THREE.Vector3(0.85, 2.70, 0) },
+    mint: { position: new THREE.Vector3(0, 2.70, -0.8) },
   },
   rocks_glass_2: {
-    cherry: new THREE.Vector3(0, 2.5, 0),
-    olive: new THREE.Vector3(0, 2.5, 0),
-    salt_rim: new THREE.Vector3(0, 2.2, 0),
-    orange_round: new THREE.Vector3(0, 2.5, 0),
-    mint: new THREE.Vector3(0, 2.7, 0),
+    cherry: { position: new THREE.Vector3(0, 2.3, 0.4) },
+    olive: { position: new THREE.Vector3(0, 2.3, 0.4) },
+    salt_rim: { position: new THREE.Vector3(0, 2.3, 0) },
+    orange_round: { position: new THREE.Vector3(0.85, 2.3, 0) },
+    mint: { position: new THREE.Vector3(0, 2.3, -0.7) },
   },
   hurricane_glass_3: {
-    cherry: new THREE.Vector3(0, 3.2, 0),
-    olive: new THREE.Vector3(0, 3.2, 0),
-    salt_rim: new THREE.Vector3(0, 3.0, 0),
-    orange_round: new THREE.Vector3(0, 3.2, 0),
-    mint: new THREE.Vector3(0, 3.4, 0),
+    cherry: { position: new THREE.Vector3(0, 4, 0.2) },
+    olive: {position: new THREE.Vector3(0, 4, 0.2) },
+    salt_rim: { position: new THREE.Vector3(0, 4, 0) },
+    orange_round: { position: new THREE.Vector3(0.6, 4, 0) },
+    mint: { position: new THREE.Vector3(0, 4, -0.5) },
   },
   pint_glass_4: {
-    cherry: new THREE.Vector3(0, 3.0, 0),
-    olive: new THREE.Vector3(0, 3.0, 0),
-    salt_rim: new THREE.Vector3(0, 2.8, 0),
-    orange_round: new THREE.Vector3(0, 3.0, 0),
-    mint: new THREE.Vector3(0, 3.2, 0),
+    cherry: { position: new THREE.Vector3(0, 4.05, 0.7) },
+    olive: { position: new THREE.Vector3(0, 4.05, 0.7)  },
+    salt_rim: { position: new THREE.Vector3(0, 4.05, 0) },
+    orange_round: { position: new THREE.Vector3(1.1, 4.05, 0) },
+    mint: { position: new THREE.Vector3(0, 4.05, -1) },
   },
   seidel_Glass_5: {
-    cherry: new THREE.Vector3(0, 3.0, 0),
-    olive: new THREE.Vector3(0, 3.0, 0),
-    salt_rim: new THREE.Vector3(0, 2.8, 0),
-    orange_round: new THREE.Vector3(0, 3.0, 0),
-    mint: new THREE.Vector3(0, 3.2, 0),
+    cherry: { position: new THREE.Vector3(0, 4.3, 1.5) },
+    olive: { position: new THREE.Vector3(0, 4.3, 1.5) },
+    salt_rim: { position: new THREE.Vector3(0, 4.3,0.45 ) },
+    orange_round: { position: new THREE.Vector3(1.2, 4.3, 0.6) },
+    mint: { position: new THREE.Vector3(0, 4.3, -0.8) },
   },
   shot_glass_6: {
-    cherry: new THREE.Vector3(0, 1.5, 0),
-    olive: new THREE.Vector3(0, 1.5, 0),
-    salt_rim: new THREE.Vector3(0, 1.3, 0),
-    orange_round: new THREE.Vector3(0, 1.5, 0),
-    mint: new THREE.Vector3(0, 1.7, 0),
+    cherry: { position: new THREE.Vector3(0, 1.5, 0) },
+    olive: { position: new THREE.Vector3(0, 1.5, 0) },
+    salt_rim: { position: new THREE.Vector3(0, 1.5, 0) },
+    orange_round: { position: new THREE.Vector3(0, 1.5, 0) },
+    mint: { position: new THREE.Vector3(0, 1.7, 0) },
   },
   highball_glass_7: {
-    cherry: new THREE.Vector3(0, 2.8, 0),
-    olive: new THREE.Vector3(0, 2.8, 0),
-    salt_rim: new THREE.Vector3(0, 2.5, 0),
-    orange_round: new THREE.Vector3(0, 2.8, 0),
-    mint: new THREE.Vector3(0, 3.0, 0),
+    cherry: { position: new THREE.Vector3(0, 4.3, 0.8) },
+    olive: { position: new THREE.Vector3(0, 4.3, 0.8) },
+    salt_rim: { position: new THREE.Vector3(0, 4.3, 0) },
+    orange_round: { position: new THREE.Vector3(1.1, 4.3, 0) },
+    mint: { position: new THREE.Vector3(0, 4.3, -1.1) },
   },
   margarita_glass_8: {
-    cherry: new THREE.Vector3(0, 2.2, 0),
-    olive: new THREE.Vector3(0, 2.2, 0),
-    salt_rim: new THREE.Vector3(0, 3.25, 0),
-    orange_round: new THREE.Vector3(0, 2.2, 0),
-    mint: new THREE.Vector3(0.1, 3.2, -1),
+    cherry: { position: new THREE.Vector3(0, 3.3, 1) },
+    olive: { position: new THREE.Vector3(0, 3.3, 1) },
+    salt_rim: { position: new THREE.Vector3(0, 3.3, 0) },
+    orange_round: { position: new THREE.Vector3(-1.3, 3.3, 0) },
+    mint: {
+      position: new THREE.Vector3(0, 3.3, -1.4),
+    },
   },
   martini_glass_9: {
-    cherry: new THREE.Vector3(0, 3.3, 1),
-    olive: new THREE.Vector3(0, 3.3, 1),
-    salt_rim: new THREE.Vector3(0, 3.25, 0),
-    orange_round: new THREE.Vector3(0, 2.0, 0),
-    mint: new THREE.Vector3(0, 2.2, 0),
+    cherry: { position: new THREE.Vector3(0, 3.3, 1) },
+    olive: { position: new THREE.Vector3(0, 3.3, 1) },
+    salt_rim: { position: new THREE.Vector3(0, 3.25, 0) },
+    orange_round: { position: new THREE.Vector3(-1.3, 3.3, 0) },
+    mint: {
+      position: new THREE.Vector3(0, 3.3, -1.4),
+    },
   },
 }
 
@@ -150,19 +180,17 @@ export class GarnishLoader {
           garnish = createProceduralOrangeRound()
         } else {
           // salt_rim
-          // Get rim radius and height for this glass type
+          // Get rim radius for this glass type
           const rimRadius = glassName ? GLASS_RIM_RADIUS[glassName] : 0.5
-          const rimHeight = glassName
-            ? GARNISH_POSITIONS[glassName][garnishName].y
-            : 2.0
 
-          garnish = createProceduralSaltRim(rimRadius, rimHeight)
+          garnish = createProceduralSaltRim(rimRadius, 0)
         }
 
-        // Apply default transforms (only for non-salt garnishes, salt uses absolute positioning)
-        if (garnishName !== 'salt_rim') {
-          this.applyDefaultTransforms(garnish, garnishName, glassName, startHidden)
-        }
+        // Apply default transforms to all garnishes
+        this.applyDefaultTransforms(garnish, garnishName, glassName, startHidden)
+
+        // Set renderOrder to render at same time as ice (ice is renderOrder 2)
+        this.setRenderOrder(garnish, 2)
 
         scene.add(garnish)
         this.garnishObjects.set(garnishName, garnish)
@@ -193,6 +221,9 @@ export class GarnishLoader {
               this.applyCustomMaterial(child, garnishName)
             }
           })
+
+          // Set renderOrder to render at same time as ice (ice is renderOrder 2)
+          this.setRenderOrder(garnish, 2)
 
           scene.add(garnish)
           this.garnishObjects.set(garnishName, garnish)
@@ -231,7 +262,7 @@ export class GarnishLoader {
   /**
    * Apply custom material to mesh based on garnish type
    */
-  private applyCustomMaterial(_mesh: THREE.Mesh, garnishName: GarnishName): void {
+  private applyCustomMaterial(mesh: THREE.Mesh, garnishName: GarnishName): void {
     switch (garnishName) {
       case 'cherry':
         // Cherry material is already applied in createProceduralCherry()
@@ -246,7 +277,14 @@ export class GarnishLoader {
         // Keep default material for now
         break
       case 'mint':
-        // Keep default material for now
+        // Modify existing material properties without replacing it
+        if (mesh.material) {
+          const material = mesh.material as THREE.Material
+          // Set clipping planes to prevent liquid clipping
+          if ('clippingPlanes' in material) {
+            ;(material as THREE.MeshStandardMaterial).clippingPlanes = []
+          }
+        }
         break
     }
   }
@@ -262,8 +300,13 @@ export class GarnishLoader {
   ): void {
     // If glass type is specified, use the position map
     if (glassName && GARNISH_POSITIONS[glassName]) {
-      const position = GARNISH_POSITIONS[glassName][garnishName]
-      garnish.position.copy(position)
+      const config = GARNISH_POSITIONS[glassName][garnishName]
+      garnish.position.copy(config.position)
+
+      // Apply rotation if specified
+      if (config.rotation) {
+        garnish.rotation.copy(config.rotation)
+      }
 
       // If startHidden, position garnish 8 units above final position
       if (startHidden) {
@@ -307,7 +350,8 @@ export class GarnishLoader {
         }
         break
       case 'orange_round':
-        garnish.scale.set(1, 1, 1)
+        garnish.scale.set(2.5, 1, 2.5) // Make it bigger in X and Z, keep Y (thickness) the same
+        garnish.rotation.set(Math.PI / 2, 0, 0) // Rotate 90° to make it vertical
         if (!glassName) {
           garnish.position.y = 2.5
           if (startHidden) {
@@ -316,7 +360,7 @@ export class GarnishLoader {
         }
         break
       case 'mint':
-        garnish.scale.set(1, 1, 1)
+        garnish.scale.set(0.2, 0.2, 0.2) // Always scale down mint leaves
         if (!glassName) {
           garnish.position.y = 3 // Position floating on top
           if (startHidden) {
@@ -443,5 +487,16 @@ export class GarnishLoader {
    */
   public update(): void {
     this.tweenGroup.update()
+  }
+
+  /**
+   * Set the render order for all meshes in a garnish object
+   */
+  private setRenderOrder(garnish: THREE.Object3D, renderOrder: number): void {
+    garnish.traverse((child) => {
+      if (child instanceof THREE.Mesh || child instanceof THREE.Points) {
+        child.renderOrder = renderOrder
+      }
+    })
   }
 }

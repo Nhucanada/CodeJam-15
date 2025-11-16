@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { Floor } from './scene/Floor'
 import { GlassLoader } from './scene/GlassLoader'
 import { IceLoader } from './scene/IceLoader'
-import { GarnishLoader } from './scene/GarnishLoader'
+import { GarnishLoader, getAllowedGarnishes } from './scene/GarnishLoader'
 import { Lighting } from './scene/Lighting'
 import { CameraSetup } from './scene/CameraSetup'
 import { ControlsSetup } from './scene/ControlsSetup'
@@ -36,7 +36,7 @@ new Lighting(scene)
 new Floor(scene)
 
 // Load glass model
-const GLASS_TO_LOAD = 'margarita_glass_8' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
+const GLASS_TO_LOAD = 'martini_glass_9' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
                                             // hurricane_glass_3, pint_glass_4, seidel_Glass_5,
                                             // shot_glass_6, highball_glass_7, margarita_glass_8, martini_glass_9
 const glassLoader = new GlassLoader()
@@ -120,15 +120,8 @@ function createIceCubesForGlass(glassName: typeof glassNames[number], loadGarnis
 glassLoader.loadGlass(scene, GLASS_TO_LOAD, controls, camera).then(() => {
   createIceCubesForGlass(GLASS_TO_LOAD)
 
-  // Load mint garnish for testing
-  garnishLoader.loadGarnish(scene, 'mint', GLASS_TO_LOAD).then(() => {
-    console.log('Mint garnish loaded!')
-    // Scale it down a lot
-    garnishLoader.setGarnishScale('mint', 0.2)
-    garnishLoader.setGarnishPosition('mint', new THREE.Vector3(0.1, 3.2,-1 )) // Adjust position above liquid
-  }).catch((error) => {
-    console.error('Failed to load mint:', error)
-  })
+  // Load all garnishes for tweaking
+  loadAllGarnishes()
 })
 
 // Handle window resize
@@ -152,6 +145,25 @@ const glassNames = [
 
 let currentGlassIndex = 8 // Start with margarita_glass_8
 
+// Load all garnishes for tweaking (press 'G' key)
+function loadAllGarnishes() {
+  console.log('Loading all garnishes for showcase...')
+
+  // Remove any existing garnishes
+  garnishLoader.removeAllGarnishes()
+
+  // Get allowed garnishes for the current glass type
+  const allowedGarnishes = getAllowedGarnishes(GLASS_TO_LOAD)
+  console.log(`Allowed garnishes for ${GLASS_TO_LOAD}:`, allowedGarnishes)
+
+  // Load only allowed garnishes for this glass type
+  allowedGarnishes.forEach((garnishName) => {
+    garnishLoader.loadGarnish(scene, garnishName, GLASS_TO_LOAD).then(() => {
+      console.log(`${garnishName} loaded`)
+    }).catch(console.error)
+  })
+}
+
 window.addEventListener('keydown', (event) => {
   if (event.code === 'Space') {
     event.preventDefault() // Prevent page scroll
@@ -174,6 +186,12 @@ window.addEventListener('keydown', (event) => {
         console.error('Failed to load mint:', error)
       })
     }).catch(console.error)
+  }
+
+  // Press 'G' to load all garnishes for tweaking
+  if (event.code === 'KeyG') {
+    event.preventDefault()
+    loadAllGarnishes()
   }
 })
 
