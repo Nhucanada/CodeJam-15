@@ -152,11 +152,8 @@ class AgenticEngine:
             schema_str = json.dumps(schema_json, indent=2)
             enhanced_prompt = f"""{prompt}\n[OUTPUT SCHEMA]\nYou MUST respond with valid JSON matching the output schema.\n{schema_str}\nResponse (JSON only, no other text):\n"""
 
-            # TODO: Make inference output enforces schema output
             
             # Use Gemini's JSON mode or response_mime_type
-
-            logger.info(f"Prompt: {enhanced_prompt}")
             response = client.models.generate_content(
                 model=model or settings.gemini_model,
                 contents=enhanced_prompt,
