@@ -1,10 +1,10 @@
 import './style.css'
 import * as THREE from 'three'
-import { Floor } from './scene/Floor'
 import { GlassLoader } from './scene/GlassLoader'
 import { IceLoader } from './scene/IceLoader'
-import { GarnishLoader, getAllowedGarnishes } from './scene/GarnishLoader'
+import { GarnishLoader, type GlassName } from './scene/GarnishLoader'
 import { CharacterLoader } from './scene/CharacterLoader'
+import { BarLoader } from './scene/BarLoader'
 import { Lighting } from './scene/Lighting'
 import { CameraSetup } from './scene/CameraSetup'
 import { ControlsSetup } from './scene/ControlsSetup'
@@ -13,6 +13,8 @@ import { cocktailAPI } from './api/client'
 import type { CocktailDetail } from './types/cocktail'
 import { LoginOverlay } from './components/LoginOverlay'
 import { authAPI } from './api/client'
+import { exampleCocktails } from './data/cocktails'
+import { glassTypeToRenderer, garnishToRenderer } from './types'
 
 // Token refresh management
 class TokenManager {
@@ -201,9 +203,30 @@ initializeAuth();
   initializeAuth();
 };
 
+// Audio setup
+const pourSound = new Audio('/src/assets/SFX/PourSFX.mp3')
+const iceSound = new Audio('/src/assets/SFX/IceSFX.mp3')
+
+// Helper function to play audio with optional start time trimming and duration
+function playSound(audio: HTMLAudioElement, startTime: number = 0, duration?: number) {
+  audio.currentTime = startTime
+  audio.play().catch(err => console.error('Audio playback error:', err))
+
+  // If duration is specified, stop playback after that duration
+  if (duration) {
+    setTimeout(() => {
+      audio.pause()
+    }, duration * 1000) // Convert to milliseconds
+  }
+}
+
 // Scene setup
 const scene = new THREE.Scene()
 scene.background = new THREE.Color(0x0a0a0f) // Darker background for bar atmosphere
+
+// Add fog for atmospheric depth - objects fade into darkness with distance
+// Fog(color, near distance, far distance)
+scene.fog = new THREE.Fog(0x0a0a0f, 30, 140)
 
 // Renderer setup
 const renderer = new THREE.WebGLRenderer({ antialias: true })
@@ -225,20 +248,76 @@ const controls = controlsSetup.getControls()
 new Lighting(scene)
 
 
-// Create floor
-new Floor(scene)
+// // Create floor
+// new Floor(scene)
 
-// Load glass model
-const GLASS_TO_LOAD = 'martini_glass_9' // Options: zombie_glass_0, cocktail_glass_1, rocks_glass_2,
-                                            // hurricane_glass_3, pint_glass_4, seidel_Glass_5,
-                                            // shot_glass_6, highball_glass_7, margarita_glass_8, martini_glass_9
+// Initialize loaders
 const glassLoader = new GlassLoader()
 const iceLoader = new IceLoader()
 const garnishLoader = new GarnishLoader()
 const characterLoader = new CharacterLoader()
+const barLoader = new BarLoader()
+
+// Cocktail state
+let currentCocktailIndex = 0
+
+// Helper function to render a complete cocktail
+function renderCocktail(index: number) {
+  const cocktail = exampleCocktails[index]
+  console.log(`Rendering cocktail: ${cocktail.name}`)
+
+  // Map user-friendly types to renderer types
+  const glassName = glassTypeToRenderer[cocktail.glassType]
+  const garnishName = cocktail.garnish && cocktail.garnish !== 'none'
+    ? garnishToRenderer[cocktail.garnish]
+    : null
+
+  // Switch to new glass
+  glassLoader.switchGlass(glassName, iceLoader, garnishLoader).then(() => {
+    // Update liquid color
+    const liquidHandler = glassLoader.getLiquidHandler()
+    if (liquidHandler) {
+      const color = new THREE.Color(cocktail.liquidColor)
+      liquidHandler.setLiquidColor(color)
+
+      // Play pour sound when liquid starts filling
+      // Trim start by 1.0 second and play for 1 second to match fill duration
+      playSound(pourSound, 1.5, 2.0)
+    }
+
+    // Add ice if needed
+    if (cocktail.hasIce) {
+      createIceCubesForGlass(glassName, !!garnishName)
+    }
+
+    // Add garnish if specified
+    if (garnishName) {
+      // Always start hidden (above the glass) so it can fall
+      garnishLoader.loadGarnish(scene, garnishName, glassName, true, cocktail.garnish && cocktail.garnish !== 'none' ? cocktail.garnish : undefined).then(() => {
+        console.log(`[GARNISH] ${garnishName} loaded`)
+
+        // If no ice, trigger garnish falling immediately after liquid fills
+        if (!cocktail.hasIce) {
+          const liquidHandler = glassLoader.getLiquidHandler()
+          if (liquidHandler) {
+            liquidHandler.setOnFillComplete(() => {
+              const garnish = garnishLoader.getGarnish(garnishName)
+              if (garnish) {
+                const targetY = garnish.position.y - 8
+                garnishLoader.animateGarnishFalling(garnishName, targetY, () => {
+                  console.log('[GARNISH] Garnish falling complete')
+                })
+              }
+            })
+          }
+        }
+      }).catch(console.error)
+    }
+  }).catch(console.error)
+}
 
 // Helper function to create multiple ice cubes for a glass
-function createIceCubesForGlass(glassName: typeof glassNames[number], loadGarnishAfter: boolean = false) {
+function createIceCubesForGlass(glassName: GlassName, loadGarnishAfter: boolean = false) {
   const liquid = glassLoader.getLiquid()
   const liquidHandler = glassLoader.getLiquidHandler()
 
@@ -271,8 +350,12 @@ function createIceCubesForGlass(glassName: typeof glassNames[number], loadGarnis
 
   // Set callback to trigger ice falling when water fill completes
   liquidHandler.setOnFillComplete(() => {
+    // Play ice sound when ice starts falling
+    // Trim start by 0.5 seconds
+    playSound(iceSound, 1)
+
     // Animate each ice cube with staggered timing for natural effect
-    let lastIceIndex = iceConfig.count - 1
+    const lastIceIndex = iceConfig.count - 1
     for (let i = 0; i < iceConfig.count; i++) {
       const iceName = `cube_ice_${i}`
       const pos = iceConfig.positions[i]
@@ -293,15 +376,22 @@ function createIceCubesForGlass(glassName: typeof glassNames[number], loadGarnis
 
             // If this is the last ice cube and we should load garnish, trigger garnish falling
             if (i === lastIceIndex && loadGarnishAfter) {
-              // Get the garnish's target Y position (it was loaded with startHidden, so subtract 8)
-              const garnish = garnishLoader.getGarnish('mint')
-              if (garnish) {
-                const targetY = garnish.position.y - 8 // Currently at hidden position, target is 8 below
+              // Get all garnishes and trigger falling for each
+              const currentCocktail = exampleCocktails[currentCocktailIndex]
+              const garnishName = currentCocktail.garnish && currentCocktail.garnish !== 'none'
+                ? garnishToRenderer[currentCocktail.garnish]
+                : null
 
-                console.log('[GARNISH] Triggering garnish falling animation')
-                garnishLoader.animateGarnishFalling('mint', targetY, () => {
-                  console.log('[GARNISH] Garnish falling complete')
-                })
+              if (garnishName) {
+                const garnish = garnishLoader.getGarnish(garnishName)
+                if (garnish) {
+                  const targetY = garnish.position.y - 8
+
+                  console.log('[GARNISH] Triggering garnish falling animation')
+                  garnishLoader.animateGarnishFalling(garnishName, targetY, () => {
+                    console.log('[GARNISH] Garnish falling complete')
+                  })
+                }
               }
             }
           })
@@ -311,18 +401,27 @@ function createIceCubesForGlass(glassName: typeof glassNames[number], loadGarnis
   })
 }
 
-glassLoader.loadGlass(scene, GLASS_TO_LOAD, controls, camera).then(() => {
-  createIceCubesForGlass(GLASS_TO_LOAD)
+// Load first cocktail and character
+const firstCocktail = exampleCocktails[0]
+const firstGlass = glassTypeToRenderer[firstCocktail.glassType]
 
-  // Load all garnishes for tweaking
-  loadAllGarnishes()
+glassLoader.loadGlass(scene, firstGlass, controls, camera).then(() => {
+  renderCocktail(0)
 
   // Load character behind the cocktail glass
   characterLoader.loadCharacter(
     scene,
-    new THREE.Vector3(0, -30, -20), // Position closer behind the glass
-    24, // Scale (16 times bigger than original 1.5)
-    new THREE.Euler(0, 0, 0) // Rotation
+    new THREE.Vector3(0, -30, -20),
+    24,
+    new THREE.Euler(0, 0, 0)
+  ).catch(console.error)
+
+  // Load sci-fi bar in the background
+  barLoader.loadBar(
+    scene,
+    new THREE.Vector3(-7, -21.85, 40),
+    200,
+    new THREE.Euler(0, Math.PI/2, 0)
   ).catch(console.error)
 })
 
@@ -331,69 +430,15 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight)
 })
 
-// Glass switching with spacebar
-const glassNames = [
-  'zombie_glass_0',
-  'cocktail_glass_1',
-  'rocks_glass_2',
-  'hurricane_glass_3',
-  'pint_glass_4',
-  'seidel_Glass_5',
-  'shot_glass_6',
-  'highball_glass_7',
-  'margarita_glass_8',
-  'martini_glass_9',
-] as const
-
-let currentGlassIndex = 8 // Start with margarita_glass_8
-
-// Load all garnishes for tweaking (press 'G' key)
-function loadAllGarnishes() {
-  console.log('Loading all garnishes for showcase...')
-
-  // Remove any existing garnishes
-  garnishLoader.removeAllGarnishes()
-
-  // Get allowed garnishes for the current glass type
-  const allowedGarnishes = getAllowedGarnishes(GLASS_TO_LOAD)
-  console.log(`Allowed garnishes for ${GLASS_TO_LOAD}:`, allowedGarnishes)
-
-  // Load only allowed garnishes for this glass type
-  allowedGarnishes.forEach((garnishName) => {
-    garnishLoader.loadGarnish(scene, garnishName, GLASS_TO_LOAD).then(() => {
-      console.log(`${garnishName} loaded`)
-    }).catch(console.error)
-  })
-}
-
+// Cocktail cycling with spacebar
 window.addEventListener('keydown', (event) => {
   if (event.code === 'Space') {
     event.preventDefault() // Prevent page scroll
 
-    currentGlassIndex = (currentGlassIndex + 1) % glassNames.length
-    const newGlassName = glassNames[currentGlassIndex]
-    console.log(`Switching to ${newGlassName}`)
+    currentCocktailIndex = (currentCocktailIndex + 1) % exampleCocktails.length
+    console.log(`Cycling to cocktail ${currentCocktailIndex + 1}/${exampleCocktails.length}`)
 
-    glassLoader.switchGlass(newGlassName, iceLoader, garnishLoader).then(() => {
-      // Create ice cubes for the new glass
-      createIceCubesForGlass(newGlassName, true)
-
-      // Load garnish for new glass (positioned above scene, ready to fall)
-      garnishLoader.loadGarnish(scene, 'mint', newGlassName, true).then(() => {
-        console.log('[GARNISH] Mint garnish loaded (hidden above scene)')
-        garnishLoader.setGarnishScale('mint', 0.2)
-        // Garnish is positioned 8 units above final position
-        // The falling animation will be triggered after ice completes
-      }).catch((error) => {
-        console.error('Failed to load mint:', error)
-      })
-    }).catch(console.error)
-  }
-
-  // Press 'G' to load all garnishes for tweaking
-  if (event.code === 'KeyG') {
-    event.preventDefault()
-    loadAllGarnishes()
+    renderCocktail(currentCocktailIndex)
   }
 })
 

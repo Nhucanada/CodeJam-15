@@ -84,18 +84,16 @@ const ICE_CUBE_CONFIGS: Record<GlassName, IceCubeConfig> = {
   cocktail_glass_1: {
     count: 1,
     positions: [{ x: 0, z: 0, rotation: { x: 0.1, y: 0.2, z: 0.15 } }],
-    scale: 0.35,
-    yOffset: -0.15,
+    scale: 0.65,
+    yOffset: -0.25,
   },
   rocks_glass_2: {
-    count: 3,
+    count: 1,
     positions: [
-      { x: 0, z: 0, rotation: { x: 0.25, y: 0.15, z: 0.1 } },
-      { x: 0.2, z: 0.15, rotation: { x: -0.15, y: 0.4, z: 0.25 } },
-      { x: -0.15, z: -0.15, rotation: { x: 0.3, y: -0.3, z: -0.2 } },
+      { x: 0, z: 0, rotation: { x: 0.1, y: 0.05, z: 0.05 } },
     ],
-    scale: 0.45,
-    yOffset: -0.2,
+    scale: 1.15,
+    yOffset: -0.5,
   },
   hurricane_glass_3: {
     count: 3,
@@ -155,12 +153,19 @@ const ICE_CUBE_CONFIGS: Record<GlassName, IceCubeConfig> = {
     yOffset: -0.22,
   },
   margarita_glass_8: {
-    count: 2,
-    positions: [
-      { x: 0.1, z: 0, rotation: { x: 0.15, y: 0.3, z: 0.1 } },
-      { x: -0.1, z: 0, rotation: { x: -0.2, y: -0.25, z: -0.15 } },
+    count: 9,
+   positions: [
+      { x: 0, z: 0, rotation: { x: 0.05, y: 0.3, z: 0.05 } },
+      { x: 0.55, z: 0.55, rotation: { x: -0.05, y: 0.5, z: 0.08 } },
+      { x: -0.55, z: 0.55, rotation: { x: 0.08, y: -0.2, z: -0.05 } },
+      { x: 0.55, z: -0.55, rotation: { x: -0.08, y: 0.35, z: 0.05 } },
+      { x: -0.55, z: -0.55, rotation: { x: 0.05, y: 0.3, z: 0.05 } },
+      { x: 0.75, z: 0, rotation: { x: -0.05, y: 0.5, z: 0.08 } },
+      { x: -0.75, z: 0, rotation: { x: 0.08, y: -0.2, z: -0.05 } },
+      { x: 0, z: 0.75, rotation: { x: -0.08, y: 0.35, z: 0.05 } },
+      { x: 0, z: -0.75, rotation: { x: 0.05, y: -0.3, z: 0.08 } },
     ],
-    scale: 0.35,
+    scale: 0.55,
     yOffset: -0.15,
   },
   martini_glass_9: {
@@ -232,9 +237,10 @@ export class GlassLoader {
                 child.material = new THREE.MeshPhysicalMaterial({
                   metalness: 0.0,
                   roughness: 0.05,
-                  transmission: 0.9, // Makes it see-through like glass
+                  transmission: 0.5, // Makes it see-through like glass
                   thickness: 0.2,
                   transparent: true,
+                  opacity: 0.6,
                   color: 0xffffff,
                   ior: 1.1, // Reduced refraction index for less distortion
                   depthWrite: false, // Allow seeing objects behind transparent glass
