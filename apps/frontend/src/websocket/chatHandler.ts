@@ -589,7 +589,7 @@ public sendMessage(content: string) {
         this.addToHistory('user', content);
 
         // Get last N messages to send as context (excluding the current message we just added)
-        const recentHistory = this.chatHistory.slice(-(this.HISTORY_TO_SEND + 1), -1);
+        const recentHistory = this.chatHistory.slice(0, -1);
 
         console.log('[SEND MESSAGE] Sending message with', recentHistory.length, 'history messages');
 

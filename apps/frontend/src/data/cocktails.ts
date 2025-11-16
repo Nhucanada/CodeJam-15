@@ -2,6 +2,17 @@ import type { CocktailConfig } from '../types'
 
 export const exampleCocktails: CocktailConfig[] = [
   {
+    name: 'Water',
+    id: 'water',
+    glassType: 'highball',
+    liquidColor: '#ADD8E6',
+    garnish: null,
+    hasIce: true,
+    ingredients: [
+      { name: 'Water', amount: 250, color: '#ADD8E6' },
+    ],
+  },
+  {
     name: 'Mojito',
     id: 'mojito',
     glassType: 'highball',

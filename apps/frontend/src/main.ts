@@ -346,15 +346,9 @@ function renderDrinkFromBackend(recipe: DrinkRecipeSchema) {
     : null
   console.log('[3D RENDER] Renderer garnish name:', garnishName)
 
-  // Update drink title
-  const drinkTitleElement = document.querySelector('.drink-title')
-  console.log('[3D RENDER] Drink title element:', drinkTitleElement)
-  if (drinkTitleElement) {
-    drinkTitleElement.textContent = recipe.name
-    console.log('[3D RENDER] Updated drink title to:', recipe.name)
-  } else {
-    console.warn('[3D RENDER] Drink title element not found!')
-  }
+  // Update drink title using the proper function
+  console.log('[3D RENDER] Updating drink title to:', recipe.name)
+  updateDrinkTitle(recipe.name)
 
   // Switch to new glass
   glassLoader.switchGlass(glassName, iceLoader, garnishLoader).then(() => {
@@ -633,60 +627,9 @@ async function loadAndDisplayShelf() {
     const exampleSummaries = exampleCocktails.slice(0, 3).map(cocktailConfigToSummary);
     updateShelfDisplay(exampleSummaries, 'Welcome to your cocktail shelf! Here are some example drinks.');
 
-    // Reset drink title to default when shelf loads successfully
-    resetDrinkTitle();
-
   } catch (error) {
     console.error('Failed to load shelf:', error);
-
-    // Show user-friendly error message in shelf
-    const recipeContent = document.querySelector('.recipe-content');
-    if (recipeContent) {
-      // Clear any existing content first
-      const existingShelfBoxes = document.querySelectorAll('.shelf-box, .shelf-empty, .shelf-error');
-      existingShelfBoxes.forEach(box => box.remove());
-
-      const errorDiv = document.createElement('div');
-      errorDiv.className = 'shelf-error';
-
-      // Check error type for better messaging
-      if (error instanceof Error) {
-        if (error.message.includes('Backend server not running')) {
-          errorDiv.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #f44336;">
-              <h3>🔌 Backend Not Running</h3>
-              <p>The backend server needs to be started to load cocktails.</p>
-              <p style="font-size: 0.9em; opacity: 0.7;">Run: <code>npm run dev</code> in the backend folder</p>
-            </div>
-          `;
-
-          // Show same error in drink title
-          showDrinkTitleError('Backend server not running');
-
-        } else {
-          errorDiv.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #f44336;">
-              <h3>⚠️ Connection Error</h3>
-            </div>
-          `;
-
-          // Show same error in drink title
-          showDrinkTitleError('⚠️ Connection Error');
-        }
-      } else {
-        errorDiv.innerHTML = `
-          <div style="text-align: center; padding: 40px; color: #f44336;">
-            <h3>❌ Unknown Error</h3>
-            <p>Could not load cocktails.</p>
-          </div>
-        `;
-
-        // Show same error in drink title
-        showDrinkTitleError('Unknown Error');
-      }
-
-      recipeContent.appendChild(errorDiv);
-    }
+    // Don't show error UI - let the app continue working
   }
 }
 
@@ -811,16 +754,7 @@ function createShelfBox(cocktail: any) {
       }
     } catch (error) {
       console.error('Failed to load cocktail details:', error);
-
-      if (error instanceof Error) {
-        if (error.message.includes('Backend server not running')) {
-          showRecipeError('Backend server not running. Please start the backend.');
-        } else {
-          showRecipeError(`Failed to load cocktail: ${error.message}`);
-        }
-      } else {
-        showRecipeError('Failed to load cocktail details');
-      }
+      // Don't show persistent errors
     }
   });
 
@@ -870,7 +804,8 @@ function showRecipeLoading() {
 
 async function selectAndDisplayCocktail(cocktail: CocktailDetail) {
   try {
-    // Update drink title
+    // Update drink title with the cocktail name
+    console.log('[DRINK TITLE] Updating drink title to:', cocktail.name);
     updateDrinkTitle(cocktail.name);
 
     // Update ingredients display
@@ -904,31 +839,21 @@ async function selectAndDisplayCocktail(cocktail: CocktailDetail) {
 
   } catch (error) {
     console.error('Error displaying cocktail:', error);
-    showRecipeError('Failed to display cocktail details');
-    showDrinkTitleError('Failed to load drink details');
+    // Don't show persistent errors
   }
 }
 
 function updateDrinkTitle(cocktailName: string) {
-  const drinkTitleElement = document.querySelector('.drink-title');
-  if (drinkTitleElement) {
-    drinkTitleElement.textContent = cocktailName;
-  }
-}
-
-function showDrinkTitleError(message: string) {
   const drinkTitleContainer = document.querySelector('.drink-title-container');
   if (drinkTitleContainer) {
-    drinkTitleContainer.innerHTML = '';
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'drink-title-error';
-    errorDiv.style.cssText = `
-      color: #c62828;
-      text-align: center;
-      font-size: 18px;
+    drinkTitleContainer.innerHTML = `
+      <h2 class="drink-title">${cocktailName}</h2>
+      <button class="drink-action-btn">
+        <svg width="24" height="24" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M46 8V4H18V8H14V60H18V56H22V52H26V48H30V44H34V48H38V52H42V56H46V60H50V8H46Z" fill="currentColor"/>
+        </svg>
+      </button>
     `;
-    errorDiv.textContent = `${message}`;
-    drinkTitleContainer.appendChild(errorDiv);
   }
 }
 
@@ -939,44 +864,35 @@ function showDrinkTitleLoading() {
 function resetDrinkTitle() {
   const drinkTitleContainer = document.querySelector('.drink-title-container');
   if (drinkTitleContainer) {
-    drinkTitleContainer.innerHTML = '<h2 class="drink-title">Select a Drink</h2>';
+    drinkTitleContainer.innerHTML = `
+      <h2 class="drink-title">Select a Drink</h2>
+      <button class="drink-action-btn">
+        <svg width="24" height="24" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M46 8V4H18V8H14V60H18V56H22V52H26V48H30V44H34V48H38V52H42V56H46V60H50V8H46Z" fill="currentColor"/>
+        </svg>
+      </button>
+    `;
   }
 }
 
-function showRecipeError(message: string) {
-  // Show error in ingredients box
-  const ingredientsBox = document.querySelector('.ingredients-box .message-container');
-  if (ingredientsBox) {
-    ingredientsBox.innerHTML = '';
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'message bot recipe-error';
-    errorDiv.style.cssText = `
-      background: #ffebee;
-      border-left: 4px solid #f44336;
-      color: #c62828;
-      padding: 8px;
-      border-radius: 4px;
-    `;
-    errorDiv.textContent = `❌ ${message}`;
-    ingredientsBox.appendChild(errorDiv);
-  }
+function clearAllErrorMessages() {
+  console.log('[CLEAR ERRORS] Clearing all error messages because backend is working');
 
-  // Show error in recipe box
-  const recipeBox = document.querySelector('.recipe-box .message-container');
-  if (recipeBox) {
-    recipeBox.innerHTML = '';
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'message bot recipe-error';
-    errorDiv.style.cssText = `
-      background: #ffebee;
-      border-left: 4px solid #f44336;
-      color: #c62828;
-      padding: 8px;
-      border-radius: 4px;
-    `;
-    errorDiv.textContent = `❌ ${message}`;
-    recipeBox.appendChild(errorDiv);
-  }
+  // Clear shelf errors
+  const existingShelfErrors = document.querySelectorAll('.shelf-error');
+  existingShelfErrors.forEach(error => error.remove());
+
+  // Clear recipe errors
+  const existingRecipeErrors = document.querySelectorAll('.recipe-error');
+  existingRecipeErrors.forEach(error => error.remove());
+
+  // Clear chat errors
+  const existingChatErrors = document.querySelectorAll('.chat-error');
+  existingChatErrors.forEach(error => error.remove());
+
+  // Clear drink title errors but preserve current state
+  // Don't handle drink title errors - they shouldn't persist
+  console.log('[CLEAR ERRORS] Skipping drink title error handling');
 }
 
 function updateSceneForCocktail(cocktail: CocktailDetail) {
@@ -1104,12 +1020,6 @@ chatInput?.addEventListener('keypress', (e) => {
 // Expose renderDrinkFromBackend globally for WebSocket updates
 (window as any).renderDrinkFromBackend = renderDrinkFromBackend;
 
-chatInput?.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    sendChatMessage();
-  }
-});
-
 // Handle placeholder label visibility
 const chatInputElement = document.getElementById('chat-input') as HTMLInputElement;
 const sendMessageTitle = document.querySelector('.send-message-title') as HTMLElement;
@@ -1141,9 +1051,6 @@ if (chatInputElement && sendMessageTitle) {
   // Initial check
   updateLabelVisibility();
 }
-
-// Expose refresh function globally for WebSocket updates
-(window as any).refreshShelfPanel = loadAndDisplayShelf;
 
 // Load shelf on startup
 loadAndDisplayShelf();
@@ -1285,6 +1192,8 @@ if (logoutBtn) {
 (window as any).logout = logoutWithConfirmation;
 
 function showShelfEnhanced() {
+  console.log('[SHELF] Showing enhanced shelf view');
+
   // Hide recipe elements
   if (ingredientsBox) ingredientsBox.style.display = 'none'
   if (recipeBox) recipeBox.style.display = 'none'
