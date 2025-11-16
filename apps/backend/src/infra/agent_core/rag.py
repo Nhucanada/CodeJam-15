@@ -34,68 +34,125 @@ class SupabaseVectorDatabaseSearch(RAGStrategy):
         self.embedding_model = embedding_model
 
     def __call__(self, query: str, user_id: Optional[str] = None, top_k: int = 5, **kwargs) -> np.ndarray[RAGRetrievalResult]:
+        """
+        Perform RAG over one or more Supabase tables containing vector embeddings.
+
+        Flow:
+          1. Embed the incoming query with the configured embedding model.
+          2. Fetch candidate rows from each table (optionally filtered by user_id).
+          3. Compute cosine similarity between the query embedding and each row's embedding.
+          4. Return the globally top_k results across all tables.
+
+        Notes:
+          - We intentionally compute similarity in-process using NumPy + sklearn to avoid
+            relying on provider-specific SQL syntax like `embedding <-> query`.
+        """
         try:
             # Generate embedding for the query
             query_embedding = self._generate_embedding(query)
 
-            # Build base query for vector similarity search
-            query_builder = self.supabase.table(self.table).select(
-                "content, metadata, embedding"
-            ).order("embedding <-> %s" % query_embedding, desc=False).limit(top_k)
-
-            # Filter by user_id if provided (for user-specific drinks)
-            if user_id:
-                query_builder = query_builder.eq("user_id", user_id)
-
-            # Execute the query
-            response = query_builder.execute()
-
-            if not response.data:
+            if query_embedding is None or getattr(query_embedding, "size", 0) == 0:
+                logger.warning("RAG query embedding is empty; returning no results.")
                 return []
 
-            # Multi-table vector search
+            # Ensure NumPy array and normalize for stable cosine similarity
+            query_embedding = np.array(query_embedding, dtype=np.float32)
+            query_norm = np.linalg.norm(query_embedding)
+            if query_norm > 0:
+                query_embedding = query_embedding / query_norm
+
+            logger.debug(f"Query embedding shape: {query_embedding.shape}")
+
+            # Number of raw candidates to pull per table before re-ranking locally
+            max_candidates_per_table: int = kwargs.get("max_candidates_per_table", max(top_k * 10, top_k))
+
             table_list: list[str] = self.tables
             all_results: list[RAGRetrievalResult] = []
 
-            if table_list:
-                for tbl in table_list:
-                    query_builder = self.supabase.table(tbl).select(
-                        "content, metadata, embedding"
-                    ).order("embedding <-> %s" % query_embedding, desc=False).limit(top_k)
-                    if user_id:
-                        query_builder = query_builder.eq("user_id", user_id)
-                    response = query_builder.execute()
-                    if not response.data:
+            logger.debug("PERFORMING RAG SEARCH FOR TABLES")
+
+            for tbl in table_list:
+                logger.debug(f"Searching table: {tbl}")
+
+                query_builder = (
+                    self.supabase
+                    .table(tbl)
+                    .select("content, metadata, embedding")
+                    .limit(max_candidates_per_table)
+                )
+
+                if user_id:
+                    query_builder = query_builder.eq("user_id", user_id)
+
+                response = query_builder.execute()
+                rows = getattr(response, "data", None) or []
+
+                if not rows:
+                    logger.debug(f"No rows returned from table {tbl}")
+                    continue
+
+                for item in rows:
+                    raw_embedding = item.get("embedding") or []
+                    if not raw_embedding:
                         continue
-                    for item in response.data:
-                        # Compute cosine similarity score
-                        doc_embedding = np.array(item.get("embedding", []))
-                        similarity_score = (
-                            float(cosine_similarity(query_embedding.reshape(1, -1), doc_embedding.reshape(1, -1))[0][0])
-                            if doc_embedding.size > 0 and query_embedding.size > 0 else 0.0
+
+                    doc_embedding = np.array(raw_embedding, dtype=np.float32)
+                    if doc_embedding.size == 0:
+                        continue
+
+                    # Normalize document embedding for cosine similarity
+                    doc_norm = np.linalg.norm(doc_embedding)
+                    if doc_norm == 0:
+                        continue
+
+                    doc_embedding = doc_embedding / doc_norm
+
+                    # Compute cosine similarity score
+                    similarity_score = float(
+                        cosine_similarity(
+                            query_embedding.reshape(1, -1),
+                            doc_embedding.reshape(1, -1),
+                        )[0][0]
+                    )
+
+                    all_results.append(
+                        RAGRetrievalResult(
+                            content=item.get("content", "") or "",
+                            metadata=item.get("metadata", {}) or {},
+                            score=similarity_score,
                         )
-                        all_results.append(
-                            RAGRetrievalResult(
-                                content=item.get("content", ""),
-                                metadata=item.get("metadata", {}),
-                                score=similarity_score
-                            )
-                        )
+                    )
+
+            if not all_results:
+                logger.info("RAG search returned no candidates across all tables.")
+                return []
 
             # Sort all results by score descending, take top_k overall
-            logger.info(f"All results: {all_results}")
-            all_results.sort(key=lambda x: x.score if x.score is not None else 0.0, reverse=True)
-            return all_results[:top_k]
+            all_results.sort(
+                key=lambda x: x.score if x.score is not None else 0.0,
+                reverse=True,
+            )
+            top_results = all_results[:top_k]
+
+            logger.debug(
+                "RAG search completed. Total candidates=%d, returning top_k=%d",
+                len(all_results),
+                len(top_results),
+            )
+
+            return top_results
 
         except Exception as e:
-            print(f"Error in RAG retrieval: {e}")
+            logger.exception(f"Error in RAG retrieval: {e}")
             return []
 
     def _generate_embedding(self, text: str) -> np.ndarray:
         from src.services.embedding_service import get_embedding_with_task_type
 
         # Use QUESTION_ANSWERING task type for better retrieval embeddings
-        embedding_list = get_embedding_with_task_type(text, "QUESTION_ANSWERING")
+        embedding_list = get_embedding_with_task_type(text, "RETRIEVAL_QUERY")
+
+        logger.debug(f"Embedding list: {embedding_list}")
 
         # Convert to numpy array
         if hasattr(embedding_list, 'embedding'):

@@ -10,7 +10,7 @@ from src.core.config import get_settings
 from src.infra.supabase_client import init_supabase
 
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager

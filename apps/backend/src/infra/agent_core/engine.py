@@ -91,21 +91,21 @@ class AgenticEngine:
         # Append few-shot examples for structured outputs
         few_shot_examples = self._get_few_shot_examples(template_name)
 
-        if few_shot_examples:
-            prompt.append("\n\n--- FEW-SHOT EXAMPLES ---")
-            for idx, example in enumerate(few_shot_examples, 1):
-                prompt.append(f"\n\nExample {idx}:\n{example}")
-            prompt.append("\n--- END EXAMPLES ---\n")
+        # if few_shot_examples:
+        #     prompt.append("\n\n--- FEW-SHOT EXAMPLES ---")
+        #     for idx, example in enumerate(few_shot_examples, 1):
+        #         prompt.append(f"\n\nExample {idx}:\n{example}")
+        #     prompt.append("\n--- END EXAMPLES ---\n")
 
         # Optionally augment via RAG
         retrieved_chunks = []
         if rag_enabled:
             retrieval_results = self.rag_strategy(user_input, user_id=user_id, top_k=top_k)
+            logger.debug(f"Retrieval results: {retrieval_results}") 
             retrieved_chunks = [doc.content for doc in retrieval_results if hasattr(doc, "content")]
+            logger.debug(f"Retrieved chunks: {retrieved_chunks}")
             for chunk in retrieved_chunks:
                 prompt.append(f"\n[RETRIEVED]\n{chunk}")
-
-        logger.info(prompt.as_string())
 
         # Send to Gemini
         completion = await self._invoke_llm(
@@ -151,8 +151,6 @@ class AgenticEngine:
             enhanced_prompt = f"""{prompt}\n[OUTPUT SCHEMA]\nYou MUST respond with valid JSON matching the output schema.\n{schema_str}\nResponse (JSON only, no other text):\n"""
 
             # TODO: Make inference output enforces schema output
-
-            logger.info(enhanced_prompt)
             
             # Use Gemini's JSON mode or response_mime_type
             response = client.models.generate_content(
