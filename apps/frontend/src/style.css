@@ -220,7 +220,7 @@ canvas {
 .ingredients-box {
   flex: 1;
   padding: 20px;
-  height: 25%;
+  max-height: 50%;
   margin-top: 6px;
   margin-left: 19px;
   margin-right: 19px;
@@ -386,8 +386,17 @@ canvas {
 
 .drink-img {
   height: 100%;
-  object-fit: contain;
+  width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-right: 3px solid #252525;
+  flex-shrink: 0;
+}
+
+.drink-img svg {
+  height: 80%;
+  width: auto;
 }
 
 
