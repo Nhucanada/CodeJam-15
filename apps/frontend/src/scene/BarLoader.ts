@@ -18,7 +18,7 @@ export class BarLoader {
     this.scene = scene
 
     return new Promise((resolve, reject) => {
-      const modelPath = './src/models/sci-fi_bar/scene.gltf'
+      const modelPath = '/models/sci-fi_bar/scene.gltf'
 
       this.loader.load(
         modelPath,

@@ -95,37 +95,123 @@ export const authAPI = {
     }
 };
 
+// In-memory storage for saved cocktails
+const savedCocktails: any[] = [];
+
+// Helper to calculate liquid color from ingredients
+function calculateLiquidColor(ingredients: any[]): string {
+    if (!ingredients || ingredients.length === 0) return '#CC2739';
+
+    // Use the first ingredient's color if available
+    const firstColoredIngredient = ingredients.find(ing => ing.color);
+    return firstColoredIngredient?.color || '#CC2739';
+}
+
 export const cocktailAPI = {
 getUserShelf: async () => {
-    const token = localStorage.getItem('access_token');
-    const response = await fetch('/api/v1/cocktails/shelf', {
-    headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-    }
-    });
-    return response.json();
+    // Return saved cocktails from memory with visual data
+    const cocktails = savedCocktails.map(recipe => ({
+        id: recipe.id,
+        name: recipe.name,
+        ingredients_summary: recipe.ingredients.map((ing: any) => ing.name).join(', '),
+        created_at: recipe.created_at || new Date().toISOString(),
+        // Add visual data for shelf display
+        glassType: recipe.glass_type || 'cocktail',
+        liquidColor: recipe.liquidColor || calculateLiquidColor(recipe.ingredients)
+    }));
+
+    const greeting = cocktails.length === 0
+        ? 'Welcome! Ready to create your first cocktail?'
+        : cocktails.length === 1
+        ? 'Welcome back! You have one cocktail in your collection.'
+        : `Welcome back! You have ${cocktails.length} cocktails in your collection.`;
+
+    return {
+        cocktails,
+        agent_greeting: greeting,
+        total_count: cocktails.length
+    };
 },
 
 getCocktailDetail: async (id: string) => {
-    const token = localStorage.getItem('access_token');
-    const response = await fetch(`/api/v1/cocktails/${id}`, {
-    headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+    // Find cocktail in memory by ID
+    const recipe = savedCocktails.find(c => c.id === id);
+    if (!recipe) {
+        throw new Error('Cocktail not found');
     }
-    });
-    return response.json();
+
+    return {
+        id: recipe.id,
+        name: recipe.name,
+        description: recipe.description,
+        type: recipe.glass_type,
+        has_ice: recipe.has_ice ?? true,
+        created_at: recipe.created_at || new Date().toISOString(),
+        ingredients: recipe.ingredients.map((ing: any) => ({
+            id: `ingredient-${Math.random()}`,
+            name: ing.name,
+            quantity: ing.amount,
+            unit: ing.unit || 'ml',
+            hexcode: ing.color
+        })),
+        garnishes: [],
+        glass: null,
+        recipe: recipe // Include full recipe for 3D rendering
+    };
 },
 
 getCocktailIngredients: async (id: string) => {
-    const token = localStorage.getItem('access_token');
-    const response = await fetch(`/api/v1/cocktails/${id}/ingredients`, {
-    headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
+    // Find cocktail in memory and return ingredients
+    const recipe = savedCocktails.find(c => c.id === id);
+    if (!recipe) {
+        return [];
     }
-    });
-    return response.json();
+
+    return recipe.ingredients.map((ing: any) => ({
+        id: `ingredient-${Math.random()}`,
+        name: ing.name,
+        quantity: ing.amount,
+        unit: ing.unit || 'ml',
+        hexcode: ing.color
+    }));
+},
+
+saveDrinkToShelf: async (recipe: any) => {
+    console.log('[COCKTAIL API] Saving drink to in-memory shelf:', recipe);
+    console.log('[COCKTAIL API] Recipe ingredients:', recipe.ingredients);
+    console.log('[COCKTAIL API] Recipe glass_type:', recipe.glass_type);
+
+    // Calculate liquid color from ingredients
+    const liquidColor = calculateLiquidColor(recipe.ingredients);
+
+    // Add ID, timestamp, and visual data if not present
+    const cocktailToSave = {
+        ...recipe,
+        id: recipe.id || `cocktail-${Date.now()}-${Math.random()}`,
+        created_at: new Date().toISOString(),
+        liquidColor: liquidColor
+    };
+
+    // Save to in-memory array
+    savedCocktails.push(cocktailToSave);
+
+    console.log('[COCKTAIL API] Total saved cocktails:', savedCocktails.length);
+    console.log('[COCKTAIL API] Saved cocktail:', cocktailToSave);
+    console.log('[COCKTAIL API] Glass type:', cocktailToSave.glass_type, 'Liquid color:', liquidColor);
+
+    return {
+        success: true,
+        message: 'Cocktail saved successfully',
+        cocktail: cocktailToSave
+    };
+},
+
+checkDrinkExists: async (name: string): Promise<boolean> => {
+    // Check if drink exists in memory
+    const exists = savedCocktails.some((cocktail: any) =>
+        cocktail.name.toLowerCase() === name.toLowerCase()
+    );
+    console.log('[COCKTAIL API] Checking if drink exists:', name, '→', exists);
+    return exists;
 }
 };

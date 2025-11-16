@@ -7,8 +7,8 @@ export class Floor {
     const textureLoader = new THREE.TextureLoader()
 
     // Load plank flooring textures
-    const floorDiffuse = textureLoader.load('/src/assets/textures/textures/plank_flooring_04_diff_4k.jpg')
-    const floorDisplacement = textureLoader.load('/src/assets/textures/textures/plank_flooring_04_disp_4k.png')
+    const floorDiffuse = textureLoader.load('/assets/textures/textures/plank_flooring_04_diff_4k.jpg')
+    const floorDisplacement = textureLoader.load('/assets/textures/textures/plank_flooring_04_disp_4k.png')
 
     // Configure texture tiling and wrapping
     floorDiffuse.wrapS = THREE.RepeatWrapping

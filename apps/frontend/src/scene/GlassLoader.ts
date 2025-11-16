@@ -214,7 +214,7 @@ export class GlassLoader {
 
     return new Promise((resolve, reject) => {
       this.loader.load(
-        '/src/models/scene.gltf',
+        '/models/scene.gltf',
         (gltf) => {
           const model = gltf.scene
 

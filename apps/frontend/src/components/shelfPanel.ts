@@ -26,21 +26,32 @@
     public async loadShelf(): Promise<void> {
       try {
         this.loading = true;
-        // TEMPORARY: Using example data for styling - comment out API call
-        // const response = await cocktailAPI.getUserShelf();
-        // this.cocktails = response.cocktails;
-        // this.greeting = response.agent_greeting;
 
-        // Load example cocktails (first 3 for display)
-        this.cocktails = exampleCocktails.slice(0, 3).map(config =>
+        // Fetch saved cocktails from in-memory storage
+        const response = await cocktailAPI.getUserShelf();
+        const savedCocktails = response.cocktails || [];
+
+        // Load example cocktails (exclude first, show next 3)
+        const exampleSummaries = exampleCocktails.slice(1, 4).map(config =>
           this.cocktailConfigToSummary(config)
         );
-        this.greeting = 'Welcome to your cocktail shelf! Here are some example drinks.';
+
+        // Combine example cocktails at the start with saved cocktails
+        this.cocktails = [...exampleSummaries, ...savedCocktails];
+
+        // Use API greeting if available, otherwise use default
+        this.greeting = response.agent_greeting || 'Welcome to your cocktail shelf!';
 
         this.updateDisplay();
       } catch (error) {
         console.error('Failed to load shelf:', error);
-        this.showError('Failed to load cocktails');
+
+        // Fallback to example data only if fails
+        this.cocktails = exampleCocktails.slice(1, 4).map(config =>
+          this.cocktailConfigToSummary(config)
+        );
+        this.greeting = 'Welcome to your cocktail shelf! Here are some example drinks.';
+        this.updateDisplay();
       } finally {
         this.loading = false;
       }
@@ -67,8 +78,8 @@
       // Add greeting (could be displayed somewhere)
       console.log('Agent greeting:', this.greeting);
 
-      // Create cocktail cards (limit to 3 for display)
-      this.cocktails.slice(0, 3).forEach(cocktail => {
+      // Create cocktail cards - show all cocktails
+      this.cocktails.forEach((cocktail) => {
         const shelfBox = this.createShelfBox(cocktail);
         recipeContent.appendChild(shelfBox);
       });
@@ -79,16 +90,26 @@
       }
     }
 
-    private createShelfBox(cocktail: CocktailSummary): HTMLElement {
+    private createShelfBox(cocktail: any): HTMLElement {
       const shelfBox = document.createElement('div');
       shelfBox.className = 'shelf-box';
       shelfBox.style.cursor = 'pointer';
       shelfBox.style.display = 'none'; // Start hidden, will be shown when shelf view is active
 
-      // TEMPORARY: Use example cocktail data to get the glass type and liquid color
-      const exampleCocktail = exampleCocktails.find(c => c.id === cocktail.id);
-      const glassType = (exampleCocktail?.glassType as GlassIconName) || 'cocktail';
-      const liquidColor = exampleCocktail?.liquidColor || '#CC2739';
+      // Use cocktail's own visual data if available (for saved cocktails), otherwise look for example
+      let glassType: GlassIconName;
+      let liquidColor: string;
+
+      if (cocktail.glassType && cocktail.liquidColor) {
+        // Saved cocktail with visual data
+        glassType = cocktail.glassType as GlassIconName;
+        liquidColor = cocktail.liquidColor;
+      } else {
+        // Example cocktail - look it up
+        const exampleCocktail = exampleCocktails.find(c => c.id === cocktail.id);
+        glassType = (exampleCocktail?.glassType as GlassIconName) || 'cocktail';
+        liquidColor = exampleCocktail?.liquidColor || '#CC2739';
+      }
 
       // Generate glass icon SVG
       const glassIconSvg = this.generateGlassIcon(glassType, liquidColor);
@@ -145,12 +166,34 @@
       }
     }
 
-    private updateRecipeDisplay(cocktail: CocktailDetail): void {
+    private updateRecipeDisplay(cocktail: any): void {
+      // Update drink title
+      const drinkTitleContainer = document.querySelector('.drink-title-container');
+      if (drinkTitleContainer) {
+        drinkTitleContainer.innerHTML = `
+          <h2 class="drink-title">${this.escapeHtml(cocktail.name)}</h2>
+          <button class="drink-action-btn">
+            <svg width="24" height="24" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M46 8V4H18V8H14V60H18V56H22V52H26V48H30V44H34V48H38V52H42V56H46V60H50V8H46Z" fill="currentColor"/>
+            </svg>
+          </button>
+        `;
+
+        // Attach click handler to save button
+        const saveBtn = drinkTitleContainer.querySelector('.drink-action-btn');
+        saveBtn?.addEventListener('click', async () => {
+          // Import the handler from main.ts by calling the global function
+          if ((window as any).handleSaveDrink) {
+            (window as any).handleSaveDrink();
+          }
+        });
+      }
+
       // Update ingredients
       const ingredientsContainer = document.querySelector('.ingredients-box .message-container');
       if (ingredientsContainer) {
         ingredientsContainer.innerHTML = '';
-        cocktail.ingredients.forEach((ing, index) => {
+        cocktail.ingredients.forEach((ing: any, index: number) => {
           const messageDiv = document.createElement('div');
           messageDiv.className = 'message bot';
           messageDiv.textContent = `${index + 1}. ${ing.quantity} ${ing.unit} ${ing.name}`;
