@@ -1088,6 +1088,9 @@ chatInput?.addEventListener('keypress', (e) => {
 // Expose renderDrinkFromBackend globally for WebSocket updates
 (window as any).renderDrinkFromBackend = renderDrinkFromBackend;
 
+// Expose handleSaveDrink globally for ShelfPanel
+(window as any).handleSaveDrink = handleSaveDrink;
+
 // Handle placeholder label visibility
 const chatInputElement = document.getElementById('chat-input') as HTMLInputElement;
 const sendMessageTitle = document.querySelector('.send-message-title') as HTMLElement;
