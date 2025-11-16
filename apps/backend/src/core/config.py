@@ -59,7 +59,7 @@ class Settings(BaseSettings):
         description="Number of concurrent Gemini API requests allowed"
     )
     gemini_general_model: str = Field(
-        default="gemini-2.0-flash",
+        default="gemini-2.5-flash",
         description="Default Gemini general model"
     )
     gemini_embedding_model: str = Field(

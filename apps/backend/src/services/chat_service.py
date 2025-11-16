@@ -27,11 +27,38 @@ class ChatSession:
         self.user = user
         self.session_id = session_id
         self.message_count = 0
+        self.conversation_history: list[str] = []
         
     def generate_message_id(self) -> str:
         """Generate unique message ID for this session."""
         self.message_count += 1
         return f"{self.session_id}-{self.message_count}"
+    
+    def add_to_history(self, role: str, content: str) -> None:
+        """
+        Add a message to conversation history.
+        
+        Args:
+            role: Message role (user, assistant, system)
+            content: Message content
+        """
+        self.conversation_history.append(f"[{role.upper()}]: {content}")
+    
+    def get_context_string(self, max_messages: int = 10) -> str:
+        """
+        Get recent conversation context as a formatted string.
+        
+        Args:
+            max_messages: Maximum number of recent messages to include
+            
+        Returns:
+            Formatted conversation context
+        """
+        if not self.conversation_history:
+            return ""
+        
+        recent = self.conversation_history[-max_messages:]
+        return "\n".join(recent)
 
 
 async def authenticate_message(
@@ -95,9 +122,9 @@ async def process_user_message(
     supabase: Client
 ) -> AsyncGenerator[OutgoingMessage, None]:
     """
-    Process a user message and generate AI response.
+    Process a user message and generate AI response using AgenticEngine.
     
-    This function will integrate with the agentic RAG service to provide
+    This function integrates with the agentic RAG service to provide
     personalized responses based on user history and context.
     
     Args:
@@ -109,31 +136,56 @@ async def process_user_message(
         OutgoingMessage instances (streaming response)
     """
     try:
+        from src.infra.agent_core.factory import get_agentic_engine
+        
         # Generate unique message ID
         message_id = session.generate_message_id()
+        
+        # Add user message to history
+        if message.content:
+            session.add_to_history("user", message.content)
         
         # Send stream start
         yield OutgoingMessage(
             type=MessageType.STREAM_START,
             message_id=message_id,
-            metadata={"user_id": session.user.id}
+            metadata={
+                "user_id": session.user.id,
+                "session_id": session.session_id
+            }
         )
         
-        # TODO: Integrate with agentic RAG service here
-        # For now, echo back the message as a simple response
-        # In production, this would call the RAG service with:
-        # - user_id: session.user.id
-        # - message: message.content
-        # - conversation_context: from metadata
+        # Get conversation context
+        context = session.get_context_string(max_messages=10)
         
-        # Simulate streaming response
-        if message.content:
-            response_text = f"Received your message: {message.content}"
-            
-            # Stream the response in chunks
-            chunk_size = 10
-            for i in range(0, len(response_text), chunk_size):
-                chunk = response_text[i:i + chunk_size]
+        # Prepare enhanced input with context
+        user_input = message.content or ""
+        if context:
+            enhanced_input = f"[CONVERSATION CONTEXT]\n{context}\n\n[CURRENT MESSAGE]\n{user_input}"
+        else:
+            enhanced_input = user_input
+        
+        # Get the singleton AgenticEngine
+        engine = get_agentic_engine()
+        
+        # Run the agent with RAG
+        result = await engine.run(
+            user_input=enhanced_input,
+            user_id=session.user.id,
+            top_k=5,
+            rag_enabled=True
+        )
+        
+        # Extract the completion
+        completion = result.get("completion", "")
+        template_name = result.get("template_name", "unknown")
+        retrieved_chunks = result.get("retrieved_chunks", [])
+        
+        # Stream the response in chunks for better UX
+        if completion:
+            chunk_size = 20  # Stream in chunks of 20 characters
+            for i in range(0, len(completion), chunk_size):
+                chunk = completion[i:i + chunk_size]
                 yield OutgoingMessage(
                     type=MessageType.STREAM_DELTA,
                     message_id=message_id,
@@ -141,24 +193,34 @@ async def process_user_message(
                     complete=False
                 )
         
-        # Send stream end
+        # Add assistant response to history
+        session.add_to_history("assistant", completion)
+        
+        # Send stream end with full response and metadata
         yield OutgoingMessage(
             type=MessageType.STREAM_END,
             message_id=message_id,
             complete=True,
-            content=response_text if message.content else "No content provided",
+            content=completion,
             metadata={
                 "user_id": session.user.id,
-                "processed": True
+                "session_id": session.session_id,
+                "template_used": template_name,
+                "retrieved_count": len(retrieved_chunks),
+                "conversation_length": len(session.conversation_history)
             }
         )
         
     except Exception as e:
-        logger.error(f"Error processing message: {str(e)}")
+        logger.error(f"Error processing message: {str(e)}", exc_info=True)
+        
+        # Add error to history for context
+        session.add_to_history("system", f"Error: {str(e)}")
+        
         yield OutgoingMessage(
             type=MessageType.ERROR,
             message_id=session.generate_message_id(),
-            content=f"Failed to process message: {str(e)}"
+            content=f"I encountered an error processing your request: {str(e)}"
         )
 
 
