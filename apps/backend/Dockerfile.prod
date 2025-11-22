@@ -13,11 +13,8 @@ RUN pip install --no-cache-dir .
 # Copy your application code
 COPY src ./src
 
-# -------- Runtime stage: add AWS Lambda Web Adapter + app --------
-FROM public.ecr.aws/docker/library/python:3.11-slim-bullseye
-COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 \
-    /lambda-adapter \
-    /opt/extensions/aws-lambda-adapter
+# -------- Runtime stage: run FastAPI with Uvicorn for EC2 --------
+FROM python:3.11-slim-bullseye
 
 ENV PORT=8080
 WORKDIR /var/task
@@ -26,12 +23,7 @@ WORKDIR /var/task
 COPY --from=build /usr/local /usr/local
 COPY --from=build /app /app
 
-# Configure the Web Adapter
-ENV AWS_LWA_PORT=8080
-ENV AWS_LWA_ENABLE_COMPRESSION=true
-ENV AWS_LWA_LOG_LEVEL=info
-
 EXPOSE 8080
 
-# Start a normal Uvicorn server; Lambda Web Adapter will proxy requests to it
-CMD exec uvicorn --port=$PORT src.main:app
+# Use gunicorn with Uvicorn workers for maximum compatibility and performance
+CMD ["fastapi", "run", "src.main:app", "--host", "0.0.0.0", "--port", "8080"]
