@@ -1,29 +1,17 @@
-# -------- Build stage: install dependencies and copy app --------
-FROM python:3.11-slim AS build
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system deps if you need them (optional)
-# RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
-
-# Copy pyproject.toml to the build stage
 COPY pyproject.toml ./
-RUN pip install --no-cache-dir .
 
-# Copy your application code
+RUN pip install --no-cache-dir -e .
+
 COPY src ./src
 
-# -------- Runtime stage: run FastAPI with Uvicorn for EC2 --------
-FROM python:3.11-slim
-
-ENV PORT=8080
-WORKDIR /var/task
-
-# Copy installed Python packages and app from build stage
-COPY --from=build /usr/local /usr/local
-COPY --from=build /app /app
+# Add health check
+# HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+# CMD curl -f http://localhost:8080/ || exit 1
 
 EXPOSE 8080
 
-# Use gunicorn with Uvicorn workers for maximum compatibility and performance
-CMD ["fastapi", "run", "src.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8080"]
