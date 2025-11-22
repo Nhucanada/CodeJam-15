@@ -23,4 +23,4 @@ services:
     #   backend:
     #     # condition: service_healthy
     environment:
-      - VITE_API_URL=http://localhost:8080
+      - VITE_ARTHUR_URL=http://localhost:8080
