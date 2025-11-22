@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir .
 COPY src ./src
 
 # -------- Runtime stage: run FastAPI with Uvicorn for EC2 --------
-FROM python:3.11-slim-bullseye
+FROM python:3.11-slim
 
 ENV PORT=8080
 WORKDIR /var/task
