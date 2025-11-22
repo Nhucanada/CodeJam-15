@@ -31,13 +31,10 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Prepare backend build context
+      - name: Set up build context
         run: |
-          echo "Copying backend files to build context..."
-          mkdir -p build-context
-          cp -r apps/backend/src build-context/
-          cp apps/backend/Dockerfile.prod build-context/
-          cp requirements.txt build-context/
+          rm -rf build-context
+          cp -r apps/backend build-context
 
       - name: Build, tag, and push image to ECR
         env:
