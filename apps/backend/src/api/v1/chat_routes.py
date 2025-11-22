@@ -26,7 +26,7 @@ async def chat_websocket(websocket: WebSocket, token: Optional[str] = None):
     Connection requires authentication via query parameter:
     - token: JWT access token
     
-    Example connection: ws://localhost:8000/api/v1/chat/ws?token=<access_token>
+    Example connection: ws://localhost:8080/api/v1/chat/ws?token=<access_token>
     
     Message Format (Client -> Server):
     {

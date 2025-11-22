@@ -31,5 +31,7 @@ ENV AWS_LWA_PORT=8080
 ENV AWS_LWA_ENABLE_COMPRESSION=true
 ENV AWS_LWA_LOG_LEVEL=info
 
+EXPOSE 8080
+
 # Start a normal Uvicorn server; Lambda Web Adapter will proxy requests to it
 CMD exec uvicorn --port=$PORT src.main:app

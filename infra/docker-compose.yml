@@ -2,13 +2,13 @@ services:
   backend:
     build: ../apps/backend
     ports:
-      - "8000:8000"
+      - "8080:8080"
     volumes:
       - ../apps/backend:/app
     # healthcheck:
     #   test: [
     #     "CMD-SHELL",
-    #     "curl --fail --silent --show-error http://localhost:8000/health || exit 1"
+    #     "curl --fail --silent --show-error http://localhost:8080/health || exit 1"
     #   ]
     #   interval: 30s
     #   timeout: 10s
@@ -23,4 +23,4 @@ services:
     #   backend:
     #     # condition: service_healthy
     environment:
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_URL=http://localhost:8080

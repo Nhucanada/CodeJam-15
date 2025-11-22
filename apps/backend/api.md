@@ -34,10 +34,10 @@ pip install -r ../../requirements.txt
 ### 3. Run the Server
 
 ```bash
-uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8080
 ```
 
-The API will be available at `http://localhost:8000`
+The API will be available at `http://localhost:8080`
 
 ## API Endpoints
 
@@ -320,8 +320,8 @@ apps/backend/src/
 
 FastAPI automatically generates interactive API documentation:
 
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+- **Swagger UI**: http://localhost:8080/docs
+- **ReDoc**: http://localhost:8080/redoc
 
 You can test all endpoints directly from the Swagger UI interface.
 
@@ -343,21 +343,21 @@ This authentication system is ready for integration with your drink recipe featu
 
 **Signup:**
 ```bash
-curl -X POST http://localhost:8000/api/v1/auth/signup \
+curl -X POST http://localhost:8080/api/v1/auth/signup \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password123","full_name":"Test User"}'
 ```
 
 **Login:**
 ```bash
-curl -X POST http://localhost:8000/api/v1/auth/login \
+curl -X POST http://localhost:8080/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password123"}'
 ```
 
 **Get Current User:**
 ```bash
-curl -X GET http://localhost:8000/api/v1/auth/me \
+curl -X GET http://localhost:8080/api/v1/auth/me \
   -H "Authorization: Bearer <your_access_token>"
 ```
 

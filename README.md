@@ -210,9 +210,9 @@ CORS_ORIGINS=http://localhost:5173
 #### 5. Run Backend
 ```bash
 cd apps/backend
-uvicorn src.main:app --reload --port 8000
+uvicorn src.main:app --reload --port 8080
 ```
-Backend will be available at: `http://localhost:8000`
+Backend will be available at: `http://localhost:8080`
 
 #### 6. Run Frontend (New Terminal)
 ```bash
@@ -234,7 +234,7 @@ docker-compose up
 
 Services will be available at:
 - **Frontend**: `http://localhost:5173`
-- **Backend**: `http://localhost:8000`
+- **Backend**: `http://localhost:8080`
 
 #### 3. Stop Services
 ```bash
@@ -247,9 +247,9 @@ docker-compose down
 | Service | URL | Description |
 |---------|-----|-------------|
 | **Frontend** | http://localhost:5173 | Main application UI |
-| **Backend API** | http://localhost:8000 | REST API endpoints |
-| **API Docs (Swagger)** | http://localhost:8000/docs | Interactive API documentation |
-| **API Docs (ReDoc)** | http://localhost:8000/redoc | Alternative API docs |
+| **Backend API** | http://localhost:8080 | REST API endpoints |
+| **API Docs (Swagger)** | http://localhost:8080/docs | Interactive API documentation |
+| **API Docs (ReDoc)** | http://localhost:8080/redoc | Alternative API docs |
 
 ---
 
@@ -277,7 +277,7 @@ docker-compose down
 
 ### WebSocket Chat
 
-**Endpoint**: `ws://localhost:8000/api/v1/chat/ws?token=<access_token>`
+**Endpoint**: `ws://localhost:8080/api/v1/chat/ws?token=<access_token>`
 
 **Message Types:**
 - `user` - User message to Arthur
@@ -421,7 +421,7 @@ pnpm preview          # Preview production build
 
 # Backend
 uvicorn src.main:app --reload  # Start with hot reload
-uvicorn src.main:app --port 8000  # Specify port
+uvicorn src.main:app --port 8080  # Specify port
 
 # Docker
 docker-compose up              # Start all services

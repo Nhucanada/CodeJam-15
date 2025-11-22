@@ -11,7 +11,7 @@ def get_access_token():
     """Login and get access token."""
     print("Logging in...")
     response = requests.post(
-        'http://localhost:8000/api/v1/auth/login',
+        'http://localhost:8080/api/v1/auth/login',
         json={
             'email': 'albert931023@gmail.com',
             'password': 'SecurePassword123!'
@@ -32,7 +32,7 @@ def get_access_token():
 async def test_chat():
     # Get token automatically
     token = get_access_token()
-    uri = f"ws://localhost:8000/api/v1/chat/ws?token={token}"
+    uri = f"ws://localhost:8080/api/v1/chat/ws?token={token}"
     
     print(f"\nConnecting to chat...")
     

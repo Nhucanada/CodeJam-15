@@ -82,10 +82,14 @@ class Settings(BaseSettings):
     )
     
     # CORS Settings
-    cors_origins: list[str] = Field(
-        default=["http://localhost:5173", "http://localhost:8000"],
-        description="Allowed CORS origins"
+    cors_allow_all: bool = Field(
+        default=True,
+        description="Allow all CORS origins"
     )
+    # cors_origins: list[str] = Field(
+    #     default=["http://localhost:5173", "http://localhost:8080"],
+    #     description="Allowed CORS origins"
+    # )
 
 
 @field_validator("cors_origins", mode="after")
