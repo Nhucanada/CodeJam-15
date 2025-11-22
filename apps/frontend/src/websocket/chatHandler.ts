@@ -1,4 +1,5 @@
 import type { EnhancedChatMessage, AgentActionResponse, DrinkRecipeSchema } from '../types/cocktail';
+import { WS_BASE_URL } from '../config';
 
 interface ChatHistoryMessage {
   role: 'user' | 'assistant';
@@ -27,7 +28,7 @@ constructor() {
       return;
     }
 
-    const wsUrl = `ws://barline-30370655280.us-east4.run.app:8080/api/v1/chat/ws?token=${token}`;
+    const wsUrl = `${WS_BASE_URL}/api/v1/chat/ws?token=${token}`;
     this.socket = new WebSocket(wsUrl);
 
     this.socket.onopen = () => {
