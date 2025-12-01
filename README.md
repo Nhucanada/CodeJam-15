@@ -4,7 +4,7 @@
 
 A 90's inspired retro video game-style web application where you chat with Arthur, a PS1-style 3D bartender who crafts custom cocktails right before your eyes using Three.js and AI.
 
-Watch our video demonstrating Arthur's capabilities [here](https://drive.google.com/file/d/1R6NzK73l1h-cJuN-vYWr8NDtz8J_oxkL/view?usp=sharing)
+Watch our video demonstrating Arthur's capabilities [here](https://drive.google.com/file/d/1R6NzK73l1h-cJuN-vYWr8NDtz8J_oxkL/view?usp=sharing).
 
 ---
 
